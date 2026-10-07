@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, FlatList, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { photoUrl, supabase } from '@/lib/supabase';
@@ -48,9 +48,9 @@ export default function CourtPage() {
     .filter((u): u is string => !!u);
   const offers = court.court_sports.filter((x) => x.sport);
 
-  function book(sportName: string) {
+  function book(sportSlug: string) {
     if (!session) return router.push('/login');
-    Alert.alert('Booking calendar', `Booking for ${sportName} is the next thing we are adding to the app.`);
+    router.push({ pathname: '/book/[courtId]', params: { courtId: court!.id, sport: sportSlug } });
   }
 
   return (
@@ -92,7 +92,7 @@ export default function CourtPage() {
               {o.sport!.emoji} {o.sport!.name}
             </Text>
             <Text style={{ color: colors.muted, marginBottom: 10 }}>{egp(Number(o.price_per_hour))} / hour</Text>
-            <Button title={`Book for ${o.sport!.name}`} onPress={() => book(o.sport!.name)} />
+            <Button title={`Book for ${o.sport!.name}`} onPress={() => book(o.sport!.slug)} />
           </View>
         ))}
       </View>
