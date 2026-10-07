@@ -51,3 +51,8 @@ const s = StyleSheet.create({
   },
   note: { borderWidth: 1, borderRadius: radius.md, padding: 12, marginBottom: 14 },
 });
+
+// The brand gradient as a fill: put it first inside a `overflow: 'hidden'` view.
+export function GradientFill() {
+  return <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} pointerEvents="none" />;
+}

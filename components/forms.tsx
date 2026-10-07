@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { colors, radius } from '@/lib/theme';
 import { USERNAME_RE } from '@/lib/validate';
-import { Field } from './ui';
+import { Field, GradientFill } from './ui';
 
 export type Gender = 'male' | 'female' | '';
 export type UsernameStatus = '' | 'checking' | 'ok' | 'taken' | 'bad' | 'limit';
@@ -16,8 +16,9 @@ export function GenderField({ value, onChange }: { value: Gender; onChange: (g: 
         {(['male', 'female'] as const).map((g) => (
           <Pressable key={g} onPress={() => onChange(g)} style={{
             flex: 1, paddingVertical: 12, borderRadius: radius.md, alignItems: 'center', borderWidth: 1,
-            borderColor: value === g ? colors.primary : colors.border, backgroundColor: value === g ? colors.primary : colors.card,
+            borderColor: value === g ? 'transparent' : colors.border, backgroundColor: colors.card, overflow: 'hidden',
           }}>
+            {value === g && <GradientFill />}
             <Text style={{ color: value === g ? '#fff' : colors.text, fontWeight: '600', textTransform: 'capitalize' }}>{g}</Text>
           </Pressable>
         ))}

@@ -137,7 +137,7 @@ export default function BookCourt() {
       <SlotPicker
         rules={rules} busy={busy} value={pick} minMinutes={minMinutes} maxDate={lastDay}
         onChange={(p) => { setPick(p); setErr(null); setWaitFor(null); }}
-        onBusyTap={(start, end) => setWaitFor({ start, end })}
+        onBusyTap={(start, end) => setWaitFor({ start, end })} waitingFor={waiting}
       />
 
       {waitFor && (

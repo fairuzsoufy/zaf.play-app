@@ -1,8 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { TabIcon } from '@/components/TabIcon';
 import { colors } from '@/lib/theme';
-
-const icon = (e: string) => () => <Text style={{ fontSize: 20 }}>{e}</Text>;
 
 export default function TabsLayout() {
   return (
@@ -12,13 +10,14 @@ export default function TabsLayout() {
         headerTintColor: colors.text,
         sceneStyle: { backgroundColor: colors.bg },
         tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.text,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarInactiveTintColor: colors.muted,
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Courts', headerShown: false, tabBarIcon: icon('🏟️') }} />
-      <Tabs.Screen name="bookings" options={{ title: 'My bookings', tabBarIcon: icon('📅') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('👤') }} />
+      <Tabs.Screen name="index" options={{ title: 'Play', headerShown: false, tabBarIcon: ({ focused }) => <TabIcon name="ball" focused={focused} /> }} />
+      <Tabs.Screen name="bookings" options={{ title: 'My bookings', tabBarIcon: ({ focused }) => <TabIcon name="calendar" focused={focused} /> }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ focused }) => <TabIcon name="user" focused={focused} /> }} />
     </Tabs>
   );
 }

@@ -8,7 +8,7 @@ import { countdown, dateLabel, egp, timeLabel } from '@/lib/format';
 import {
   cancelSplitPreview, cleanInstapay, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT, INSTAPAY_HELP, isInstapay, isLate, REVIEW_MINUTES,
 } from '@/lib/payment';
-import { Button, Field, Note } from '@/components/ui';
+import { Button, Field, GradientFill, Note } from '@/components/ui';
 
 type Tab = 'upcoming' | 'past' | 'cancelled';
 
@@ -107,6 +107,7 @@ export default function Bookings() {
         <View style={{ flexDirection: 'row', marginBottom: 14 }}>
           {tabs.map(([t, label]) => (
             <Pressable key={t} onPress={() => { setTab(t); setCancelId(null); }} style={[s.tab, tab === t && s.tabOn]}>
+              {tab === t && <GradientFill />}
               <Text style={{ color: tab === t ? '#fff' : colors.muted, fontWeight: '600' }}>{label} ({lists[t].length})</Text>
             </Pressable>
           ))}
@@ -309,7 +310,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
 
 const s = StyleSheet.create({
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
-  tabOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  tabOn: { borderColor: 'transparent', overflow: 'hidden' },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
   title: { color: colors.text, fontSize: 16, fontWeight: '700' },
   sub: { color: colors.muted, marginTop: 3 },
