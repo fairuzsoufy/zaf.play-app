@@ -2,6 +2,7 @@ import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '@/lib/auth';
+import { Splash } from '@/components/Splash';
 import { colors } from '@/lib/theme';
 
 const theme = {
@@ -30,6 +31,7 @@ export default function RootLayout() {
           <Stack.Screen name="signup" options={{ title: 'Create account', presentation: 'modal' }} />
           <Stack.Screen name="forgot-password" options={{ title: 'Forgot password' }} />
         </Stack>
+        <Splash />
       </AuthProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
