@@ -1,6 +1,15 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radius } from '@/lib/theme';
+
+// The website's brand gradient (blue → purple → pink), used for buttons and anything chosen.
+export const GRADIENT = [colors.brandBlue, colors.brandPurple, colors.brandPink] as const;
+
+// Fills its parent with the gradient; the parent needs overflow: 'hidden' and rounded corners.
+export function GradientFill({ style }: { style?: object }) {
+  return <LinearGradient colors={GRADIENT} start={{ x: 0, y: 0.3 }} end={{ x: 1, y: 0.7 }} style={[StyleSheet.absoluteFill, style]} pointerEvents="none" />;
+}
 
 export function Button({
   title, onPress, loading, disabled, variant = 'primary',
@@ -17,6 +26,7 @@ export function Button({
         pressed && { opacity: 0.8 },
       ]}
     >
+      {variant === 'primary' && <GradientFill />}
       {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>{title}</Text>}
     </Pressable>
   );
@@ -41,8 +51,8 @@ export function Note({ kind, children }: { kind: 'error' | 'ok'; children: React
 }
 
 const s = StyleSheet.create({
-  btn: { borderRadius: radius.md, paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
-  btnPrimary: { backgroundColor: colors.primary },
+  btn: { borderRadius: radius.md, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  btnPrimary: { backgroundColor: colors.brandPurple },
   btnGhost: { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   label: { color: colors.muted, marginBottom: 6, fontSize: 13 },

@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { photoUrl, supabase } from '@/lib/supabase';
 import { colors, radius } from '@/lib/theme';
 import { CourtCard } from '@/components/CourtCard';
-import { Note } from '@/components/ui';
+import { GradientFill, Note } from '@/components/ui';
 import type { CourtRow, Sport } from '@/lib/types';
 
 const logo = require('@/assets/zaf-logo.png');
@@ -65,6 +65,7 @@ function SportTile({ sport, count, index, onPress }: { sport: Sport; count: numb
 function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={[s.chip, on && s.chipOn]}>
+      {on && <GradientFill />}
       <Text style={{ color: on ? '#fff' : colors.muted, fontWeight: '600' }}>{label}</Text>
     </Pressable>
   );
@@ -233,7 +234,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border,
     paddingVertical: 22, paddingHorizontal: 12, alignItems: 'center',
   },
-  tilePressed: { borderColor: colors.primary, backgroundColor: colors.cardAlt, transform: [{ scale: 0.97 }] },
+  tilePressed: { borderColor: colors.brandPurple, backgroundColor: colors.cardAlt, transform: [{ scale: 0.97 }] },
   tileIcon: {
     width: 76, height: 76, borderRadius: 38, backgroundColor: colors.cardAlt,
     alignItems: 'center', justifyContent: 'center', marginBottom: 12,
@@ -245,7 +246,7 @@ const s = StyleSheet.create({
   backText: { color: colors.primaryAlt, fontSize: 16, fontWeight: '600' },
   banner: {
     flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.card,
-    borderRadius: radius.xl, borderWidth: 1, borderColor: colors.primary, padding: 16, marginBottom: 14,
+    borderRadius: radius.xl, borderWidth: 1, borderColor: colors.brandPurple, padding: 16, marginBottom: 14,
   },
   bannerIcon: {
     width: 60, height: 60, borderRadius: 30, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center',
@@ -256,7 +257,7 @@ const s = StyleSheet.create({
   changeText: { color: colors.text, fontWeight: '600' },
 
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
-  chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipOn: { borderColor: 'transparent', overflow: 'hidden' },
 
   empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
 });
