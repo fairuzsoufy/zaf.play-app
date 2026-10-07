@@ -63,6 +63,7 @@ export default function Courts() {
     <FlatList
       data={list}
       keyExtractor={(c) => c.id}
+      style={{ backgroundColor: colors.bg }}
       contentContainerStyle={{ padding: 16 }}
       refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={() => { setRefreshing(true); load(); }} />}
       ListHeaderComponent={

@@ -27,7 +27,7 @@ export function Field(props: TextInputProps & { label: string }) {
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput placeholderTextColor={colors.muted} style={[s.input, style]} {...rest} />
+      <TextInput aria-label={label} placeholderTextColor={colors.muted} style={[s.input, style]} {...rest} />
     </View>
   );
 }

@@ -28,7 +28,7 @@ export default function Profile() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }}>
+    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16 }}>
       <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border }}>
         <Text style={{ color: colors.muted }}>Signed in as</Text>
         <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 4 }}>{session.user.email}</Text>

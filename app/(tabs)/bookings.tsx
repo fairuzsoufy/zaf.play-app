@@ -49,6 +49,7 @@ export default function Bookings() {
     <FlatList
       data={rows}
       keyExtractor={(r) => r.id}
+      style={{ backgroundColor: colors.bg }}
       contentContainerStyle={{ padding: 16 }}
       refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={() => { setRefreshing(true); load(); }} />}
       ListEmptyComponent={<Text style={{ color: colors.muted, textAlign: 'center', marginTop: 40 }}>No bookings yet.</Text>}
