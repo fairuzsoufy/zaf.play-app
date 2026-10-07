@@ -1,6 +1,7 @@
 import React from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import { colors, radius } from '@/lib/theme';
+import { colors, gradient, radius } from '@/lib/theme';
 
 export function Button({
   title, onPress, loading, disabled, variant = 'primary',
@@ -10,13 +11,11 @@ export function Button({
     <Pressable
       onPress={onPress}
       disabled={off}
-      style={({ pressed }) => [
-        s.btn,
-        variant === 'primary' ? s.btnPrimary : s.btnGhost,
-        off && { opacity: 0.5 },
-        pressed && { opacity: 0.8 },
-      ]}
+      style={({ pressed }) => [s.btn, variant === 'primary' ? s.btnPrimary : s.btnGhost, off && { opacity: 0.5 }, pressed && { opacity: 0.8 }]}
     >
+      {variant === 'primary' && (
+        <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+      )}
       {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>{title}</Text>}
     </Pressable>
   );
@@ -42,7 +41,7 @@ export function Note({ kind, children }: { kind: 'error' | 'ok'; children: React
 
 const s = StyleSheet.create({
   btn: { borderRadius: radius.md, paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
-  btnPrimary: { backgroundColor: colors.primary },
+  btnPrimary: { backgroundColor: colors.primary, overflow: 'hidden' },
   btnGhost: { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   label: { color: colors.muted, marginBottom: 6, fontSize: 13 },

@@ -16,7 +16,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.muted,
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Courts', tabBarIcon: icon('🏟️') }} />
+      <Tabs.Screen name="index" options={{ title: 'Courts', headerShown: false, tabBarIcon: icon('🏟️') }} />
       <Tabs.Screen name="bookings" options={{ title: 'My bookings', tabBarIcon: icon('📅') }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('👤') }} />
     </Tabs>
