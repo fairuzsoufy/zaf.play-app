@@ -26,7 +26,8 @@
     "plugins": [
       "expo-router",
       "expo-image",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-font"
     ],
     "scheme": "zafplay"
   }

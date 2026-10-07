@@ -100,3 +100,10 @@ export function themed<T>(make: () => T): () => T {
     return cache.value;
   };
 }
+
+// The website's display font (Saira, italic, heavy) for titles, numbers and buttons. Loaded in app/_layout.tsx.
+export const fonts = {
+  display: 'Saira-ExtraBoldItalic',
+  displayBold: 'Saira-BoldItalic',
+  displaySemi: 'Saira-SemiBoldItalic',
+};

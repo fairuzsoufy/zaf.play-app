@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, FlatList, Linking, Pressable, RefreshControl,
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius, themed } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 import { countdown, dateLabel, egp, timeLabel } from '@/lib/format';
 import {
   cancelSplitPreview, cleanInstapay, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT, INSTAPAY_HELP, isInstapay, isLate, REVIEW_MINUTES,
@@ -146,7 +146,9 @@ export default function Bookings() {
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>{egp(Number(b.total_price) - Number(b.discount_amount || 0))}</Text>
                 {(b.booking_extras ?? []).length > 0 && <Text style={s.sub}>Extras: {b.booking_extras.map((x: any) => `${x.name} × ${x.qty}`).join(', ')}</Text>}
               </View>
-              <Text style={{ color: bd.color, fontSize: 12, fontWeight: '700', textTransform: 'capitalize' }}>{bd.label}</Text>
+              <View style={{ alignSelf: 'flex-start', borderRadius: 999, borderWidth: 1, borderColor: bd.color, paddingHorizontal: 10, paddingVertical: 3 }}>
+                <Text style={{ color: bd.color, fontSize: 11, fontWeight: '800', textTransform: 'capitalize' }}>{bd.label}</Text>
+              </View>
             </View>
 
             {summary && <Text style={{ color: colors.warning, marginTop: 10 }}>{summary}</Text>}
@@ -320,8 +322,8 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
 const useS = themed(() => StyleSheet.create({
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
   tabOn: { borderColor: 'transparent', overflow: 'hidden' },
-  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-  title: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.brandPurple },
+  title: { color: colors.text, fontFamily: fonts.display, fontSize: 20 },
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
   box: { backgroundColor: colors.cardAlt, borderRadius: radius.md, padding: 12, marginTop: 12 },

@@ -6,11 +6,12 @@ import { Image } from 'expo-image';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { photoUrl, supabase } from '@/lib/supabase';
-import { colors, radius, themed } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 import { CourtCard } from '@/components/CourtCard';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
-import { GradientFill, Note } from '@/components/ui';
+import { Card, GradientFill, GradientText, GRADIENT, Note, PressableScale } from '@/components/ui';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { CourtRow, Sport } from '@/lib/types';
 
 
@@ -25,6 +26,20 @@ function SportIcon({ sport, size }: { sport: Sport; size: number }) {
   const uri = photoUrl(sport.icon_url);
   if (uri) return <Image source={{ uri }} style={{ width: size, height: size }} contentFit="contain" />;
   return <Text style={{ fontSize: size * 0.85, lineHeight: size }}>{sport.emoji || '🏅'}</Text>;
+}
+
+// gently floats up and down, so the home screen feels alive
+function Floating({ children }: { children: React.ReactNode }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(v, { toValue: 1, duration: 1800, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 0, duration: 1800, useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [v]);
+  return <Animated.View style={{ transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -6] }) }] }}>{children}</Animated.View>;
 }
 
 function countLabel(n: number) {
@@ -47,19 +62,24 @@ function SportTile({ sport, count, index, onPress }: { sport: Sport; count: numb
         { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] },
       ]}
     >
-      <Pressable
+      <PressableScale
         onPress={onPress}
         disabled={empty}
         accessibilityRole="button"
         accessibilityLabel={`${sport.name}, ${countLabel(count)}`}
-        style={({ pressed }) => [s.tile, empty && { opacity: 0.45 }, pressed && s.tilePressed]}
+        style={[s.tile, empty && { opacity: 0.45 }]}
+        scaleTo={0.94}
       >
-        <View style={s.tileIcon}>
-          <SportIcon sport={sport} size={46} />
-        </View>
+        <LinearGradient colors={empty ? [colors.border, colors.border] : GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.ring}>
+          <View style={s.tileIcon}>
+            <SportIcon sport={sport} size={44} />
+          </View>
+        </LinearGradient>
         <Text style={s.tileName} numberOfLines={1}>{sport.name}</Text>
-        <Text style={[s.tileCount, !empty && { color: colors.primaryAlt }]}>{countLabel(count)}</Text>
-      </Pressable>
+        <View style={[s.countPill, !empty && { backgroundColor: colors.soft }]}>
+          <Text style={[s.tileCount, !empty && { color: colors.primary }]}>{countLabel(count)}</Text>
+        </View>
+      </PressableScale>
     </Animated.View>
   );
 }
@@ -158,15 +178,20 @@ export default function Courts() {
       >
         <View style={[s.toggle, { top: insets.top + 8 }]}><ThemeToggle /></View>
         <View style={s.brand}>
-          <Logo size={130} />
-          <Text style={s.brandTag}>
-            Play. Compete. <Text style={{ color: colors.brandPink, fontWeight: '800' }}>Connect.</Text>
-          </Text>
+          <Floating><Logo size={130} /></Floating>
+          <View style={{ flexDirection: 'row', marginTop: 6 }}>
+            <Text style={s.brandTag}>Play. Compete. </Text>
+            <GradientText style={[s.brandTag, { fontFamily: fonts.display }]}>Connect.</GradientText>
+          </View>
         </View>
 
         {err && <Note kind="error">{err}</Note>}
 
-        <Text style={s.h1}>What do you want to play?</Text>
+        <Text style={s.h1}>What do you want</Text>
+        <View style={{ flexDirection: 'row' }}>
+          <Text style={s.h1}>to </Text>
+          <GradientText style={s.h1}>play?</GradientText>
+        </View>
         <Text style={s.lead}>Pick a sport to see the courts you can book.</Text>
 
         <View style={s.grid}>
@@ -195,7 +220,7 @@ export default function Courts() {
             <ThemeToggle />
           </View>
 
-          <View style={s.banner}>
+          <Card glow style={s.banner}>
             <View style={s.bannerIcon}>
               <SportIcon sport={sport} size={40} />
             </View>
@@ -206,7 +231,7 @@ export default function Courts() {
             <Pressable onPress={() => setSport(null)} style={s.change} accessibilityRole="button">
               <Text style={s.changeText}>Change</Text>
             </Pressable>
-          </View>
+          </Card>
 
           {err && <Note kind="error">{err}</Note>}
 
@@ -220,7 +245,7 @@ export default function Courts() {
           )}
         </View>
       }
-      renderItem={({ item }) => <CourtCard court={item} sportId={sport.id} />}
+      renderItem={({ item, index }) => <CourtCard court={item} sportId={sport.id} index={index} />}
       ListEmptyComponent={<Text style={s.empty}>No {sport.name.toLowerCase()} courts here yet.</Text>}
     />
   );
@@ -233,33 +258,29 @@ const useS = themed(() => StyleSheet.create({
   brand: { alignItems: 'center', marginBottom: 18 },
   brandTag: { color: colors.muted, fontStyle: 'italic', fontSize: 15, letterSpacing: 0.4, marginTop: 6 },
 
-  h1: { color: colors.text, fontSize: 26, fontWeight: '800', marginTop: 4 },
-  lead: { color: colors.muted, fontSize: 15, marginTop: 4, marginBottom: 16 },
+  h1: { color: colors.text, fontFamily: fonts.display, fontSize: 32, lineHeight: 38 },
+  lead: { color: colors.muted, fontSize: 15, marginTop: 6, marginBottom: 18 },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
   tileWrap: { width: '50%', padding: 6 },
   tile: {
     backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border,
     paddingVertical: 22, paddingHorizontal: 12, alignItems: 'center',
+    shadowColor: colors.brandPurple, shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 3,
   },
-  tilePressed: { borderColor: colors.brandPurple, backgroundColor: colors.cardAlt, transform: [{ scale: 0.97 }] },
-  tileIcon: {
-    width: 76, height: 76, borderRadius: 38, backgroundColor: colors.cardAlt,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-  },
-  tileName: { color: colors.text, fontSize: 17, fontWeight: '700' },
-  tileCount: { color: colors.muted, fontSize: 13, marginTop: 4, fontWeight: '600' },
+  ring: { width: 82, height: 82, borderRadius: 41, padding: 2.5, marginBottom: 12 },
+  tileIcon: { flex: 1, borderRadius: 40, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' },
+  tileName: { color: colors.text, fontFamily: fonts.displayBold, fontSize: 18 },
+  countPill: { marginTop: 6, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: colors.cardAlt },
+  tileCount: { color: colors.muted, fontSize: 12, fontWeight: '700' },
 
   back: { alignSelf: 'flex-start', paddingVertical: 6 },
   backText: { color: colors.primaryAlt, fontSize: 16, fontWeight: '600' },
-  banner: {
-    flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.card,
-    borderRadius: radius.xl, borderWidth: 1, borderColor: colors.brandPurple, padding: 16, marginBottom: 14,
-  },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
   bannerIcon: {
     width: 60, height: 60, borderRadius: 30, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center',
   },
-  bannerTitle: { color: colors.text, fontSize: 22, fontWeight: '800' },
+  bannerTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 26 },
   bannerSub: { color: colors.muted, marginTop: 2 },
   change: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.cardAlt },
   changeText: { color: colors.text, fontWeight: '600' },
