@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, radius } from '@/lib/theme';
 import { countdown, egp } from '@/lib/format';
-import { cleanInstapay, HOLD_MINUTES, INSTAPAY_HELP, isInstapay, MAX_PROOFS, MAX_PROOF_MB, REVIEW_MINUTES, ZAF_INSTAPAY_LINK } from '@/lib/payment';
+import { HOLD_MINUTES, isEgyptMobile, MAX_PROOFS, MAX_PROOF_MB, REVIEW_MINUTES, ZAF_INSTAPAY_LINK } from '@/lib/payment';
 import { Button, Field, Note } from '@/components/ui';
 import { dateLabel, timeLabel } from '@/lib/format';
 
@@ -62,7 +62,7 @@ export default function Pay() {
     setErr(null);
     if (!session) return;
     if (files.length === 0) return setErr('Please choose the screenshot of your InstaPay transfer.');
-    if (!isInstapay(refundTo)) return setErr(`Please add your InstaPay for refunds: ${INSTAPAY_HELP}`);
+    if (!isEgyptMobile(refundTo)) return setErr('Please add your InstaPay mobile number for refunds: 11 digits, like 01012345678.');
     setSending(true);
     const paths: string[] = [];
     for (const f of files) {
@@ -79,7 +79,7 @@ export default function Pay() {
     setSending(false);
     if (error) { setErr(error.message); load(); return; }
     setFiles([]);
-    load();
+    router.replace('/(tabs)/bookings');
   }
 
   if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
@@ -101,7 +101,10 @@ export default function Pay() {
       <Text style={{ color: colors.muted, marginBottom: 16 }}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} – {timeLabel(b.end_time)}</Text>
 
       {b.payment_status === 'paid' && b.status !== 'cancelled' && (
-        <Note kind="ok">✅ Payment approved, you are booked! The court's phone number shows in My bookings 30 minutes before your game.</Note>
+        <View>
+          <Note kind="ok">✅ Payment approved, you are booked! The court's phone number shows in My bookings 30 minutes before your game.</Note>
+          <Button title="View my bookings" onPress={() => router.replace('/(tabs)/bookings')} />
+        </View>
       )}
 
       {b.payment_status === 'pending_review' && b.status !== 'cancelled' && (
@@ -112,6 +115,8 @@ export default function Pay() {
           <Text style={{ color: colors.muted, marginBottom: 14 }}>
             {reviewLeft !== null && reviewLeft > 0 ? `Approval expected within ${countdown(reviewLeft)}` : 'Taking a little longer than usual, we are on it.'} This page updates by itself.
           </Text>
+          <Button title="View my bookings" onPress={() => router.replace('/(tabs)/bookings')} />
+          <View style={{ height: 8 }} />
           <Button title="🔄 Refresh status" variant="ghost" onPress={load} />
         </View>
       )}
@@ -158,10 +163,10 @@ export default function Pay() {
             <Button title={files.length ? 'Choose other screenshots' : `Choose screenshot (up to ${MAX_PROOFS})`} variant="ghost" onPress={choose} />
 
             <View style={{ height: 14 }} />
-            <Field label="Your InstaPay for refunds" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))}
-              placeholder="e.g. 01012345678" autoCapitalize="none" autoCorrect={false} />
+            <Field label="Your InstaPay number for refunds" value={refundTo} onChangeText={(v) => setRefundTo(v.replace(/\D/g, '').slice(0, 11))}
+              placeholder="e.g. 01012345678" keyboardType="number-pad" maxLength={11} />
             <Text style={{ color: colors.muted, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
-              If this booking is ever cancelled, your money goes back here. {INSTAPAY_HELP}
+              If this booking is ever cancelled, your money goes back to this InstaPay mobile number (11 digits).
             </Text>
             {err && <Note kind="error">{err}</Note>}
             <Button title="Send payment screenshot" onPress={submit} loading={sending} />

@@ -12,6 +12,15 @@ import { capitalizeWords, FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits,
 const KIND: Record<string, string> = { earned: 'Added from a cancelled booking', used: 'Used on a booking', restored: 'Returned (booking was not paid)' };
 const card = { backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border };
 
+function Info({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 2 }}>{label}</Text>
+      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>{value || '—'}</Text>
+    </View>
+  );
+}
+
 export default function Profile() {
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
@@ -28,6 +37,10 @@ export default function Profile() {
   const [status, setStatus] = useState<UsernameStatus>('');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
+  // the "Saved" banner goes away by itself
+  useEffect(() => { if (!saved) return; const t = setTimeout(() => setSaved(false), 3000); return () => clearTimeout(t); }, [saved]);
 
   const load = useCallback(async () => {
     if (!uid) return;
@@ -60,7 +73,13 @@ export default function Profile() {
     if (error) return setMsg({ kind: 'error', text: error.message });
     setMe({ ...me, full_name: capitalizeWords(fullName), phone, username: username.trim().toLowerCase() || me.username });
     setStatus('');
-    setMsg({ kind: 'ok', text: 'Saved.' });
+    setEditing(false);
+    setSaved(true);
+  }
+
+  function cancelEdit() {
+    setEditing(false); setMsg(null); setStatus('');
+    setFullName(me.full_name || ''); setPhone(me.phone || ''); setUsername(me.username || ''); setGender(savedGender);
   }
 
   if (authLoading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
@@ -104,15 +123,32 @@ export default function Profile() {
         </View>
       )}
 
+      {saved && <Note kind="ok">✅ Your changes are saved.</Note>}
+
       <View style={card}>
         <Text style={{ color: colors.muted, marginBottom: 12 }}>{me.email}</Text>
-        {msg && <Note kind={msg.kind}>{msg.text}</Note>}
-        <Field label="Full name" value={fullName} onChangeText={setFullName} autoComplete="name" placeholder="First and last name" />
-        <Field label="Mobile number" value={phone} onChangeText={(v) => setPhone(onlyDigits(v))} keyboardType="number-pad" maxLength={11} />
-        <GenderField value={gender} onChange={setGender} />
-        <UsernameField value={username} onChange={setUsername} onStatus={setStatus} current={me.username || ''}
-          hint="Friends use it to find you for teams and games. 3–20 characters: letters, numbers, _ and ." />
-        <Button title="Save changes" onPress={save} loading={saving} />
+        {editing ? (
+          <>
+            {msg && <Note kind={msg.kind}>{msg.text}</Note>}
+            <Field label="Full name" value={fullName} onChangeText={setFullName} autoComplete="name" placeholder="First and last name" />
+            <Field label="Mobile number" value={phone} onChangeText={(v) => setPhone(onlyDigits(v))} keyboardType="number-pad" maxLength={11} />
+            <GenderField value={gender} onChange={setGender} />
+            <UsernameField value={username} onChange={setUsername} onStatus={setStatus} current={me.username || ''}
+              hint="Friends use it to find you for teams and games. 3–20 characters: letters, numbers, _ and ." />
+            <Button title="Save changes" onPress={save} loading={saving} />
+            <View style={{ height: 8 }} />
+            <Button title="Cancel" variant="ghost" onPress={cancelEdit} />
+          </>
+        ) : (
+          <>
+            <Info label="Full name" value={me.full_name} />
+            <Info label="Mobile number" value={me.phone} />
+            <Info label="Gender" value={savedGender ? savedGender[0].toUpperCase() + savedGender.slice(1) : ''} />
+            <Info label="Username" value={me.username ? `@${me.username}` : ''} />
+            <View style={{ height: 4 }} />
+            <Button title="Edit profile" onPress={() => { setSaved(false); setEditing(true); }} />
+          </>
+        )}
       </View>
 
       {ref?.code && (

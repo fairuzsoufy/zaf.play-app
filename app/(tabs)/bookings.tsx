@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { colors, radius } from '@/lib/theme';
 import { countdown, dateLabel, egp, timeLabel } from '@/lib/format';
 import {
-  cancelSplitPreview, cleanInstapay, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT, INSTAPAY_HELP, isInstapay, isLate, REVIEW_MINUTES,
+  cancelSplitPreview, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT, isEgyptMobile, isLate, REVIEW_MINUTES,
 } from '@/lib/payment';
 import { Button, Field, GradientFill, Note } from '@/components/ui';
 
@@ -70,6 +70,7 @@ export default function Bookings() {
 
   const holdExpired = (b: any) => b.status === 'pending' && b.payment_status === 'unpaid' && b.hold_expires_at && new Date(b.hold_expires_at).getTime() <= now;
   const requestOpen = (b: any) => b.cancel_request_status === 'pending' && ['pending', 'confirmed'].includes(b.status);
+  const pendingChangeFor = useMemo(() => new Set(rows.filter((b) => b.rescheduled_from && b.status === 'pending').map((b) => b.rescheduled_from)), [rows]);
   const lists = useMemo(() => ({
     upcoming: rows.filter((b) => ['pending', 'confirmed'].includes(b.status) && new Date(b.end_time).getTime() > now && !holdExpired(b) && !requestOpen(b)),
     past: rows.filter((b) => ['confirmed', 'completed', 'no_show'].includes(b.status) && new Date(b.end_time).getTime() <= now && !requestOpen(b)),
@@ -147,6 +148,7 @@ export default function Bookings() {
             </View>
 
             {summary && <Text style={{ color: colors.warning, marginTop: 10 }}>{summary}</Text>}
+            {pendingChangeFor.has(b.id) && <Text style={{ color: colors.muted, marginTop: 8, fontSize: 12 }}>A change to a new time is waiting for payment. This booking stays until it's approved.</Text>}
             {requestOpen(b) && <Pressable onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
             {b.cancel_request_status === 'declined' && ['pending', 'confirmed'].includes(b.status) && (
               <Text style={{ color: colors.danger, marginTop: 8 }}>Your cancellation request was declined{b.cancel_request_decline_reason ? `: ${b.cancel_request_decline_reason}` : '.'} Your booking stays as it is.</Text>
@@ -167,6 +169,9 @@ export default function Bookings() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
               {b.court?.id && <Pressable onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
               {b.court?.maps_url && <Pressable onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
+              {paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id) && (
+                <Pressable onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })}><Text style={s.link}>✏️ Modify time or extras</Text></Pressable>
+              )}
               {canCancel && cancelId !== b.id && (
                 <Pressable onPress={() => setCancelId(b.id)}><Text style={[s.link, { color: colors.danger }]}>{awaiting ? 'Cancel booking' : 'Request cancellation'}</Text></Pressable>
               )}
@@ -249,7 +254,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
 
   async function send() {
     setErr(null);
-    if (needsNumber && !isInstapay(refundTo)) return setErr(`Your InstaPay for the refund: ${INSTAPAY_HELP}`);
+    if (needsNumber && !isEgyptMobile(refundTo)) return setErr('Your InstaPay mobile number for the refund: 11 digits, like 01012345678.');
     setBusy(true);
     const { data, error } = await supabase.rpc('request_cancellation', {
       p_booking_id: b.id, p_reason: reason, p_refund_to: needsNumber ? refundTo : null, ...(asCredit ? { p_as_credit: true } : {}),
@@ -297,7 +302,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
       {cancelRefund > 0 && b.refund_to ? <Text style={{ color: colors.muted, marginTop: 10 }}>Your refund will be sent to the InstaPay you gave when booking: {b.refund_to}</Text> : null}
       {needsNumber && (
         <View style={{ marginTop: 10 }}>
-          <Field label="Your InstaPay for the refund" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))} placeholder="e.g. 01012345678" autoCapitalize="none" />
+          <Field label="Your InstaPay number for the refund" value={refundTo} onChangeText={(v) => setRefundTo(v.replace(/\D/g, '').slice(0, 11))} placeholder="e.g. 01012345678" keyboardType="number-pad" maxLength={11} />
         </View>
       )}
       <View style={{ marginTop: 10 }}><Field label="Reason (optional)" value={reason} onChangeText={setReason} /></View>

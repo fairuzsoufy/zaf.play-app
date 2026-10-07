@@ -28,11 +28,13 @@ export function hoursFor(rules: Rule[], date: string) {
 // Tap a start time and you get the minimum straight away; tap lower to move the finish, tap higher to move the start,
 // or use the − / + buttons. Minimum from the court, maximum 4 hours.
 export function SlotPicker({
-  rules, busy, value, onChange, minMinutes, maxDate, onBusyTap, waitingFor,
+  rules, busy, value, onChange, minMinutes, maxDate, onBusyTap, waitingFor, ignore, current,
 }: {
   rules: Rule[]; busy: Busy[]; value: Pick; onChange: (p: Pick) => void;
   minMinutes: number; maxDate?: string; onBusyTap?: (startIso: string, endIso: string) => void;
   waitingFor?: string[]; // start times (ms) the player waits for: drawn with a bell
+  ignore?: { start: string; end: string } | null; // the player's own booking when changing it: not drawn as booked
+  current?: { start: string; end: string } | null; // the booking being changed: drawn as "Your current booking"
 }) {
   const [now, setNow] = useState(Date.now());
   const [note, setNote] = useState('');
@@ -40,7 +42,9 @@ export function SlotPicker({
 
   const today = cairoDate();
   const MIN = Math.max(STEP, Math.ceil(minMinutes / STEP) * STEP);
-  const active = busy.filter((b) => !(b.state === 'hold' && b.hold_expires_at && new Date(b.hold_expires_at).getTime() <= now));
+  const sameTime = (b: Busy, r: { start: string; end: string }) =>
+    new Date(b.start_time).getTime() === new Date(r.start).getTime() && new Date(b.end_time).getTime() === new Date(r.end).getTime();
+  const active = busy.filter((b) => !(b.state === 'hold' && b.hold_expires_at && new Date(b.hold_expires_at).getTime() <= now) && !(ignore && sameTime(b, ignore)));
 
   const days = useMemo(() => {
     const out: string[] = [];
@@ -77,7 +81,7 @@ export function SlotPicker({
   const jumped = useRef(false);
   useEffect(() => {
     if (value.date < today) { onChange({ date: today, start: null, duration: 0 }); return; }
-    if (jumped.current || value.start !== null) return;
+    if (jumped.current || value.start !== null || current) return;
     jumped.current = true;
     if (value.date === today && !bookable(today)) {
       const next = days.find((d) => d > today && bookable(d));
@@ -109,6 +113,14 @@ export function SlotPicker({
       return { s, e, b, hold: b.state === 'hold' };
     })
     .filter((x) => hours && x.e > hours.open && x.s < hours.close);
+
+  const curBlock = current && hours
+    ? (() => {
+        const s0 = (new Date(current.start).getTime() - midnight) / 60000;
+        const e0 = (new Date(current.end).getTime() - midnight) / 60000;
+        return e0 > hours.open && s0 < hours.close ? { s: s0, e: e0 } : null;
+      })()
+    : null;
 
   const commit = (s: number, e: number) => {
     if (e - s < MIN) e = s + MIN;
@@ -181,6 +193,7 @@ export function SlotPicker({
       <View style={s.legend}>
         <Legend color="transparent" border={colors.border} label="Free" />
         <Legend gradient label="Your booking" />
+        {current && <Legend color="transparent" border={colors.success} label="Current" />}
         <Legend color="#3a3a4d" label="Booked" />
         <Legend color="#6b4a12" label="On hold" />
       </View>
@@ -213,6 +226,13 @@ export function SlotPicker({
               </Pressable>
             );
           })}
+
+          {curBlock && (
+            <View pointerEvents="none" style={[s.ev, s.evCurrent, { top: topOf(Math.max(curBlock.s, hours.open)) + 1, height: ((Math.min(curBlock.e, hours.close) - Math.max(curBlock.s, hours.open)) / STEP) * ROW - 3 }]}>
+              <Text style={[s.evText, { color: colors.success }]}>Your current booking</Text>
+              <Text style={s.evSub} numberOfLines={1}>{clock(curBlock.s)} – {clock(curBlock.e)}</Text>
+            </View>
+          )}
 
           {sel && (
             <View pointerEvents="none" style={[s.ev, s.evMine, { top: topOf(sel.s) + 1, height: ((sel.e - sel.s) / STEP) * ROW - 3 }]}>
@@ -297,6 +317,7 @@ const s = StyleSheet.create({
   ev: { position: 'absolute', left: 68, right: 6, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, overflow: 'hidden', justifyContent: 'center' },
   evTaken: { backgroundColor: '#3a3a4d' },
   evHold: { backgroundColor: '#6b4a12' },
+  evCurrent: { backgroundColor: '#10261f', borderWidth: 1, borderColor: colors.success },
   evMine: { shadowColor: colors.violet, shadowOpacity: 0.6, shadowRadius: 8, elevation: 4 },
   evText: { color: colors.text, fontSize: 12, fontWeight: '700' },
   evSub: { color: colors.muted, fontSize: 11 },

@@ -38,3 +38,8 @@ export function cancelSplitPreview(total: number, feePercent: number, late: bool
   const transferFee = instapayFee(cash);
   return { kept, value, creditBack, transferFee, refund: Math.round((cash - transferFee) * 100) / 100, allAsCredit: value };
 }
+
+// Moving a paid booking to a new time: the late fee is kept when the change is inside the free-change window.
+export function rescheduleCredit(total: number, feePercent: number, late: boolean) {
+  return late ? Math.round(total * (100 - feePercent)) / 100 : total;
+}
