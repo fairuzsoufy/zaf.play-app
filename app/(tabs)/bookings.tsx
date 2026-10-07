@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -54,12 +54,17 @@ export default function Bookings() {
       refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={() => { setRefreshing(true); load(); }} />}
       ListEmptyComponent={<Text style={{ color: colors.muted, textAlign: 'center', marginTop: 40 }}>No bookings yet.</Text>}
       renderItem={({ item }) => (
-        <View style={s.card}>
+        <Pressable
+          style={s.card}
+          disabled={item.status !== 'pending'}
+          onPress={() => router.push({ pathname: '/pay/[id]', params: { id: item.id } })}
+        >
           <Text style={s.title}>{item.court?.name}</Text>
           <Text style={s.sub}>{item.court?.facility?.name}</Text>
           <Text style={s.sub}>{dateLabel(item.start_time)} · {timeLabel(item.start_time)} – {timeLabel(item.end_time)}</Text>
           <Text style={s.sub}>{egp(item.total_price)} · {item.status} · {item.payment_status}</Text>
-        </View>
+          {item.status === 'pending' && <Text style={{ color: colors.primaryAlt, marginTop: 6, fontWeight: '600' }}>Tap to pay or check the payment →</Text>}
+        </Pressable>
       )}
     />
   );
