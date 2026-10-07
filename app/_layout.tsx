@@ -25,6 +25,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
           <Stack.Screen name="court/[id]" options={{ title: '' }} />
           <Stack.Screen name="login" options={{ title: 'Log in', presentation: 'modal' }} />
+          <Stack.Screen name="signup" options={{ title: 'Create account', presentation: 'modal' }} />
           <Stack.Screen name="forgot-password" options={{ title: 'Forgot password' }} />
         </Stack>
       </AuthProvider>
