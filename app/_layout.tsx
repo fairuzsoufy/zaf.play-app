@@ -1,15 +1,10 @@
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { BrandSplash } from '@/components/Brand';
 import { View } from 'react-native';
-import { colors } from '@/lib/theme';
-
-const theme = {
-  ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: colors.bg, card: colors.bg, border: colors.border, primary: colors.primary },
-};
+import { colors, useTheme } from '@/lib/theme';
 
 function Splash() {
   const { loading } = useAuth();
@@ -17,11 +12,14 @@ function Splash() {
 }
 
 export default function RootLayout() {
+  const { scheme } = useTheme();
+  const base = scheme === 'light' ? DefaultTheme : DarkTheme;
+  const theme = { ...base, colors: { ...base.colors, background: colors.bg, card: colors.bg, border: colors.border, primary: colors.primary, text: colors.text } };
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ThemeProvider value={theme}>
       <AuthProvider>
-        <StatusBar style="light" />
+        <StatusBar style={scheme === 'light' ? 'dark' : 'light'} />
         <View style={{ flex: 1 }}>
         <Stack
           screenOptions={{

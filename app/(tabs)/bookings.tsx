@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, FlatList, Linking, Pressable, RefreshControl,
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed, useTheme } from '@/lib/theme';
 import { countdown, dateLabel, egp, timeLabel } from '@/lib/format';
 import {
   cancelSplitPreview, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT, isEgyptMobile, isLate, REVIEW_MINUTES,
@@ -30,6 +30,7 @@ function badge(b: any, now: number): { label: string; color: string } {
 }
 
 export default function Bookings() {
+  useTheme();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<any[]>([]);
@@ -313,7 +314,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => ({
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
   tabOn: { borderColor: 'transparent', overflow: 'hidden' },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
@@ -322,4 +323,4 @@ const s = StyleSheet.create({
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
   box: { backgroundColor: colors.cardAlt, borderRadius: radius.md, padding: 12, marginTop: 12 },
   choice: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 10, marginBottom: 8 },
-});
+}));

@@ -5,9 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { photoUrl, supabase } from '@/lib/supabase';
-import { colors, gradient, radius } from '@/lib/theme';
+import { colors, gradient, radius, themed, useTheme } from '@/lib/theme';
 import { egp } from '@/lib/format';
-import { GradientBar, Logo, Tagline } from '@/components/Brand';
+import { GradientBar, Logo, Tagline, ThemeToggle } from '@/components/Brand';
 import { Note } from '@/components/ui';
 import type { CourtRow, Sport } from '@/lib/types';
 
@@ -25,6 +25,7 @@ const countLabel = (n: number, none = 'Coming soon') => (n === 0 ? none : `${n} 
 
 // The same path as the website: sport, then area, then indoor/outdoor (only if there is a choice), then the courts.
 export default function Home() {
+  useTheme();
   const router = useRouter();
   const [courts, setCourts] = useState<CourtRow[]>([]);
   const [sports, setSports] = useState<SportFull[]>([]);
@@ -103,6 +104,7 @@ export default function Home() {
       >
         {step === 'sport' ? (
           <View style={{ alignItems: 'center', marginBottom: 22 }}>
+            <ThemeToggle />
             <Logo size={84} />
             <View style={{ marginTop: 10 }}><Tagline /></View>
             <Text style={s.hero}>Pick your sport.</Text>
@@ -233,7 +235,7 @@ function Crumb({ label, onPress }: { label: string; onPress: () => void }) {
   return <Pressable onPress={onPress} style={s.crumb}><Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>{label} ✕</Text></Pressable>;
 }
 
-const s = StyleSheet.create({
+const s = themed(() => ({
   hero: { color: colors.text, fontSize: 30, fontWeight: '900', fontStyle: 'italic', marginTop: 14, textAlign: 'center' },
   step: { color: colors.muted, fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
@@ -246,4 +248,4 @@ const s = StyleSheet.create({
   chip: { color: colors.muted, fontSize: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, overflow: 'hidden' },
   go: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.md },
   crumb: { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 },
-});
+}));

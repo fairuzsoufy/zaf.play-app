@@ -1,7 +1,7 @@
 import React from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import { colors, gradient, radius } from '@/lib/theme';
+import { colors, gradient, radius, themed } from '@/lib/theme';
 
 export function Button({
   title, onPress, loading, disabled, variant = 'primary',
@@ -39,7 +39,7 @@ export function Note({ kind, children }: { kind: 'error' | 'ok'; children: React
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => ({
   btn: { borderRadius: radius.md, paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
   btnPrimary: { backgroundColor: colors.primary, overflow: 'hidden' },
   btnGhost: { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border },
@@ -50,7 +50,7 @@ const s = StyleSheet.create({
     borderRadius: radius.md, color: colors.text, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16,
   },
   note: { borderWidth: 1, borderRadius: radius.md, padding: 12, marginBottom: 14 },
-});
+}));
 
 // The brand gradient as a fill: put it first inside a `overflow: 'hidden'` view.
 export function GradientFill() {

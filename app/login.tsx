@@ -3,9 +3,10 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-na
 import { Link, useRouter } from 'expo-router';
 import { Button, Field, Note } from '@/components/ui';
 import { signIn } from '@/lib/auth';
-import { colors } from '@/lib/theme';
+import { colors, useTheme } from '@/lib/theme';
 
 export default function Login() {
+  useTheme();
   const router = useRouter();
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');

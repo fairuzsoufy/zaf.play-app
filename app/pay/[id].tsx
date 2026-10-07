@@ -5,13 +5,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, useTheme } from '@/lib/theme';
 import { countdown, egp } from '@/lib/format';
 import { HOLD_MINUTES, isEgyptMobile, MAX_PROOFS, MAX_PROOF_MB, REVIEW_MINUTES, ZAF_INSTAPAY_LINK } from '@/lib/payment';
 import { Button, Field, Note } from '@/components/ui';
 import { dateLabel, timeLabel } from '@/lib/format';
 
 export default function Pay() {
+  useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, gradient, radius } from '@/lib/theme';
+import { colors, gradient, radius, themed } from '@/lib/theme';
 import { addDays, cairoDate, cairoToDate, dateLabel, durationText, hm12, weekdayOf } from '@/lib/format';
 
 export type Rule = { day_of_week: number; open_time: string; close_time: string; is_closed: boolean };
@@ -301,7 +301,7 @@ function Legend({ color, border, gradient: g, label }: { color?: string; border?
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => ({
   rule: { color: colors.muted, fontSize: 13, marginBottom: 12 },
   bold: { color: colors.text, fontWeight: '700' },
   day: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8, alignItems: 'center', overflow: 'hidden' },
@@ -310,18 +310,18 @@ const s = StyleSheet.create({
   legend: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10, rowGap: 6 },
   cal: { position: 'relative', backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   row: { position: 'absolute', left: 0, right: 0, flexDirection: 'row' },
-  past: { backgroundColor: '#0c0b14' },
+  past: { backgroundColor: colors.pastBg },
   gutter: { width: 62, paddingRight: 8, alignItems: 'flex-end' },
   hour: { color: colors.muted, fontSize: 11, marginTop: -7 },
-  line: { flex: 1, borderTopWidth: 1, borderTopColor: '#1b1a2b' },
+  line: { flex: 1, borderTopWidth: 1, borderTopColor: colors.gridLine },
   ev: { position: 'absolute', left: 68, right: 6, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, overflow: 'hidden', justifyContent: 'center' },
-  evTaken: { backgroundColor: '#3a3a4d' },
-  evHold: { backgroundColor: '#6b4a12' },
-  evCurrent: { backgroundColor: '#10261f', borderWidth: 1, borderColor: colors.success },
+  evTaken: { backgroundColor: colors.busy },
+  evHold: { backgroundColor: colors.hold },
+  evCurrent: { backgroundColor: colors.currentBg, borderWidth: 1, borderColor: colors.success },
   evMine: { shadowColor: colors.violet, shadowOpacity: 0.6, shadowRadius: 8, elevation: 4 },
   evText: { color: colors.text, fontSize: 12, fontWeight: '700' },
   evSub: { color: colors.muted, fontSize: 11 },
-  note: { marginTop: 10, borderRadius: radius.md, borderWidth: 1, borderColor: '#5a4318', backgroundColor: '#2a2010', padding: 10 },
+  note: { marginTop: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.noteBorder, backgroundColor: colors.noteBg, padding: 10 },
   your: { marginTop: 14, backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border, gap: 10 },
   when: { color: colors.text, fontWeight: '800', fontSize: 16, marginVertical: 2 },
   clear: { color: colors.muted, textDecorationLine: 'underline', fontSize: 13 },
@@ -333,4 +333,4 @@ const s = StyleSheet.create({
   step: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   stepText: { color: colors.text, fontSize: 22, fontWeight: '700', marginTop: -2 },
   stepTime: { color: colors.text, fontWeight: '800' },
-});
+}));

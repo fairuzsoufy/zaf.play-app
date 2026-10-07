@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, Share, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Share, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, useTheme } from '@/lib/theme';
 import { dateLabel, egp } from '@/lib/format';
-import { Button, Field, Note } from '@/components/ui';
+import { Button, Field, GradientFill, Note } from '@/components/ui';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
 import { capitalizeWords, FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, PHONE_HELP } from '@/lib/validate';
 
 const KIND: Record<string, string> = { earned: 'Added from a cancelled booking', used: 'Used on a booking', restored: 'Returned (booking was not paid)' };
-const card = { backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border };
+const cardStyle = () => ({ backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border });
 
 function Info({ label, value }: { label: string; value?: string | null }) {
   return (
@@ -22,6 +22,7 @@ function Info({ label, value }: { label: string; value?: string | null }) {
 }
 
 export default function Profile() {
+  const { mode, setMode } = useTheme();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const uid = session?.user.id;
@@ -105,7 +106,7 @@ export default function Profile() {
       )}
 
       {credit !== null && (credit > 0 || ledger.length > 0) && (
-        <View style={card}>
+        <View style={cardStyle()}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Text style={{ color: colors.text, fontWeight: '700' }}>💳 Zaf Play credit</Text>
             <Text style={{ color: colors.success, fontSize: 22, fontWeight: '800' }}>{egp(credit)}</Text>
@@ -125,7 +126,7 @@ export default function Profile() {
 
       {saved && <Note kind="ok">✅ Your changes are saved.</Note>}
 
-      <View style={card}>
+      <View style={cardStyle()}>
         <Text style={{ color: colors.muted, marginBottom: 12 }}>{me.email}</Text>
         {editing ? (
           <>
@@ -151,8 +152,21 @@ export default function Profile() {
         )}
       </View>
 
+      <View style={cardStyle()}>
+        <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 10 }}>Appearance</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {([['light', '☀️ Light'], ['dark', '🌙 Dark'], ['system', 'Auto']] as const).map(([m, label]) => (
+            <Pressable key={m} onPress={() => setMode(m)} accessibilityRole="button" accessibilityState={{ selected: mode === m }}
+              style={{ flex: 1, paddingVertical: 11, borderRadius: radius.md, alignItems: 'center', borderWidth: 1, borderColor: mode === m ? 'transparent' : colors.border, backgroundColor: colors.bg, overflow: 'hidden' }}>
+              {mode === m && <GradientFill />}
+              <Text style={{ color: mode === m ? '#fff' : colors.text, fontWeight: '600' }}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
       {ref?.code && (
-        <View style={card}>
+        <View style={cardStyle()}>
           <Text style={{ color: colors.text, fontWeight: '700' }}>🎁 Invite friends, both get {ref.percent}% off</Text>
           <Text style={{ color: colors.muted, marginTop: 6, fontSize: 13 }}>
             Your friend gets {ref.percent}% off their first booking. When they have played, you get {ref.percent}% off your next booking, for every friend.

@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed, useTheme } from '@/lib/theme';
 import { cairoDate, cairoToDate, dateLabel, durationText, egp, timeLabel } from '@/lib/format';
 import { FREE_CHANGE_HOURS, HOLD_MINUTES, INSTAPAY_FEE_TEXT, instapayFee, isLate, rescheduleCredit } from '@/lib/payment';
 import { Button, Note } from '@/components/ui';
@@ -11,6 +11,7 @@ import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
 
 // Change the time or the extras of a paid booking (reschedule_booking in the database does the work).
 export default function ChangeBooking() {
+  useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
@@ -207,7 +208,7 @@ function Line({ l, r }: { l: string; r: string }) {
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => ({
   msg: { color: colors.muted, textAlign: 'center', margin: 40 },
   h1: { color: colors.text, fontSize: 22, fontWeight: '800' },
   sub: { color: colors.muted, marginTop: 4 },
@@ -218,4 +219,4 @@ const s = StyleSheet.create({
   stepText: { color: colors.text, fontSize: 20, fontWeight: '700', marginTop: -2 },
   totalRow: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: 10, paddingTop: 10 },
   small: { color: colors.muted, fontSize: 12, marginTop: 6 },
-});
+}));

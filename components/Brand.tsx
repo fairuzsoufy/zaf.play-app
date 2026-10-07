@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, gradient } from '@/lib/theme';
+import { colors, gradient, useTheme } from '@/lib/theme';
 
 const logo = require('../assets/logo.png');
 
@@ -52,5 +52,17 @@ export function BrandSplash({ ready }: { ready: boolean }) {
         <View style={{ marginTop: 18 }}><Tagline /></View>
       </Animated.View>
     </Animated.View>
+  );
+}
+
+// Light / dark switch (the website's sun and moon button)
+export function ThemeToggle() {
+  const { scheme, setMode } = useTheme();
+  return (
+    <Pressable onPress={() => setMode(scheme === 'light' ? 'dark' : 'light')} hitSlop={10} accessibilityRole="button"
+      accessibilityLabel={scheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+      style={{ position: 'absolute', right: 0, top: 0, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+      <Text style={{ fontSize: 18 }}>{scheme === 'light' ? '🌙' : '☀️'}</Text>
+    </Pressable>
   );
 }
