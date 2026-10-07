@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed, useTheme } from '@/lib/theme';
 
 // The website's brand gradient (blue → purple → pink), used for buttons and anything chosen.
 export const GRADIENT = [colors.brandBlue, colors.brandPurple, colors.brandPink] as const;
@@ -14,6 +14,7 @@ export function GradientFill({ style }: { style?: object }) {
 export function Button({
   title, onPress, loading, disabled, variant = 'primary',
 }: { title: string; onPress: () => void; loading?: boolean; disabled?: boolean; variant?: 'primary' | 'ghost' }) {
+  const s = useS();
   const off = disabled || loading;
   return (
     <Pressable
@@ -27,22 +28,25 @@ export function Button({
       ]}
     >
       {variant === 'primary' && <GradientFill />}
-      {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>{title}</Text>}
+      {loading ? <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.text} /> : <Text style={[s.btnText, variant === 'ghost' && { color: colors.text }]}>{title}</Text>}
     </Pressable>
   );
 }
 
 export function Field(props: TextInputProps & { label: string }) {
+  const s = useS();
+  const { scheme } = useTheme();
   const { label, style, ...rest } = props;
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput aria-label={label} placeholderTextColor={colors.muted} style={[s.input, style]} {...rest} />
+      <TextInput aria-label={label} placeholderTextColor={colors.muted} keyboardAppearance={scheme} style={[s.input, style]} {...rest} />
     </View>
   );
 }
 
 export function Note({ kind, children }: { kind: 'error' | 'ok'; children: React.ReactNode }) {
+  const s = useS();
   return (
     <View style={[s.note, { borderColor: kind === 'error' ? colors.danger : colors.success }]}>
       <Text style={{ color: kind === 'error' ? colors.danger : colors.success }}>{children}</Text>
@@ -50,7 +54,7 @@ export function Note({ kind, children }: { kind: 'error' | 'ok'; children: React
   );
 }
 
-const s = StyleSheet.create({
+const useS = themed(() => StyleSheet.create({
   btn: { borderRadius: radius.md, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   btnPrimary: { backgroundColor: colors.brandPurple },
   btnGhost: { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border },
@@ -61,4 +65,4 @@ const s = StyleSheet.create({
     borderRadius: radius.md, color: colors.text, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16,
   },
   note: { borderWidth: 1, borderRadius: radius.md, padding: 12, marginBottom: 14 },
-});
+}));

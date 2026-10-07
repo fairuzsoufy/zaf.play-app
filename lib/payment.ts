@@ -6,14 +6,11 @@ export const FREE_CHANGE_HOURS = 3;
 export const MAX_PROOFS = 2;
 export const MAX_PROOF_MB = 5;
 
-// an 11-digit Egyptian mobile or an https:// InstaPay link (refunds go there)
+// refunds go to the player's InstaPay mobile number: 11 digits, numbers only
 export const isEgyptMobile = (v: string) => /^01[0125]\d{8}$/.test(v);
-export const isInstapay = (v: string) => isEgyptMobile(v.trim()) || /^https:\/\/\S+$/i.test(v.trim());
-export function cleanInstapay(value: string) {
-  const v = value.replace(/\s/g, '');
-  return /^\d/.test(v) ? v.replace(/\D/g, '').slice(0, 11) : v;
-}
-export const INSTAPAY_HELP = 'An 11-digit mobile number (01xxxxxxxxx) or your InstaPay link (https://...).';
+export const isInstapay = (v: string) => isEgyptMobile(v.trim());
+export const cleanInstapay = (value: string) => value.replace(/\D/g, '').slice(0, 11);
+export const INSTAPAY_HELP = 'The 11-digit mobile number on your InstaPay (01xxxxxxxxx).';
 
 // InstaPay charges the SENDER 0.1% (min 0.50, max 20 EGP), so we send a little less and the receiver pays it.
 // Same maths as the database (private.instapay_send_amount / private.instapay_fee).
@@ -37,4 +34,9 @@ export function cancelSplitPreview(total: number, feePercent: number, late: bool
   const cash = Math.round((value - creditBack) * 100) / 100;
   const transferFee = instapayFee(cash);
   return { kept, value, creditBack, transferFee, refund: Math.round((cash - transferFee) * 100) / 100, allAsCredit: value };
+}
+
+// Moving a booking: what you paid counts toward the new time; a late move (within FREE_CHANGE_HOURS) keeps the court's fee.
+export function rescheduleCredit(total: number, feePercent: number, late: boolean) {
+  return late ? Math.round(total * (100 - feePercent)) / 100 : total;
 }

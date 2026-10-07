@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, Share, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Share, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed, useTheme } from '@/lib/theme';
 import { dateLabel, egp } from '@/lib/format';
 import { Button, Field, Note } from '@/components/ui';
+import { Icon } from '@/components/Icon';
+import { toast } from '@/components/Toast';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
 import { capitalizeWords, FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, PHONE_HELP } from '@/lib/validate';
 
 const KIND: Record<string, string> = { earned: 'Added from a cancelled booking', used: 'Used on a booking', restored: 'Returned (booking was not paid)' };
-const card = { backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border };
+const useCard = themed(() => ({ backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border }));
 
 export default function Profile() {
+  const card = useCard();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const uid = session?.user.id;
@@ -28,6 +31,7 @@ export default function Profile() {
   const [status, setStatus] = useState<UsernameStatus>('');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const load = useCallback(async () => {
     if (!uid) return;
@@ -60,7 +64,14 @@ export default function Profile() {
     if (error) return setMsg({ kind: 'error', text: error.message });
     setMe({ ...me, full_name: capitalizeWords(fullName), phone, username: username.trim().toLowerCase() || me.username });
     setStatus('');
-    setMsg({ kind: 'ok', text: 'Saved.' });
+    setEditing(false);
+    toast('Your profile is saved');
+  }
+
+  // leave edit mode without saving: put the saved values back
+  function cancelEdit() {
+    setFullName(me.full_name || ''); setPhone(me.phone || ''); setUsername(me.username || '');
+    setGender(savedGender); setStatus(''); setMsg(null); setEditing(false);
   }
 
   if (authLoading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
@@ -105,7 +116,26 @@ export default function Profile() {
       )}
 
       <View style={card}>
-        <Text style={{ color: colors.muted, marginBottom: 12 }}>{me.email}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>My details</Text>
+          {!editing && (
+            <Pressable onPress={() => setEditing(true)} hitSlop={8} accessibilityRole="button"
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 1, borderColor: colors.border }}>
+              <Icon name="edit" color={colors.text} size={16} />
+              <Text style={{ color: colors.text, fontWeight: '700' }}>Edit</Text>
+            </Pressable>
+          )}
+        </View>
+        {!editing ? (
+          <>
+            <Detail label="Full name" value={me.full_name} />
+            <Detail label="Username" value={me.username ? `@${me.username}` : ''} />
+            <Detail label="Mobile number" value={me.phone} />
+            <Detail label="Gender" value={savedGender ? savedGender[0].toUpperCase() + savedGender.slice(1) : ''} />
+            <Detail label="Email" value={me.email} last />
+          </>
+        ) : (
+        <>
         {msg && <Note kind={msg.kind}>{msg.text}</Note>}
         <Field label="Full name" value={fullName} onChangeText={setFullName} autoComplete="name" placeholder="First and last name" />
         <Field label="Mobile number" value={phone} onChangeText={(v) => setPhone(onlyDigits(v))} keyboardType="number-pad" maxLength={11} />
@@ -113,6 +143,10 @@ export default function Profile() {
         <UsernameField value={username} onChange={setUsername} onStatus={setStatus} current={me.username || ''}
           hint="Friends use it to find you for teams and games. 3–20 characters: letters, numbers, _ and ." />
         <Button title="Save changes" onPress={save} loading={saving} />
+        <View style={{ height: 8 }} />
+        <Button title="Cancel" variant="ghost" onPress={cancelEdit} />
+        </>
+        )}
       </View>
 
       {ref?.code && (
@@ -136,5 +170,15 @@ export default function Profile() {
 
       <Button title="Log out" variant="ghost" onPress={() => supabase.auth.signOut()} />
     </ScrollView>
+  );
+}
+
+function Detail({ label, value, last }: { label: string; value?: string | null; last?: boolean }) {
+  useTheme();
+  return (
+    <View style={{ paddingVertical: 10, borderBottomWidth: last ? 0 : 1, borderBottomColor: colors.border }}>
+      <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
+      <Text style={{ color: value ? colors.text : colors.muted, fontSize: 16, fontWeight: '600', marginTop: 2 }}>{value || 'Not added yet'}</Text>
+    </View>
   );
 }

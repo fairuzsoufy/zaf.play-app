@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { photoUrl } from '@/lib/supabase';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import { egp } from '@/lib/format';
 import type { CourtRow } from '@/lib/types';
 
@@ -14,6 +14,7 @@ export function firstPhoto(c: CourtRow): string | null {
 }
 
 export function CourtCard({ court, sportId }: { court: CourtRow; sportId: string | null }) {
+  const s = useS();
   const router = useRouter();
   const offers = court.court_sports.filter((x) => x.sport);
   const shown = sportId ? offers.filter((x) => x.sport!.id === sportId) : offers;
@@ -42,11 +43,11 @@ export function CourtCard({ court, sportId }: { court: CourtRow; sportId: string
   );
 }
 
-const s = StyleSheet.create({
+const useS = themed(() => StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.lg, overflow: 'hidden', marginBottom: 14, borderWidth: 1, borderColor: colors.border },
   img: { width: '100%', height: 150 },
   title: { color: colors.text, fontSize: 17, fontWeight: '700' },
   sub: { color: colors.muted, marginTop: 3, fontSize: 13 },
   row: { marginTop: 4 },
   price: { color: colors.primaryAlt, marginTop: 8, fontWeight: '700' },
-});
+}));

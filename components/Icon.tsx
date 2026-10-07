@@ -8,6 +8,10 @@ const shapes = {
   user: <><Circle cx="12" cy="8" r="4" /><Path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></>,
   clock: <><Circle cx="12" cy="12" r="9" /><Path d="M12 7v5l3 2" /></>,
   info: <><Circle cx="12" cy="12" r="9" /><Path d="M12 11v5M12 8h.01" /></>,
+  sun: <><Circle cx="12" cy="12" r="4" /><Path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+  moon: <><Path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /></>,
+  check: <><Circle cx="12" cy="12" r="9" /><Path d="M8 12l3 3 5-6" /></>,
+  edit: <><Path d="M4 20h4L19 9l-4-4L4 16z" /><Path d="M13 7l4 4" /></>,
 };
 
 export type IconName = keyof typeof shapes;

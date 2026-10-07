@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'rea
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed, useTheme } from '@/lib/theme';
 import { cairoDate, cairoToDate, dateLabel, durationText, egp } from '@/lib/format';
 import { HOLD_MINUTES } from '@/lib/payment';
 import { Button, Note } from '@/components/ui';
@@ -12,6 +12,7 @@ import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
 type Extra = { id: string; name: string; price: number; max_qty: number; is_required: boolean; sport_id: string | null };
 
 export default function BookCourt() {
+  const st = useSt();
   const { courtId, sport: sportSlug } = useLocalSearchParams<{ courtId: string; sport?: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -197,6 +198,7 @@ export default function BookCourt() {
 }
 
 function Row({ l, r, good }: { l: string; r: string; good?: boolean }) {
+  useTheme();
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
       <Text style={{ color: good ? colors.success : colors.muted }}>{l}</Text>
@@ -205,8 +207,8 @@ function Row({ l, r, good }: { l: string; r: string; good?: boolean }) {
   );
 }
 
-const st = {
+const useSt = themed(() => ({
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, marginVertical: 14, borderWidth: 1, borderColor: colors.border },
   step: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.cardAlt, alignItems: 'center' as const, justifyContent: 'center' as const },
   stepText: { color: colors.text, fontSize: 18, fontWeight: '700' as const },
-};
+}));

@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, FlatList, Linking, Pressable, RefreshControl,
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import { countdown, dateLabel, egp, timeLabel } from '@/lib/format';
 import {
   cancelSplitPreview, cleanInstapay, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT, INSTAPAY_HELP, isInstapay, isLate, REVIEW_MINUTES,
@@ -30,6 +30,7 @@ function badge(b: any, now: number): { label: string; color: string } {
 }
 
 export default function Bookings() {
+  const s = useS();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<any[]>([]);
@@ -70,6 +71,8 @@ export default function Bookings() {
 
   const holdExpired = (b: any) => b.status === 'pending' && b.payment_status === 'unpaid' && b.hold_expires_at && new Date(b.hold_expires_at).getTime() <= now;
   const requestOpen = (b: any) => b.cancel_request_status === 'pending' && ['pending', 'confirmed'].includes(b.status);
+  // bookings that already have a move to a new time waiting for payment
+  const pendingChangeFor = useMemo(() => new Set(rows.filter((x) => x.rescheduled_from && x.status === 'pending' && !holdExpired(x)).map((x) => x.rescheduled_from)), [rows, now]); // eslint-disable-line react-hooks/exhaustive-deps
   const lists = useMemo(() => ({
     upcoming: rows.filter((b) => ['pending', 'confirmed'].includes(b.status) && new Date(b.end_time).getTime() > now && !holdExpired(b) && !requestOpen(b)),
     past: rows.filter((b) => ['confirmed', 'completed', 'no_show'].includes(b.status) && new Date(b.end_time).getTime() <= now && !requestOpen(b)),
@@ -147,6 +150,7 @@ export default function Bookings() {
             </View>
 
             {summary && <Text style={{ color: colors.warning, marginTop: 10 }}>{summary}</Text>}
+            {pendingChangeFor.has(b.id) && <Text style={{ color: colors.warning, marginTop: 10 }}>A change to a new time is waiting for payment. This booking stays until it's approved.</Text>}
             {requestOpen(b) && <Pressable onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
             {b.cancel_request_status === 'declined' && ['pending', 'confirmed'].includes(b.status) && (
               <Text style={{ color: colors.danger, marginTop: 8 }}>Your cancellation request was declined{b.cancel_request_decline_reason ? `: ${b.cancel_request_decline_reason}` : '.'} Your booking stays as it is.</Text>
@@ -167,6 +171,9 @@ export default function Bookings() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
               {b.court?.id && <Pressable onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
               {b.court?.maps_url && <Pressable onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
+              {paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id) && (
+                <Pressable onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })}><Text style={s.link}>✏️ Modify booking</Text></Pressable>
+              )}
               {canCancel && cancelId !== b.id && (
                 <Pressable onPress={() => setCancelId(b.id)}><Text style={[s.link, { color: colors.danger }]}>{awaiting ? 'Cancel booking' : 'Request cancellation'}</Text></Pressable>
               )}
@@ -200,6 +207,7 @@ export default function Bookings() {
 }
 
 function Rate({ bookingId, onDone, onClose }: { bookingId: string; onDone: () => void; onClose: () => void }) {
+  const s = useS();
   const [stars, setStars] = useState(0);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -228,6 +236,7 @@ function Rate({ bookingId, onDone, onClose }: { bookingId: string; onDone: () =>
 }
 
 function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone: (toCancelled: boolean) => void }) {
+  const s = useS();
   const [reason, setReason] = useState('');
   const [refundTo, setRefundTo] = useState('');
   const [asCredit, setAsCredit] = useState(false);
@@ -297,7 +306,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
       {cancelRefund > 0 && b.refund_to ? <Text style={{ color: colors.muted, marginTop: 10 }}>Your refund will be sent to the InstaPay you gave when booking: {b.refund_to}</Text> : null}
       {needsNumber && (
         <View style={{ marginTop: 10 }}>
-          <Field label="Your InstaPay for the refund" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))} placeholder="e.g. 01012345678" autoCapitalize="none" />
+          <Field label="Your InstaPay for the refund" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))} placeholder="e.g. 01012345678" keyboardType="number-pad" maxLength={11} />
         </View>
       )}
       <View style={{ marginTop: 10 }}><Field label="Reason (optional)" value={reason} onChangeText={setReason} /></View>
@@ -308,7 +317,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
   );
 }
 
-const s = StyleSheet.create({
+const useS = themed(() => StyleSheet.create({
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
   tabOn: { borderColor: 'transparent', overflow: 'hidden' },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
@@ -317,4 +326,4 @@ const s = StyleSheet.create({
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
   box: { backgroundColor: colors.cardAlt, borderRadius: radius.md, padding: 12, marginTop: 12 },
   choice: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 10, marginBottom: 8 },
-});
+}));

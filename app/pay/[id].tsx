@@ -5,13 +5,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, useTheme } from '@/lib/theme';
 import { countdown, egp } from '@/lib/format';
 import { cleanInstapay, HOLD_MINUTES, INSTAPAY_HELP, isInstapay, MAX_PROOFS, MAX_PROOF_MB, REVIEW_MINUTES, ZAF_INSTAPAY_LINK } from '@/lib/payment';
 import { Button, Field, Note } from '@/components/ui';
+import { toast } from '@/components/Toast';
 import { dateLabel, timeLabel } from '@/lib/format';
 
 export default function Pay() {
+  useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
@@ -79,7 +81,8 @@ export default function Pay() {
     setSending(false);
     if (error) { setErr(error.message); load(); return; }
     setFiles([]);
-    load();
+    toast("Payment sent! We'll confirm it shortly.");
+    router.replace('/bookings');
   }
 
   if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
@@ -101,7 +104,10 @@ export default function Pay() {
       <Text style={{ color: colors.muted, marginBottom: 16 }}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} – {timeLabel(b.end_time)}</Text>
 
       {b.payment_status === 'paid' && b.status !== 'cancelled' && (
-        <Note kind="ok">✅ Payment approved, you are booked! The court's phone number shows in My bookings 30 minutes before your game.</Note>
+        <View>
+          <Note kind="ok">✅ Payment approved, you are booked! The court's phone number shows in My bookings 30 minutes before your game.</Note>
+          <Button title="Go to My bookings →" onPress={() => router.replace('/bookings')} />
+        </View>
       )}
 
       {b.payment_status === 'pending_review' && b.status !== 'cancelled' && (
@@ -112,6 +118,8 @@ export default function Pay() {
           <Text style={{ color: colors.muted, marginBottom: 14 }}>
             {reviewLeft !== null && reviewLeft > 0 ? `Approval expected within ${countdown(reviewLeft)}` : 'Taking a little longer than usual, we are on it.'} This page updates by itself.
           </Text>
+          <Button title="Go to My bookings →" onPress={() => router.replace('/bookings')} />
+          <View style={{ height: 10 }} />
           <Button title="🔄 Refresh status" variant="ghost" onPress={load} />
         </View>
       )}
@@ -159,7 +167,7 @@ export default function Pay() {
 
             <View style={{ height: 14 }} />
             <Field label="Your InstaPay for refunds" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))}
-              placeholder="e.g. 01012345678" autoCapitalize="none" autoCorrect={false} />
+              placeholder="e.g. 01012345678" keyboardType="number-pad" maxLength={11} autoCorrect={false} />
             <Text style={{ color: colors.muted, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
               If this booking is ever cancelled, your money goes back here. {INSTAPAY_HELP}
             </Text>

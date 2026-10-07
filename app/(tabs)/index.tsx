@@ -6,12 +6,13 @@ import { Image } from 'expo-image';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { photoUrl, supabase } from '@/lib/supabase';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import { CourtCard } from '@/components/CourtCard';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Logo } from '@/components/Logo';
 import { GradientFill, Note } from '@/components/ui';
 import type { CourtRow, Sport } from '@/lib/types';
 
-const logo = require('@/assets/zaf-logo.png');
 
 const COURT_SELECT =
   'id,name,is_indoor,surface_type,maps_url,' +
@@ -32,6 +33,7 @@ function countLabel(n: number) {
 
 // One big sport box; they rise in one after the other.
 function SportTile({ sport, count, index, onPress }: { sport: Sport; count: number; index: number; onPress: () => void }) {
+  const s = useS();
   const rise = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(rise, { toValue: 1, duration: 420, delay: 40 * index, useNativeDriver: true }).start();
@@ -63,6 +65,7 @@ function SportTile({ sport, count, index, onPress }: { sport: Sport; count: numb
 }
 
 function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+  const s = useS();
   return (
     <Pressable onPress={onPress} style={[s.chip, on && s.chipOn]}>
       {on && <GradientFill />}
@@ -72,6 +75,7 @@ function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () 
 }
 
 export default function Courts() {
+  const s = useS();
   const insets = useSafeAreaInsets();
   const [courts, setCourts] = useState<CourtRow[]>([]);
   const [sports, setSports] = useState<Sport[]>([]);
@@ -152,8 +156,9 @@ export default function Courts() {
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 24 }}
         refreshControl={refreshControl}
       >
+        <View style={[s.toggle, { top: insets.top + 8 }]}><ThemeToggle /></View>
         <View style={s.brand}>
-          <Image source={logo} style={s.brandLogo} contentFit="contain" accessibilityLabel="Zaf Play" />
+          <Logo size={130} />
           <Text style={s.brandTag}>
             Play. Compete. <Text style={{ color: colors.brandPink, fontWeight: '800' }}>Connect.</Text>
           </Text>
@@ -183,9 +188,12 @@ export default function Courts() {
       refreshControl={refreshControl}
       ListHeaderComponent={
         <View style={{ marginBottom: 6 }}>
-          <Pressable onPress={() => setSport(null)} hitSlop={10} style={s.back} accessibilityRole="button">
-            <Text style={s.backText}>‹  All sports</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <Pressable onPress={() => setSport(null)} hitSlop={10} style={s.back} accessibilityRole="button">
+              <Text style={s.backText}>‹  All sports</Text>
+            </Pressable>
+            <ThemeToggle />
+          </View>
 
           <View style={s.banner}>
             <View style={s.bannerIcon}>
@@ -218,12 +226,12 @@ export default function Courts() {
   );
 }
 
-const s = StyleSheet.create({
+const useS = themed(() => StyleSheet.create({
   center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
+  toggle: { position: 'absolute', right: 16, zIndex: 2 },
   brand: { alignItems: 'center', marginBottom: 18 },
-  brandLogo: { width: 130, height: 130 },
-  brandTag: { color: '#D4D6E4', fontStyle: 'italic', fontSize: 15, letterSpacing: 0.4, marginTop: -6 },
+  brandTag: { color: colors.muted, fontStyle: 'italic', fontSize: 15, letterSpacing: 0.4, marginTop: 6 },
 
   h1: { color: colors.text, fontSize: 26, fontWeight: '800', marginTop: 4 },
   lead: { color: colors.muted, fontSize: 15, marginTop: 4, marginBottom: 16 },
@@ -242,7 +250,7 @@ const s = StyleSheet.create({
   tileName: { color: colors.text, fontSize: 17, fontWeight: '700' },
   tileCount: { color: colors.muted, fontSize: 13, marginTop: 4, fontWeight: '600' },
 
-  back: { alignSelf: 'flex-start', paddingVertical: 6, marginBottom: 10 },
+  back: { alignSelf: 'flex-start', paddingVertical: 6 },
   backText: { color: colors.primaryAlt, fontSize: 16, fontWeight: '600' },
   banner: {
     flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.card,
@@ -260,4 +268,4 @@ const s = StyleSheet.create({
   chipOn: { borderColor: 'transparent', overflow: 'hidden' },
 
   empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
-});
+}));

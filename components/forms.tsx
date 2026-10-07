@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, useTheme } from '@/lib/theme';
 import { USERNAME_RE } from '@/lib/validate';
 import { Field, GradientFill } from './ui';
 
@@ -9,6 +9,7 @@ export type Gender = 'male' | 'female' | '';
 export type UsernameStatus = '' | 'checking' | 'ok' | 'taken' | 'bad' | 'limit';
 
 export function GenderField({ value, onChange }: { value: Gender; onChange: (g: Gender) => void }) {
+  useTheme();
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={{ color: colors.muted, marginBottom: 6, fontSize: 13 }}>Gender</Text>
@@ -31,6 +32,7 @@ export function GenderField({ value, onChange }: { value: Gender; onChange: (g: 
 export function UsernameField({ value, onChange, onStatus, current = '', hint }: {
   value: string; onChange: (v: string) => void; onStatus: (s: UsernameStatus) => void; current?: string; hint?: string;
 }) {
+  useTheme();
   const [status, setStatus] = useState<UsernameStatus>('');
   useEffect(() => {
     const u = value.trim();

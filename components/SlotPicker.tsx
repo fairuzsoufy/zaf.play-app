@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed, useTheme } from '@/lib/theme';
 import { addDays, cairoDate, cairoToDate, countdown, dateLabel, durationText, hm12, weekdayOf } from '@/lib/format';
 import { GradientFill } from './ui';
 
@@ -48,11 +48,13 @@ type Sel = { s: number; e: number }; // minutes from that day's Cairo midnight (
 // Tap the time you start and you get the minimum straight away; tap lower to move the finish, higher to move the
 // start, or use the − / + buttons. Minimum 1 hour (or the court's minimum), maximum 4 hours.
 export function SlotPicker({
-  rules, busy, value, onChange, minMinutes, maxDate, onBusyTap,
+  rules, busy, value, onChange, minMinutes, maxDate, onBusyTap, current,
 }: {
   rules: Rule[]; busy: Busy[]; value: Pick; onChange: (p: Pick) => void;
   minMinutes: number; maxDate?: string; onBusyTap?: (startIso: string, endIso: string) => void;
+  current?: { start: string; end: string } | null; // the booking being changed: drawn green, and its time can be chosen again
 }) {
+  const s = useS();
   const [now, setNow] = useState(Date.now());
   const [note, setNote] = useState('');
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
@@ -86,8 +88,10 @@ export function SlotPicker({
   const midnight = cairoToDate(date, 0).getTime();
   const at = (m: number) => midnight + m * 60000;
 
+  const isCurrent = (b: Busy) => !!current && new Date(b.start_time).getTime() === new Date(current.start).getTime() &&
+    new Date(b.end_time).getTime() === new Date(current.end).getTime();
   const blocks = busy
-    .filter((b) => !(b.state === 'hold' && b.hold_expires_at && new Date(b.hold_expires_at).getTime() <= now))
+    .filter((b) => !(b.state === 'hold' && b.hold_expires_at && new Date(b.hold_expires_at).getTime() <= now) && !isCurrent(b))
     .map((b) => ({
       s: (new Date(b.start_time).getTime() - midnight) / 60000,
       e: (new Date(b.end_time).getTime() - midnight) / 60000,
@@ -102,6 +106,12 @@ export function SlotPicker({
     for (let m = s; m < e; m += STEP) if (!isOpen(m) || isPast(m)) return false;
     return !blocks.some((b) => s < b.e && e > b.s);
   };
+
+  const cur = current && hours ? (() => {
+    const cs = (new Date(current.start).getTime() - midnight) / 60000;
+    const ce = (new Date(current.end).getTime() - midnight) / 60000;
+    return ce > hours.open && cs < hours.close ? { s: cs, e: ce } : null;
+  })() : null;
 
   const chosen: Sel | null = value.start !== null && value.duration ? { s: value.start, e: value.start + value.duration } : null;
 
@@ -193,7 +203,8 @@ export function SlotPicker({
       </View>
 
       <View style={s.legend}>
-        <Legend swatch={<View style={[s.sw, { overflow: 'hidden' }]}><GradientFill /></View>} label="Your booking" />
+        {current && <Legend swatch={<View style={[s.sw, s.swCurrent]} />} label="Your current booking" />}
+        <Legend swatch={<View style={[s.sw, { overflow: 'hidden' }]}><GradientFill /></View>} label={current ? 'Your new time' : 'Your booking'} />
         <Legend swatch={<View style={[s.sw, s.swTaken]} />} label="Booked" />
         <Legend swatch={<View style={[s.sw, s.swHold]} />} label="On hold" />
         {crossesMidnight && <Legend swatch={<View style={[s.sw, s.swNight]} />} label="After midnight" />}
@@ -268,6 +279,12 @@ export function SlotPicker({
                 );
               })}
 
+              {cur && (
+                <View pointerEvents="none" style={[s.ev, s.evCurrent, { top: top(Math.max(cur.s, hours.open)) + 1, height: ((Math.min(cur.e, hours.close) - Math.max(cur.s, hours.open)) / STEP) * ROW - 3 }]}>
+                  <Text style={[s.evText, { color: colors.current, fontWeight: '800' }]}>Your current booking</Text>
+                  <Text style={[s.evText, { color: colors.current }]}>{clock(cur.s)} – {clock(cur.e)} · Paid ✓</Text>
+                </View>
+              )}
               {chosen && (
                 <View pointerEvents="none" style={[s.ev, s.evMine, { top: top(chosen.s) + 1, height: ((chosen.e - chosen.s) / STEP) * ROW - 3 }]}>
                   <GradientFill />
@@ -285,7 +302,7 @@ export function SlotPicker({
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flex: 1 }}>
-                <Text style={s.muted}>Your booking</Text>
+                <Text style={s.muted}>{current ? 'Your new time' : 'Your booking'}</Text>
                 <Text style={{ color: colors.text, fontWeight: '800', fontSize: 16, marginTop: 2 }}>
                   {dateLabel(`${date}T12:00:00Z`)} · {clock(chosen.s)} → {clock(chosen.e)}
                 </Text>
@@ -325,6 +342,7 @@ export function SlotPicker({
 }
 
 function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  const s = useS();
   return (
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
       <View style={s.num}><GradientFill /><Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>{n}</Text></View>
@@ -334,6 +352,7 @@ function Step({ n, children }: { n: number; children: React.ReactNode }) {
 }
 
 function Legend({ swatch, label }: { swatch: React.ReactNode; label: string }) {
+  useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
       {swatch}
@@ -342,52 +361,52 @@ function Legend({ swatch, label }: { swatch: React.ReactNode; label: string }) {
   );
 }
 
-const line = '#23203A';
-const lineStrong = '#34304F';
-const s = StyleSheet.create({
-  howto: { backgroundColor: colors.card, borderWidth: 1, borderColor: line, borderRadius: radius.md, padding: 12, gap: 10, marginBottom: 12 },
+const useS = themed(() => StyleSheet.create({
+  howto: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12, gap: 10, marginBottom: 12 },
   howtoText: { color: colors.muted, fontSize: 13, lineHeight: 19 },
   bold: { color: colors.text, fontWeight: '700' },
-  rule: { backgroundColor: '#2A2350', color: '#A38BFF', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, fontSize: 12, fontWeight: '600', overflow: 'hidden' },
+  rule: { backgroundColor: colors.soft, color: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, fontSize: 12, fontWeight: '600', overflow: 'hidden' },
   num: { width: 22, height: 22, borderRadius: 11, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 1 },
 
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 12 },
   sw: { width: 12, height: 12, borderRadius: 3 },
-  swTaken: { backgroundColor: '#23202F', borderWidth: 1, borderColor: lineStrong },
-  swHold: { backgroundColor: '#251D38', borderWidth: 1, borderStyle: 'dashed', borderColor: '#A38BFF' },
-  swNight: { backgroundColor: '#15131F', borderWidth: 1, borderColor: lineStrong },
+  swTaken: { backgroundColor: colors.taken, borderWidth: 1, borderColor: colors.borderStrong },
+  swHold: { backgroundColor: colors.hold, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.primary },
+  swCurrent: { backgroundColor: 'rgba(16,185,129,0.2)', borderWidth: 2, borderColor: colors.current },
+  swNight: { backgroundColor: colors.night, borderWidth: 1, borderColor: colors.borderStrong },
 
-  dayTab: { borderWidth: 1, borderColor: lineStrong, backgroundColor: colors.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center', overflow: 'hidden' },
+  dayTab: { borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center', overflow: 'hidden' },
   dayTabOn: { borderColor: 'transparent' },
   dayTop: { color: colors.text, fontWeight: '700', fontSize: 13 },
   dayBottom: { color: colors.muted, fontWeight: '600', fontSize: 11, marginTop: 1 },
 
-  note: { backgroundColor: '#2A2210', borderWidth: 1, borderColor: '#6B5317', borderRadius: radius.md, padding: 10, marginBottom: 12 },
-  noteText: { color: '#FCD98A', fontSize: 13 },
+  note: { backgroundColor: colors.noteBg, borderWidth: 1, borderColor: colors.noteBorder, borderRadius: radius.md, padding: 10, marginBottom: 12 },
+  noteText: { color: colors.noteText, fontSize: 13 },
 
-  cal: { backgroundColor: colors.card, borderWidth: 1, borderColor: line, borderRadius: radius.md, overflow: 'hidden' },
+  cal: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, overflow: 'hidden' },
   glabel: { position: 'absolute', right: 8, fontSize: 11, color: colors.muted },
-  glabelMid: { color: '#A38BFF', fontWeight: '700' },
-  col: { flex: 1, borderLeftWidth: 1, borderLeftColor: line },
-  cell: { height: ROW, borderBottomWidth: 1, borderBottomColor: line },
-  cellHour: { borderBottomColor: lineStrong },
-  cellNight: { backgroundColor: '#15131F' },
-  cellPast: { backgroundColor: '#0D0C14' },
-  cellPressed: { backgroundColor: '#2A2350' },
-  midline: { position: 'absolute', left: 0, right: 0, borderTopWidth: 2, borderStyle: 'dashed', borderTopColor: '#A38BFF' },
-  midText: { position: 'absolute', right: 4, top: -9, fontSize: 10, fontWeight: '700', color: '#A38BFF', backgroundColor: colors.card, paddingHorizontal: 4 },
+  glabelMid: { color: colors.primary, fontWeight: '700' },
+  col: { flex: 1, borderLeftWidth: 1, borderLeftColor: colors.border },
+  cell: { height: ROW, borderBottomWidth: 1, borderBottomColor: colors.border },
+  cellHour: { borderBottomColor: colors.borderStrong },
+  cellNight: { backgroundColor: colors.night },
+  cellPast: { backgroundColor: colors.past },
+  cellPressed: { backgroundColor: colors.soft },
+  midline: { position: 'absolute', left: 0, right: 0, borderTopWidth: 2, borderStyle: 'dashed', borderTopColor: colors.primary },
+  midText: { position: 'absolute', right: 4, top: -9, fontSize: 10, fontWeight: '700', color: colors.primary, backgroundColor: colors.card, paddingHorizontal: 4 },
 
   ev: { position: 'absolute', left: 3, right: 3, borderRadius: 7, paddingHorizontal: 6, paddingVertical: 3, overflow: 'hidden' },
-  evTaken: { backgroundColor: '#23202F', borderLeftWidth: 3, borderLeftColor: lineStrong },
-  evHold: { backgroundColor: '#251D38', borderWidth: 1, borderStyle: 'dashed', borderColor: '#A38BFF' },
+  evTaken: { backgroundColor: colors.taken, borderLeftWidth: 3, borderLeftColor: colors.borderStrong },
+  evHold: { backgroundColor: colors.hold, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.primary },
   evMine: { justifyContent: 'center' },
+  evCurrent: { backgroundColor: 'rgba(16,185,129,0.14)', borderWidth: 2, borderColor: colors.current, justifyContent: 'center' },
   evText: { fontSize: 11, lineHeight: 14 },
 
-  yours: { backgroundColor: colors.card, borderWidth: 1, borderColor: line, borderRadius: radius.lg, padding: 14, marginTop: 12 },
+  yours: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: 14, marginTop: 12 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   stepLabel: { width: 70, color: colors.muted, fontWeight: '600', fontSize: 13 },
-  step: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: lineStrong, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' },
+  step: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' },
   stepText: { color: colors.text, fontSize: 22, fontWeight: '700' },
   stepTime: { minWidth: 84, textAlign: 'center', color: colors.text, fontWeight: '700', fontSize: 15 },
   muted: { color: colors.muted, fontSize: 13 },
-});
+}));

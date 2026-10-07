@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { photoUrl, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import { egp } from '@/lib/format';
 import { Button } from '@/components/ui';
 import type { CourtRow, ReviewStats } from '@/lib/types';
@@ -12,6 +12,7 @@ import type { CourtRow, ReviewStats } from '@/lib/types';
 const W = Dimensions.get('window').width;
 
 export default function CourtPage() {
+  const s = useS();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -100,8 +101,8 @@ export default function CourtPage() {
   );
 }
 
-const s = StyleSheet.create({
+const useS = themed(() => StyleSheet.create({
   title: { color: colors.text, fontSize: 22, fontWeight: '800' },
   sub: { color: colors.muted, marginTop: 4 },
   offer: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-});
+}));

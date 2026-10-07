@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
-import { colors } from '@/lib/theme';
+import { colors, useTheme } from '@/lib/theme';
 import { Button, Field, Note } from '@/components/ui';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
 import { suggestUsername } from '@/lib/username';
@@ -19,6 +19,7 @@ function friendly(message: string): string {
 }
 
 export default function Signup() {
+  useTheme();
   const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
