@@ -132,8 +132,10 @@ export default function Home() {
           <View>
             <Text style={s.step}>1 · What do you want to play?</Text>
             <View style={s.grid}>
-              {sports.map((x) => {
-                const n = courts.filter((c) => c.court_sports.some((cs) => cs.sport?.id === x.id)).length;
+              {sports
+                .map((x) => ({ x, n: courts.filter((c) => c.court_sports.some((cs) => cs.sport?.id === x.id)).length }))
+                .sort((a, b) => Number(b.n > 0) - Number(a.n > 0))
+                .map(({ x, n }) => {
                 return (
                   <Pressable key={x.id} disabled={n === 0} onPress={() => setSport(x)} style={({ pressed }) => [s.sportBox, n === 0 && { opacity: 0.45 }, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}>
                     <SportIcon sport={x} size={52} />
