@@ -8,6 +8,8 @@ import { dateLabel, egp } from '@/lib/format';
 import { Button, Card, Field, GradientFill, GradientText, GRADIENT, Note, PressableScale } from '@/components/ui';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/Icon';
+import { DeleteAccount } from '@/components/DeleteAccount';
+import { LegalLinks } from '@/components/LegalLinks';
 import { toast } from '@/components/Toast';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
 import { capitalizeWords, FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, PHONE_HELP } from '@/lib/validate';
@@ -187,6 +189,8 @@ export default function Profile() {
       )}
 
       <Button title="Log out" onPress={() => supabase.auth.signOut()} />
+      {me.role === 'player' && <DeleteAccount />}
+      <LegalLinks style={{ marginTop: 18 }} />
     </ScrollView>
   );
 }

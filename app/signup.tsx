@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { colors, useTheme } from '@/lib/theme';
 import { Button, Field, Note } from '@/components/ui';
+import { LegalLinks } from '@/components/LegalLinks';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
 import { suggestUsername } from '@/lib/username';
 import { FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, PHONE_HELP } from '@/lib/validate';
@@ -133,6 +134,7 @@ export default function Signup() {
           </Text>
         )}
         <Field label="Password (at least 6 characters)" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete="new-password" />
+        <LegalLinks lead="By creating an account you agree to our" style={{ marginBottom: 12 }} />
         <Button title="Create my account" onPress={submit} loading={busy} />
         <Pressable onPress={() => router.replace('/login')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 18 }}>Already have an account? Log in</Text></Pressable>
       </ScrollView>

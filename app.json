@@ -4,21 +4,25 @@
     "slug": "zaf-play",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/zaf-icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.zafplay.app"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.zafplay.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.zafplay.app"
+      "package": "com.zafplay.app",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,7 +31,23 @@
       "expo-router",
       "expo-image",
       "expo-sqlite",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 240
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Zaf Play uses your photos so you can attach your InstaPay payment screenshot to a booking.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "scheme": "zafplay"
   }
