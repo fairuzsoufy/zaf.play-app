@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Share, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
@@ -18,6 +18,7 @@ const useCard = themed(() => ({ backgroundColor: colors.card, borderRadius: radi
 export default function Profile() {
   const card = useCard();
   const router = useRouter();
+  const params = useLocalSearchParams<{ edit?: string }>();
   const { session, loading: authLoading } = useAuth();
   const uid = session?.user.id;
   const [me, setMe] = useState<any>(null);
@@ -33,6 +34,11 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // the booking screen sends players here (with a fresh ?edit= value each time) to add their mobile number
+  const [seenEdit, setSeenEdit] = useState<string | undefined>();
+  if (params.edit && params.edit !== seenEdit) { setSeenEdit(params.edit); setEditing(true); }
 
   const load = useCallback(async () => {
     if (!uid) return;
@@ -69,6 +75,27 @@ export default function Profile() {
     toast('Your profile is saved');
   }
 
+  // App Store and Google Play rule: players can delete their account from inside the app
+  function confirmDelete() {
+    Alert.alert(
+      'Delete your account?',
+      'This is permanent. Your login, name, mobile number and username are removed, and any credit you have is lost. Past bookings stay in our records without your name.',
+      [
+        { text: 'Keep my account', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: deleteAccount },
+      ],
+    );
+  }
+  async function deleteAccount() {
+    setDeleting(true);
+    const { error } = await supabase.rpc('delete_my_account');
+    setDeleting(false);
+    if (error) return Alert.alert('Your account was not deleted', error.message);
+    await supabase.auth.signOut();
+    toast('Your account is deleted');
+    router.replace('/');
+  }
+
   // leave edit mode without saving: put the saved values back
   function cancelEdit() {
     setFullName(me.full_name || ''); setPhone(me.phone || ''); setUsername(me.username || '');
@@ -96,7 +123,7 @@ export default function Profile() {
   return (
     <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       {me.role !== 'player' && (
-        <Note kind="ok">You are logged in as {me.role}. Owner and staff tools are coming to the app soon; for now use zafplay.com.</Note>
+        <Note kind="ok">You are logged in as {me.role}. Manage your courts and team on zafplay.com.</Note>
       )}
 
       {/* who you are: gradient banner, initials, name */}
@@ -187,6 +214,17 @@ export default function Profile() {
       )}
 
       <Button title="Log out" onPress={() => supabase.auth.signOut()} />
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 18, marginTop: 22 }}>
+        <Text style={{ color: colors.muted }} onPress={() => Linking.openURL(`${SITE_URL}/privacy`)}>Privacy policy</Text>
+        <Text style={{ color: colors.muted }} onPress={() => Linking.openURL(`${SITE_URL}/terms`)}>Terms</Text>
+        <Text style={{ color: colors.muted }} onPress={() => Linking.openURL('mailto:support@zafplay.com')}>Help</Text>
+      </View>
+      {me.role === 'player' && (
+        <Pressable onPress={confirmDelete} disabled={deleting} accessibilityRole="button" style={{ alignSelf: 'center', marginTop: 18, padding: 8 }}>
+          {deleting ? <ActivityIndicator color={colors.danger} /> : <Text style={{ color: colors.danger, fontWeight: '600' }}>Delete my account</Text>}
+        </Pressable>
+      )}
     </ScrollView>
   );
 }

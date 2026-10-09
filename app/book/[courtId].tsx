@@ -87,7 +87,10 @@ export default function BookCourt() {
     if (!session) { router.push('/login'); return false; }
     const { data: me } = await supabase.from('users').select('role,phone').eq('id', session.user.id).single();
     if ((me as any)?.role === 'player' && !(me as any)?.phone) {
-      Alert.alert('One more step', 'Please add your mobile number first. Open zafplay.com, log in and finish your profile. Sign-up inside the app is coming soon.');
+      Alert.alert('One more step', 'Please add your mobile number to your profile first, so the court can reach you.', [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Add my number', onPress: () => router.push({ pathname: '/profile', params: { edit: String(Date.now()) } }) },
+      ]);
       return false;
     }
     return true;
