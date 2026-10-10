@@ -3,7 +3,7 @@ import { Platform, Vibration } from 'react-native';
 import { isRunningInExpoGo } from 'expo';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { dateLabel, timeLabel } from '@/lib/format';
+import { dateLabel, egp, timeLabel } from '@/lib/format';
 import { toast } from './Toast';
 
 // Expo Go on Android throws as soon as expo-notifications is loaded, so only load it where it works
@@ -41,25 +41,30 @@ async function notify(title: string, body: string) {
 export function BookingAlerts() {
   const { session } = useAuth();
   const uid = session?.user.id;
-  const known = useRef<Record<string, string>>({}); // booking id → payment status we last saw
+  const known = useRef<Record<string, { pay: string; refund: string | null }>>({}); // what we last saw per booking
 
   useEffect(() => {
     if (!uid) return;
     let live = true;
-    supabase.from('bookings').select('id,payment_status').eq('user_id', uid).in('status', ['pending', 'confirmed'])
-      .then(({ data }) => { if (live) for (const b of data ?? []) known.current[b.id] = b.payment_status; });
+    supabase.from('bookings').select('id,payment_status,refund_status').eq('user_id', uid)
+      .gt('created_at', new Date(Date.now() - 60 * 86400000).toISOString())
+      .then(({ data }) => { if (live) for (const b of data ?? []) known.current[b.id] = { pay: b.payment_status, refund: b.refund_status }; });
 
     // a fresh name every time: reusing one that is still subscribed throws
     const ch = supabase.channel(`booking-alerts-${uid}-${Date.now()}`)
       .on('postgres_changes' as any, { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `user_id=eq.${uid}` }, async (p: any) => {
         const b = p.new;
         const before = known.current[b.id];
-        known.current[b.id] = b.payment_status;
-        if (before !== 'pending_review') return;
-        if (b.payment_status !== 'paid' && b.status !== 'cancelled') return;
+        known.current[b.id] = { pay: b.payment_status, refund: b.refund_status };
+        if (!before) return;
+        const approved = before.pay === 'pending_review' && b.payment_status === 'paid';
+        const rejected = before.pay === 'pending_review' && b.status === 'cancelled' && b.payment_status !== 'paid';
+        const refunded = before.refund !== 'refunded' && b.refund_status === 'refunded';
+        if (!approved && !rejected && !refunded) return;
         const { data: c } = await supabase.from('courts').select('name').eq('id', b.court_id).maybeSingle();
         const when = `${dateLabel(b.start_time)} · ${timeLabel(b.start_time)}`;
-        if (b.payment_status === 'paid') notify('✅ Booking confirmed', `${c?.name ?? 'Your court'}, ${when}. See you on court!`);
+        if (approved) notify('✅ Booking confirmed', `${c?.name ?? 'Your court'}, ${when}. See you on court!`);
+        else if (refunded) notify('💸 Refund sent', `${egp(Number(b.refund_amount || 0))} for ${c?.name ?? 'your booking'}. The receipt is in My bookings.`);
         else notify('Payment not approved', `${c?.name ?? 'Your booking'}, ${when}. Open My bookings for details.`);
       })
       .subscribe();

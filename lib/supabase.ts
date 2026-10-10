@@ -34,18 +34,25 @@ export function photoUrl(path: string | null | undefined): string | null {
   return supabase.storage.from('court-images').getPublicUrl(path).data.publicUrl;
 }
 
-// Uploads a picked photo to Storage. supabase-js sends raw bytes (Blob, ArrayBuffer, typed arrays) from React Native as ~14
-// junk bytes, so this posts the file as a multipart part from its uri, which React Native streams natively.
+// Uploads a picked photo to Storage. In Expo the global fetch() is Expo's own, which sends picked photos as ~14 junk bytes
+// and rejects React Native file parts ("Unsupported FormDataPart implementation"). React Native's own XMLHttpRequest
+// streams a { uri, name, type } multipart part straight from the file, so the upload goes through that.
 export async function uploadPhoto(bucket: string, path: string, uri: string, mimeType: string): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   const form = new FormData();
   form.append('cacheControl', '3600');
   form.append('file', { uri, name: path.split('/').pop() || 'photo.jpg', type: mimeType } as any);
-  const res = await fetch(`${url}/storage/v1/object/${bucket}/${path}`, {
-    method: 'POST',
-    headers: { apikey: key as string, Authorization: `Bearer ${data.session?.access_token ?? key}`, 'x-upsert': 'false' },
-    body: form,
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${url}/storage/v1/object/${bucket}/${path}`);
+    xhr.setRequestHeader('apikey', key as string);
+    xhr.setRequestHeader('Authorization', `Bearer ${data.session?.access_token ?? key}`);
+    xhr.setRequestHeader('x-upsert', 'false');
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(null);
+      try { resolve(JSON.parse(xhr.responseText).message ?? `HTTP ${xhr.status}`); } catch { resolve(`HTTP ${xhr.status}`); }
+    };
+    xhr.onerror = () => resolve('Network error, please try again.');
+    xhr.send(form);
   });
-  if (res.ok) return null;
-  try { return (await res.json()).message ?? `HTTP ${res.status}`; } catch { return `HTTP ${res.status}`; }
 }

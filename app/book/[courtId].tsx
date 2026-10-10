@@ -32,6 +32,7 @@ export default function BookCourt() {
   const [err, setErr] = useState<string | null>(null);
   const [waitFor, setWaitFor] = useState<{ start: string; end: string } | null>(null);
   const [waiting, setWaiting] = useState<string[]>([]);
+  const [dragging, setDragging] = useState(false); // the page holds still while a booking bar is dragged
 
   const loadBusy = useCallback(async () => {
     const { data } = await supabase.rpc('court_busy_slots', { p_court_id: courtId });
@@ -132,7 +133,7 @@ export default function BookCourt() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} style={{ backgroundColor: colors.bg }}>
+    <ScrollView scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: court.name }} />
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{court.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 16 }}>
@@ -144,6 +145,7 @@ export default function BookCourt() {
         rules={rules} busy={busy} value={pick} minMinutes={minMinutes} maxDate={lastDay}
         onChange={(p) => { setPick(p); setErr(null); setWaitFor(null); }}
         onBusyTap={(start, end) => setWaitFor({ start, end })}
+        onDragging={setDragging}
       />
 
       {waitFor && (

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed } from '@/lib/theme';
@@ -15,7 +16,7 @@ type Tab = 'upcoming' | 'past' | 'cancelled';
 
 const SELECT = `id,start_time,end_time,total_price,status,payment_status,hold_expires_at,amount_due,discount_amount,
   booking_extras(name,qty),open_games(id),credit_used,credit_issued,cancel_request_as_credit,rescheduled_from,credit_amount,
-  retained_amount,refund_amount,refund_fee,refund_status,refund_to,refunded_at,cancel_request_status,cancel_request_decline_reason,
+  retained_amount,refund_amount,refund_fee,refund_status,refund_to,refunded_at,refund_proof_path,cancel_request_status,cancel_request_decline_reason,
   cancelled_at,cancelled_by,cancellation_reason,created_at,payments(created_at,status),
   sport:sports(name,slug),court:courts(id,name,is_indoor,maps_url,late_fee_percent,facility:facilities(name,city))`;
 
@@ -38,6 +39,7 @@ export default function Bookings() {
   const [rows, setRows] = useState<any[]>([]);
   const [reviews, setReviews] = useState<Record<string, number>>({});
   const [phones, setPhones] = useState<Record<string, string>>({});
+  const [receipts, setReceipts] = useState<Record<string, string>>({}); // refund_proof_path → signed url
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<Tab>('upcoming');
@@ -54,6 +56,12 @@ export default function Bookings() {
     setRows(((data ?? []) as any[]).filter((b) => !(Array.isArray(b.open_games) ? b.open_games.length : b.open_games)));
     const { data: revs } = await supabase.from('reviews').select('booking_id,rating').eq('user_id', uid);
     setReviews(Object.fromEntries((revs ?? []).map((r: any) => [r.booking_id, r.rating])));
+    // the InstaPay receipt Zaf Play uploads when it sends a refund
+    const proofs = ((data ?? []) as any[]).map((b) => b.refund_proof_path).filter(Boolean);
+    if (proofs.length) {
+      const { data: signed } = await supabase.storage.from('refund-proofs').createSignedUrls(proofs, 3600);
+      setReceipts(Object.fromEntries((signed ?? []).filter((x: any) => x.signedUrl).map((x: any) => [x.path, x.signedUrl])));
+    }
     const { data: ph } = await supabase.rpc('my_court_phones');
     setPhones(Object.fromEntries(((ph as any[]) ?? []).map((r) => [r.booking_id, r.phone])));
     setLoading(false);
@@ -164,6 +172,23 @@ export default function Bookings() {
             </View>
 
             {summary && <Text style={{ color: colors.warning, marginTop: 10 }}>{summary}</Text>}
+            {b.refund_status === 'refunded' && b.refund_proof_path && (
+              <View style={{ marginTop: 10 }}>
+                <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 6 }}>
+                  Transfer receipt{b.refund_to ? <Text style={{ color: colors.muted, fontWeight: '400' }}> · to {b.refund_to}</Text> : null}
+                </Text>
+                {!receipts[b.refund_proof_path] ? (
+                  <Text style={s.sub}>Loading the receipt...</Text>
+                ) : b.refund_proof_path.toLowerCase().endsWith('.pdf') ? (
+                  <Pressable hitSlop={10} style={s.action} onPress={() => Linking.openURL(receipts[b.refund_proof_path])}><Text style={s.link}>📄 Open the receipt (PDF)</Text></Pressable>
+                ) : (
+                  <Pressable onPress={() => Linking.openURL(receipts[b.refund_proof_path])} accessibilityLabel="Open the refund receipt full size">
+                    <Image source={{ uri: receipts[b.refund_proof_path] }} style={s.receipt} contentFit="cover" />
+                    <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>Tap to open full size</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
             {pendingChangeFor.has(b.id) && <Text style={{ color: colors.warning, marginTop: 10 }}>A change to a new time is waiting for payment. This booking stays until it's approved.</Text>}
             {requestOpen(b) && <Pressable onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
             {b.cancel_request_status === 'declined' && ['pending', 'confirmed'].includes(b.status) && (
@@ -350,6 +375,7 @@ const useS = themed(() => StyleSheet.create({
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
   action: { paddingVertical: 4, paddingRight: 4 },
+  receipt: { width: 140, height: 190, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.cardAlt },
   review: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, padding: 12, borderRadius: radius.md,
     backgroundColor: colors.soft, borderWidth: 1, borderColor: colors.borderStrong,

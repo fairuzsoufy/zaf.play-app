@@ -23,6 +23,7 @@ export default function ChangeBooking() {
   const [price, setPrice] = useState(0);
   const [rules, setRules] = useState<Rule[]>([]);
   const [busy, setBusy] = useState<Busy[]>([]);
+  const [dragging, setDragging] = useState(false); // the page holds still while a booking bar is dragged
   const [extras, setExtras] = useState<any[]>([]);
   const [qty, setQty] = useState<Record<string, number>>({});
   const [pick, setPick] = useState<Pick>({ date: '', start: null, duration: 0 });
@@ -133,7 +134,7 @@ export default function ChangeBooking() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }}>
+    <ScrollView scrollEnabled={!dragging} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }}>
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{b.court?.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4 }}>{b.sport?.name} · {b.court?.is_indoor ? 'Indoor' : 'Outdoor'}</Text>
       <Text style={{ color: colors.text, marginTop: 6, marginBottom: 14 }}>
@@ -153,6 +154,7 @@ export default function ChangeBooking() {
       <SlotPicker
         rules={rules} busy={busy} value={pick} minMinutes={Math.max(60, Number(b.court?.min_booking_minutes || 0))} maxDate={lastDay}
         current={{ start: b.start_time, end: b.end_time }}
+        onDragging={setDragging}
         onChange={(p) => { setPick(p); setErr(null); }}
       />
 

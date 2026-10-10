@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, themed, useTheme } from '@/lib/theme';
 import { addDays, cairoDate, cairoToDate, countdown, dateLabel, durationText, hm12, weekdayOf } from '@/lib/format';
 import { GradientFill } from './ui';
@@ -48,11 +48,12 @@ type Sel = { s: number; e: number }; // minutes from that day's Cairo midnight (
 // Tap the time you start and you get the minimum straight away; tap lower to move the finish, higher to move the
 // start, or use the − / + buttons. Minimum 1 hour (or the court's minimum), maximum 4 hours.
 export function SlotPicker({
-  rules, busy, value, onChange, minMinutes, maxDate, onBusyTap, current,
+  rules, busy, value, onChange, minMinutes, maxDate, onBusyTap, current, onDragging,
 }: {
   rules: Rule[]; busy: Busy[]; value: Pick; onChange: (p: Pick) => void;
   minMinutes: number; maxDate?: string; onBusyTap?: (startIso: string, endIso: string) => void;
   current?: { start: string; end: string } | null; // the booking being changed: drawn green, and its time can be chosen again
+  onDragging?: (dragging: boolean) => void; // the page should stop scrolling while a bar is dragged
 }) {
   const s = useS();
   const [now, setNow] = useState(Date.now());
@@ -117,6 +118,52 @@ export function SlotPicker({
 
   const commit = (c: Sel | null) =>
     onChange(c ? { date, start: c.s, duration: c.e - c.s } : { date, start: null, duration: 0 });
+
+  // ---- drag the bar at the top (start) or bottom (finish) of your booking to make it shorter or longer, like the website ----
+  const [draft, setDraft] = useState<Sel | null>(null);
+  const shown = draft ?? chosen;
+  const api = useRef({ chosen, isFree, MIN, commit, onDragging, setNote });
+  api.current = { chosen, isFree, MIN, commit, onDragging, setNote };
+  const drag = useRef<{ which: 'start' | 'end'; from: Sel; last: Sel } | null>(null);
+  const dragTo = (dy: number) => {
+    const d = drag.current;
+    if (!d) return;
+    const { isFree: free, MIN: min } = api.current;
+    const steps = Math.round(dy / ROW);
+    let { s: ns, e: ne } = d.from;
+    if (d.which === 'end') {
+      ne = Math.min(Math.max(d.from.e + steps * STEP, d.from.s + min), d.from.s + MAX_MIN);
+      while (ne > d.from.e && !free(d.from.e, ne)) ne -= STEP; // stop at anything booked
+    } else {
+      ns = Math.max(Math.min(d.from.s + steps * STEP, d.from.e - min), d.from.e - MAX_MIN);
+      while (ns < d.from.s && !free(ns, d.from.s)) ns += STEP;
+    }
+    if (ns !== d.last.s || ne !== d.last.e) { d.last = { s: ns, e: ne }; setDraft(d.last); }
+  };
+  const endDrag = () => {
+    const d = drag.current;
+    drag.current = null;
+    setDraft(null);
+    api.current.onDragging?.(false);
+    if (d && (d.last.s !== d.from.s || d.last.e !== d.from.e)) api.current.commit(d.last);
+  };
+  const bar = (which: 'start' | 'end') => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderTerminationRequest: () => false, // don't let the page scroll take the finger away
+    onPanResponderGrant: () => {
+      const c = api.current.chosen;
+      if (!c) return;
+      drag.current = { which, from: c, last: c };
+      api.current.setNote('');
+      api.current.onDragging?.(true);
+    },
+    onPanResponderMove: (_e, g) => dragTo(g.dy),
+    onPanResponderRelease: endDrag,
+    onPanResponderTerminate: endDrag,
+  });
+  const topBar = useRef(bar('start')).current;
+  const bottomBar = useRef(bar('end')).current;
 
   // make a choice follow the rules: minimum, 4 hours at most, nothing booked in between
   function fit(s: number, e: number): Sel | null {
@@ -194,7 +241,7 @@ export function SlotPicker({
           <Text style={s.rule}>Minimum <Text style={{ fontWeight: '800' }}>{durationText(MIN)}</Text></Text>
           <Text style={s.rule}>Maximum <Text style={{ fontWeight: '800' }}>4 hours</Text></Text>
         </View>
-        <Step n={1}><Text style={s.bold}>Tap your start time.</Text> Tap lower to move the <Text style={s.bold}>finish</Text>, higher to move the <Text style={s.bold}>start</Text>, or tap your booking to clear it.</Step>
+        <Step n={1}><Text style={s.bold}>Tap your start time.</Text> Then <Text style={s.bold}>drag the bars</Text> at the top or bottom of your booking to make it shorter or longer (or tap lower / higher). Tap your booking to clear it.</Step>
         {onBusyTap && <Text style={s.howtoText}><Text style={s.bold}>Booked?</Text> Tap it to be told if it frees up.</Text>}
       </View>
 
@@ -227,8 +274,8 @@ export function SlotPicker({
               <View style={{ flex: 1 }}>
                 <Text style={s.muted}>{current ? 'Your new time' : 'Your booking'}</Text>
                 <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14, marginTop: 1 }} numberOfLines={1}>
-                  {dateLabel(`${date}T12:00:00Z`)} · {clock(chosen.s)} → {clock(chosen.e)}
-                  <Text style={[s.muted, { fontWeight: '400' }]}> · {durationText(chosen.e - chosen.s)}</Text>
+                  {dateLabel(`${date}T12:00:00Z`)} · {clock((shown ?? chosen).s)} → {clock((shown ?? chosen).e)}
+                  <Text style={[s.muted, { fontWeight: '400' }]}> · {durationText((shown ?? chosen).e - (shown ?? chosen).s)}</Text>
                 </Text>
               </View>
               <Pressable onPress={() => { setNote(''); commit(null); }} hitSlop={10}>
@@ -236,7 +283,7 @@ export function SlotPicker({
               </Pressable>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              {([['start', 'Starts', chosen.s], ['end', 'Finishes', chosen.e]] as const).map(([which, label, m]) => (
+              {([['start', 'Starts', (shown ?? chosen).s], ['end', 'Finishes', (shown ?? chosen).e]] as const).map(([which, label, m]) => (
                 <View key={which} style={s.stepper}>
                   <Text style={s.stepLabel}>{label}</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -262,7 +309,7 @@ export function SlotPicker({
         )}
         {/* fixed height, so a message never pushes the calendar down */}
         <Text style={[s.noteLine, note ? { color: colors.noteText } : null]} numberOfLines={2}>
-          {note || (chosen ? `− / + move the time by 30 minutes. Minimum ${durationText(MIN)}, maximum 4 hours.` : '')}
+          {note || (chosen ? `Drag the bars at the top or bottom, or use − / + (30 minutes). Minimum ${durationText(MIN)}, maximum 4 hours.` : '')}
         </Text>
       </View>
 
@@ -325,12 +372,22 @@ export function SlotPicker({
                   <Text style={[s.evText, { color: colors.current }]}>{clock(cur.s)} – {clock(cur.e)} · Paid ✓</Text>
                 </View>
               )}
-              {chosen && (
-                <View pointerEvents="none" style={[s.ev, s.evMine, { top: top(chosen.s) + 1, height: ((chosen.e - chosen.s) / STEP) * ROW - 3 }]}>
+              {shown && (
+                <View pointerEvents="none" style={[s.ev, s.evMine, { top: top(shown.s) + 1, height: ((shown.e - shown.s) / STEP) * ROW - 3 }]}>
                   <GradientFill />
-                  <Text style={[s.evText, { color: '#fff', fontWeight: '800', fontSize: 13 }]}>{clock(chosen.s)} – {clock(chosen.e)}</Text>
-                  <Text style={[s.evText, { color: '#fff' }]}>{durationText(chosen.e - chosen.s)}</Text>
+                  <Text style={[s.evText, { color: '#fff', fontWeight: '800', fontSize: 13 }]}>{clock(shown.s)} – {clock(shown.e)}</Text>
+                  <Text style={[s.evText, { color: '#fff' }]}>{durationText(shown.e - shown.s)}</Text>
                 </View>
+              )}
+              {shown && (
+                <>
+                  <View {...topBar.panHandlers} style={[s.bar, { top: top(shown.s) - 11 }]} accessibilityLabel="Drag to change the start">
+                    <View style={s.grip} />
+                  </View>
+                  <View {...bottomBar.panHandlers} style={[s.bar, { top: top(shown.e) - 13 }]} accessibilityLabel="Drag to change the finish">
+                    <View style={s.grip} />
+                  </View>
+                </>
               )}
             </View>
           </View>
@@ -399,6 +456,8 @@ const useS = themed(() => StyleSheet.create({
   evTaken: { backgroundColor: colors.taken, borderLeftWidth: 3, borderLeftColor: colors.borderStrong },
   evHold: { backgroundColor: colors.hold, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.primary },
   evMine: { justifyContent: 'center' },
+  bar: { position: 'absolute', left: 0, right: 0, height: 24, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
+  grip: { width: 44, height: 6, borderRadius: 3, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.brandPurple },
   evCurrent: { backgroundColor: 'rgba(16,185,129,0.14)', borderWidth: 2, borderColor: colors.current, justifyContent: 'center' },
   evText: { fontSize: 11, lineHeight: 14 },
 
