@@ -13,6 +13,13 @@ import { Button, Field, Note } from '@/components/ui';
 import { toast } from '@/components/Toast';
 import { dateLabel, timeLabel } from '@/lib/format';
 
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
 export default function Pay() {
   const insets = useSafeAreaInsets();
   useTheme();
@@ -57,7 +64,7 @@ export default function Pay() {
 
   async function choose() {
     const r = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: MAX_PROOFS, quality: 0.8,
+      mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: MAX_PROOFS, quality: 0.8, base64: true,
     });
     if (!r.canceled) setFiles(r.assets.slice(0, MAX_PROOFS));
   }
@@ -70,7 +77,8 @@ export default function Pay() {
     setSending(true);
     const paths: string[] = [];
     for (const f of files) {
-      const body = await (await fetch(f.uri)).arrayBuffer();
+      // fetch(uri).arrayBuffer() returns a few junk bytes for Android photos, so read the picture from the picker's base64
+      const body: ArrayBuffer | Uint8Array = f.base64 ? base64ToBytes(f.base64) : await (await fetch(f.uri)).arrayBuffer();
       if (body.byteLength > MAX_PROOF_MB * 1024 * 1024) { setSending(false); return setErr(`Each file must be smaller than ${MAX_PROOF_MB} MB.`); }
       const ext = (f.mimeType?.split('/')[1] || f.uri.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
       const rand = `${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
