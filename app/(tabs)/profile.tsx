@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, Share, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
@@ -20,6 +20,7 @@ const useCard = themed(() => ({ backgroundColor: colors.card, borderRadius: radi
 export default function Profile() {
   const card = useCard();
   const router = useRouter();
+  const params = useLocalSearchParams<{ edit?: string }>();
   const { session, loading: authLoading } = useAuth();
   const uid = session?.user.id;
   const [me, setMe] = useState<any>(null);
@@ -35,6 +36,11 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [editing, setEditing] = useState(false);
+
+  // opened from booking to add a missing mobile number: start in edit mode
+  useEffect(() => {
+    if (params.edit === '1') { setEditing(true); router.setParams({ edit: undefined }); }
+  }, [params.edit]);
 
   const load = useCallback(async () => {
     if (!uid) return;
@@ -98,7 +104,7 @@ export default function Profile() {
   return (
     <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       {me.role !== 'player' && (
-        <Note kind="ok">You are logged in as {me.role}. Owner and staff tools are coming to the app soon; for now use zafplay.com.</Note>
+        <Note kind="ok">You are logged in as {me.role}. Owner and staff tools are on zafplay.com.</Note>
       )}
 
       {/* who you are: gradient banner, initials, name */}
