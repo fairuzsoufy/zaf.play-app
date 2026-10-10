@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -13,6 +14,7 @@ import { toast } from '@/components/Toast';
 import { dateLabel, timeLabel } from '@/lib/format';
 
 export default function Pay() {
+  const insets = useSafeAreaInsets();
   useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -97,7 +99,7 @@ export default function Pay() {
   const extrasSum = (b.booking_extras ?? []).reduce((a: number, x: any) => a + Number(x.amount), 0);
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: isChange ? 'Pay for your change' : 'Complete your booking' }} />
       <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{b.court?.name} · {b.sport?.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4 }}>{b.court?.facility?.name}, {b.court?.facility?.city}</Text>

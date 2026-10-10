@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Dimensions, FlatList, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -13,6 +14,7 @@ import type { CourtRow, ReviewStats } from '@/lib/types';
 const W = Dimensions.get('window').width;
 
 export default function CourtPage() {
+  const insets = useSafeAreaInsets();
   const s = useS();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -56,7 +58,7 @@ export default function CourtPage() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 30 }}>
+    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 30 + insets.bottom }}>
       <Stack.Screen options={{ title: court.name }} />
       {photos.length > 0 && (
         <FlatList

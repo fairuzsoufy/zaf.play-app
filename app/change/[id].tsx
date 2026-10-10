@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -13,6 +14,7 @@ import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
 // Modify a paid, upcoming booking: a new time (or more time around it) and/or different extras.
 // Same rules and maths as the website's /bookings/[id]/change page; the database does the real work (reschedule_booking).
 export default function ChangeBooking() {
+  const insets = useSafeAreaInsets();
   const st = useSt();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -131,7 +133,7 @@ export default function ChangeBooking() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }}>
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{b.court?.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4 }}>{b.sport?.name} · {b.court?.is_indoor ? 'Indoor' : 'Outdoor'}</Text>
       <Text style={{ color: colors.text, marginTop: 6, marginBottom: 14 }}>

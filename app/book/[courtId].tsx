@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -12,6 +13,7 @@ import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
 type Extra = { id: string; name: string; price: number; max_qty: number; is_required: boolean; sport_id: string | null };
 
 export default function BookCourt() {
+  const insets = useSafeAreaInsets();
   const st = useSt();
   const { courtId, sport: sportSlug } = useLocalSearchParams<{ courtId: string; sport?: string }>();
   const router = useRouter();
@@ -130,7 +132,7 @@ export default function BookCourt() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} style={{ backgroundColor: colors.bg }}>
+    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: court.name }} />
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{court.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 16 }}>

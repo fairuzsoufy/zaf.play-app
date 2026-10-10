@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { colors, useTheme } from '@/lib/theme';
@@ -20,6 +21,7 @@ function friendly(message: string): string {
 }
 
 export default function Signup() {
+  const insets = useSafeAreaInsets();
   useTheme();
   const router = useRouter();
   const [fullName, setFullName] = useState('');
@@ -113,7 +115,7 @@ export default function Signup() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
         <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 4 }}>Join Zaf Play</Text>
         <Text style={{ color: colors.muted, marginBottom: 22 }}>Book courts in seconds.</Text>
         {err && <Note kind="error">{err}</Note>}

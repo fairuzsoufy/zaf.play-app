@@ -59,6 +59,13 @@
         }
       ]
     ],
-    "scheme": "zafplay"
+    "scheme": "zafplay",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "08f3c95d-0c2a-4771-9d69-1829054ac52a"
+      }
+    },
+    "owner": "fairuzsoufy"
   }
 }
