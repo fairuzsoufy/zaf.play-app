@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/Icon';
 import { DeleteAccount } from '@/components/DeleteAccount';
 import { FriendsCard } from '@/components/Friends';
+import { ChangeEmail } from '@/components/ChangeEmail';
 import { PlayerStats } from '@/components/PlayerStats';
 import { LegalLinks } from '@/components/LegalLinks';
 import { toast } from '@/components/Toast';
@@ -188,6 +189,8 @@ export default function Profile() {
           </View>
         )}
       </View>
+
+      {me.email && <ChangeEmail current={me.email} />}
 
       {me.role === 'player' && <FriendsCard />}
 
