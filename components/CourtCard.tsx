@@ -74,20 +74,19 @@ export function CourtCard({ court, sportId, index = 0 }: { court: CourtRow; spor
 
 const useS = themed(() => StyleSheet.create({
   card: {
-    backgroundColor: colors.card, borderRadius: radius.xl, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: colors.border,
-    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 5,
+    backgroundColor: colors.card, borderRadius: radius.lg, overflow: 'hidden', marginBottom: 14, borderWidth: 1, borderColor: colors.border,
   },
-  photo: { height: 190, justifyContent: 'flex-end', backgroundColor: colors.cardAlt },
+  photo: { height: 180, justifyContent: 'flex-end', backgroundColor: colors.cardAlt },
   shade: { position: 'absolute', left: 0, right: 0, bottom: 0, top: '35%' },
   over: { padding: 14 },
-  title: { color: '#fff', fontFamily: fonts.display, fontSize: 22 },
+  title: { color: '#fff', fontFamily: fonts.display, fontSize: 20 },
   place: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 2 },
   tag: { position: 'absolute', top: 12, left: 12, backgroundColor: 'rgba(7,6,13,0.6)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  tagText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  tagText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   price: { position: 'absolute', top: 12, right: 12, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, overflow: 'hidden' },
   priceText: { color: '#fff', fontFamily: fonts.displayBold, fontSize: 15 },
   sports: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, padding: 12 },
   chip: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border },
-  chipOn: { borderColor: colors.brandPurple, backgroundColor: colors.soft },
+  chipOn: { borderColor: colors.primary, backgroundColor: colors.soft },
   chipText: { color: colors.muted, fontSize: 12, fontWeight: '600' },
 }));

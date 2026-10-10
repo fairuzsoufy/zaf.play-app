@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
-import { colors, useTheme } from '@/lib/theme';
+import { colors, fonts, useTheme } from '@/lib/theme';
 import { Button, Field, Note } from '@/components/ui';
 import { LegalLinks } from '@/components/LegalLinks';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
@@ -100,7 +100,7 @@ export default function Signup() {
   if (sentTo) {
     return (
       <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginBottom: 8 }}>Check your email</Text>
+        <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginBottom: 8 }}>Check your email</Text>
         <Text style={{ color: colors.muted, marginBottom: 14 }}>
           We sent an email to {sentTo}. Tap the button in it and type the code to confirm your account, then come back here and log in.
         </Text>
@@ -116,7 +116,7 @@ export default function Signup() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
-        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 4 }}>Join Zaf Play</Text>
+        <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginBottom: 4 }}>Join Zaf Play</Text>
         <Text style={{ color: colors.muted, marginBottom: 22 }}>Book courts in seconds.</Text>
         {err && <Note kind="error">{err}</Note>}
         <Field label="Full name" value={fullName} onChangeText={setFullName} autoComplete="name" placeholder="First and last name"
@@ -139,6 +139,11 @@ export default function Signup() {
         <LegalLinks lead="By creating an account you agree to our" style={{ marginBottom: 12 }} />
         <Button title="Create my account" onPress={submit} loading={busy} />
         <Pressable onPress={() => router.replace('/login')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 18 }}>Already have an account? Log in</Text></Pressable>
+        <Pressable onPress={() => router.replace('/signup-owner')} hitSlop={8}>
+          <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 14 }}>
+            Own courts? <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>Sign up as a court owner</Text>
+          </Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );

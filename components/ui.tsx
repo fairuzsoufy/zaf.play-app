@@ -3,27 +3,21 @@ import {
   ActivityIndicator, Animated, Pressable, StyleSheet, Text, TextInput, View,
   type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import MaskedView from '@react-native-masked-view/masked-view';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 
-// The website's brand gradient (blue → purple → pink), used for buttons and anything chosen.
+// The logo's gradient (blue → purple → pink); kept for the logo ring and a few brand touches.
 export const GRADIENT = [colors.brandBlue, colors.brandPurple, colors.brandPink] as const;
 
-// Fills its parent with the gradient; the parent needs overflow: 'hidden' and rounded corners.
+// Fills its parent with the accent colour (buttons, chosen chips); the parent needs overflow: 'hidden' and rounded corners.
 export function GradientFill({ style }: { style?: object }) {
-  return <LinearGradient colors={GRADIENT} start={{ x: 0, y: 0.3 }} end={{ x: 1, y: 0.7 }} style={[StyleSheet.absoluteFill, style]} pointerEvents="none" />;
+  useTheme();
+  return <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.accent }, style]} pointerEvents="none" />;
 }
 
-// Text painted with the brand gradient (like the website's "Connect.").
+// Text in the accent colour.
 export function GradientText({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
-  return (
-    <MaskedView maskElement={<Text style={style}>{children}</Text>}>
-      <LinearGradient colors={GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-        <Text style={[style, { opacity: 0 }]}>{children}</Text>
-      </LinearGradient>
-    </MaskedView>
-  );
+  useTheme();
+  return <Text style={[style, { color: colors.primary }]}>{children}</Text>;
 }
 
 // A big screen title in the website's display font.
@@ -43,15 +37,10 @@ export function PressableScale({ style, children, scaleTo = 0.96, ...rest }: Omi
   );
 }
 
-// A card; `glow` gives it the website's gradient border.
+// A plain card; `glow` gives it a thin accent border to stand out a little.
 export function Card({ children, style, glow }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; glow?: boolean }) {
   const s = useS();
-  if (!glow) return <View style={[s.card, style]}>{children}</View>;
-  return (
-    <LinearGradient colors={GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[s.glowWrap, style && { marginBottom: (StyleSheet.flatten(style) as ViewStyle).marginBottom }]}>
-      <View style={[s.card, s.glowInner, style, { marginBottom: 0 }]}>{children}</View>
-    </LinearGradient>
-  );
+  return <View style={[s.card, glow && { borderColor: colors.primary }, style]}>{children}</View>;
 }
 
 export function Button({
@@ -102,22 +91,14 @@ const useS = themed(() => StyleSheet.create({
     borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   btnSmall: { paddingVertical: 10, paddingHorizontal: 16 },
-  btnPrimary: {
-    backgroundColor: colors.brandPurple,
-    shadowColor: colors.brandPurple, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6,
-  },
+  btnPrimary: { backgroundColor: colors.accent },
   btnGhost: { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border },
-  btnText: { color: '#fff', fontFamily: fonts.displayBold, fontSize: 17, letterSpacing: 0.3 },
+  btnText: { color: '#fff', fontFamily: fonts.displayBold, fontSize: 16 },
   label: { color: colors.muted, marginBottom: 6, fontSize: 13, fontWeight: '600' },
   input: {
     backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1,
     borderRadius: radius.md, color: colors.text, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16,
   },
   note: { borderWidth: 1, borderRadius: radius.md, padding: 12, marginBottom: 14 },
-  card: { backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 14 },
-  glowWrap: {
-    borderRadius: radius.xl, padding: 1.5, marginBottom: 14,
-    shadowColor: colors.brandPurple, shadowOpacity: 0.35, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
-  },
-  glowInner: { borderWidth: 0, borderRadius: radius.xl - 1.5 },
+  card: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 12 },
 }));

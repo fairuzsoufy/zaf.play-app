@@ -19,21 +19,22 @@ const toggle = () => <View style={{ marginRight: 16 }}><ThemeToggle size={18} />
 
 export default function TabsLayout() {
   useTheme();
-  // Android draws under the system buttons: lift the tab bar above them
+  // Android draws under the system buttons: lift the tab bar above them, with some breathing room
   const insets = useSafeAreaInsets();
-  const bottom = Math.max(insets.bottom, 8);
+  const bottom = insets.bottom + 10;
   return (
     <Tabs
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
         headerTintColor: colors.text,
         headerShadowVisible: false,
-        headerTitleStyle: { fontFamily: fonts.display, fontSize: 24 },
-        tabBarLabelStyle: { fontFamily: fonts.displaySemi, fontSize: 12 },
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border, paddingTop: 6, paddingBottom: bottom, height: 56 + bottom },
+        headerTitleStyle: { fontFamily: fonts.display, fontSize: 22 },
+        tabBarLabelStyle: { fontFamily: fonts.displaySemi, fontSize: 12, marginTop: 2 },
+        tabBarAllowFontScaling: false,
+        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border, paddingTop: 8, paddingBottom: bottom, height: 60 + bottom },
         headerRight: toggle,
         sceneStyle: { backgroundColor: colors.bg },
-        tabBarActiveTintColor: colors.brandPink,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
       }}
     >

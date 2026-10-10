@@ -45,9 +45,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#000000",
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 240
+          "backgroundColor": "#F6F6F8",
+          "image": "./assets/zaf-logo.png",
+          "imageWidth": 200,
+          "dark": {
+            "backgroundColor": "#0B0B0F",
+            "image": "./assets/zaf-logo.png"
+          }
         }
       ],
       [
