@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { supabase, uploadPhoto } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, radius, useTheme } from '@/lib/theme';
 import { countdown, egp } from '@/lib/format';
@@ -67,7 +67,6 @@ export default function Pay() {
   async function choose() {
     const r = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: MAX_PROOFS, quality: 0.8,
-      base64: true, // React Native can't read the picked file as bytes with fetch(); this gives us the bytes directly
     });
     if (!r.canceled) setFiles(r.assets.slice(0, MAX_PROOFS));
   }
@@ -80,16 +79,12 @@ export default function Pay() {
     setSending(true);
     const paths: string[] = [];
     for (const f of files) {
-      if (!f.base64) { setSending(false); return setErr('Could not read that screenshot. Please choose it again.'); }
-      const bin = atob(f.base64);
-      const body = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) body[i] = bin.charCodeAt(i);
-      if (body.byteLength > MAX_PROOF_MB * 1024 * 1024) { setSending(false); return setErr(`Each file must be smaller than ${MAX_PROOF_MB} MB.`); }
+      if (f.fileSize && f.fileSize > MAX_PROOF_MB * 1024 * 1024) { setSending(false); return setErr(`Each file must be smaller than ${MAX_PROOF_MB} MB.`); }
       const ext = (f.mimeType?.split('/')[1] || f.uri.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
       const rand = `${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
       const path = `${session.user.id}/${id}-${rand}.${ext}`;
-      const { error } = await supabase.storage.from('payment-proofs').upload(path, body, { contentType: f.mimeType || 'image/jpeg' });
-      if (error) { setSending(false); return setErr(`Upload failed: ${error.message}`); }
+      const upErr = await uploadPhoto('payment-proofs', path, f.uri, f.mimeType || 'image/jpeg');
+      if (upErr) { setSending(false); return setErr(`Upload failed: ${upErr}`); }
       paths.push(path);
     }
     const { error } = await supabase.rpc('submit_payment_proof', { p_booking_id: id, p_proof_path: paths.join(','), p_refund_to: refundTo.trim() });
