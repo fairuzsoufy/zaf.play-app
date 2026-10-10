@@ -9,6 +9,7 @@ import { Button, Card, Field, GradientFill, GradientText, GRADIENT, Note, Pressa
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/Icon';
 import { DeleteAccount } from '@/components/DeleteAccount';
+import { FriendsCard } from '@/components/Friends';
 import { LegalLinks } from '@/components/LegalLinks';
 import { toast } from '@/components/Toast';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
@@ -181,6 +182,8 @@ export default function Profile() {
           </View>
         )}
       </View>
+
+      {me.role === 'player' && <FriendsCard />}
 
       {ref?.code && (
         <Card glow style={{ padding: 14 }}>
