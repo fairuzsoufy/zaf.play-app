@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 import { Button, Field, Note } from '@/components/ui';
 import { SITE_URL, supabase } from '@/lib/supabase';
-import { colors } from '@/lib/theme';
+import { colors, useTheme } from '@/lib/theme';
 
 export default function ForgotPassword() {
+  useTheme();
   const [id, setId] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);

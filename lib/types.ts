@@ -1,4 +1,4 @@
-export type Sport = { id: string; name: string; slug: string; emoji: string | null };
+export type Sport = { id: string; name: string; slug: string; emoji: string | null; icon_url?: string | null };
 
 export type CourtRow = {
   id: string;

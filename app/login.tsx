@@ -3,9 +3,10 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-na
 import { Link, useRouter } from 'expo-router';
 import { Button, Field, Note } from '@/components/ui';
 import { signIn } from '@/lib/auth';
-import { colors } from '@/lib/theme';
+import { colors, useTheme } from '@/lib/theme';
 
 export default function Login() {
+  useTheme();
   const router = useRouter();
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
@@ -53,9 +54,10 @@ export default function Login() {
         <View style={{ alignItems: 'center', marginTop: 18 }}>
           <Link href="/forgot-password" style={{ color: colors.primaryAlt }}>Forgot password?</Link>
         </View>
-        <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 24, fontSize: 13 }}>
-          New here? Sign-up in the app is coming soon — you can create your account on zafplay.com for now.
-        </Text>
+        <View style={{ alignItems: 'center', marginTop: 24 }}>
+          <Text style={{ color: colors.muted, fontSize: 13 }}>New here?</Text>
+          <Link href="/signup" replace style={{ color: colors.primaryAlt, marginTop: 6, fontWeight: '600' }}>Create an account</Link>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
