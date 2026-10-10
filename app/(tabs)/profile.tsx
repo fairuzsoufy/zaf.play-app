@@ -195,7 +195,7 @@ export default function Profile() {
         </Card>
       )}
 
-      <Button title="Log out" onPress={() => supabase.auth.signOut()} />
+      <View style={{ marginTop: 16 }}><Button title="Log out" onPress={() => supabase.auth.signOut()} /></View>
       {me.role === 'player' && <DeleteAccount />}
       <LegalLinks style={{ marginTop: 18 }} />
     </ScrollView>

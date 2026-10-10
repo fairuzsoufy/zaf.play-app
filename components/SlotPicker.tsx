@@ -138,7 +138,7 @@ export function SlotPicker({
 
   //  • nothing chosen yet → this is the START; you get the minimum straight away
   //  • below your booking → moves the FINISH there; above it → moves the START there
-  //  • on your booking → nothing happens (so a stray tap never cancels it)
+  //  • on your booking → clears it (like the website)
   function tapAt(m: number) {
     setNote('');
     if (!isFree(m, m + STEP)) {
@@ -146,10 +146,7 @@ export function SlotPicker({
       return;
     }
     if (chosen) {
-      if (m >= chosen.s && m < chosen.e) {
-        setNote('To change your booking, tap above or below it, or use the − / + buttons under the calendar.');
-        return;
-      }
+      if (m >= chosen.s && m < chosen.e) return commit(null);
       if (m >= chosen.e) return commit(fit(chosen.s, m + STEP));
       let st = Math.max(m, chosen.e - MAX_MIN);
       if (st > m) setNote('The longest booking is 4 hours.');
@@ -197,8 +194,7 @@ export function SlotPicker({
           <Text style={s.rule}>Minimum <Text style={{ fontWeight: '800' }}>{durationText(MIN)}</Text></Text>
           <Text style={s.rule}>Maximum <Text style={{ fontWeight: '800' }}>4 hours</Text></Text>
         </View>
-        <Step n={1}><Text style={s.bold}>Pick when you start.</Text> Tap the time on the calendar — you get {durationText(MIN)} straight away.</Step>
-        <Step n={2}><Text style={s.bold}>Need longer?</Text> Tap lower to move the <Text style={s.bold}>finish</Text>, tap higher to move the <Text style={s.bold}>start</Text>, or use the − / + buttons under the calendar.</Step>
+        <Step n={1}><Text style={s.bold}>Tap your start time.</Text> Tap lower to move the <Text style={s.bold}>finish</Text>, higher to move the <Text style={s.bold}>start</Text>, or tap your booking to clear it.</Step>
         {onBusyTap && <Text style={s.howtoText}><Text style={s.bold}>Booked?</Text> Tap it to be told if it frees up.</Text>}
       </View>
 
@@ -224,7 +220,51 @@ export function SlotPicker({
         })}
       </ScrollView>
 
-      {note ? <View style={s.note}><Text style={s.noteText}>{note}</Text></View> : null}
+      <View style={s.yours}>
+        {chosen ? (
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.muted}>{current ? 'Your new time' : 'Your booking'}</Text>
+                <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14, marginTop: 1 }} numberOfLines={1}>
+                  {dateLabel(`${date}T12:00:00Z`)} · {clock(chosen.s)} → {clock(chosen.e)}
+                  <Text style={[s.muted, { fontWeight: '400' }]}> · {durationText(chosen.e - chosen.s)}</Text>
+                </Text>
+              </View>
+              <Pressable onPress={() => { setNote(''); commit(null); }} hitSlop={10}>
+                <Text style={{ color: colors.muted, textDecorationLine: 'underline', fontSize: 13 }}>Clear</Text>
+              </Pressable>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+              {([['start', 'Starts', chosen.s], ['end', 'Finishes', chosen.e]] as const).map(([which, label, m]) => (
+                <View key={which} style={s.stepper}>
+                  <Text style={s.stepLabel}>{label}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Pressable style={[s.step, !canNudge(which, -1) && { opacity: 0.3 }]} disabled={!canNudge(which, -1)} onPress={() => nudge(which, -1)}
+                      accessibilityLabel={`${label === 'Starts' ? 'Start' : 'Finish'} 30 minutes earlier`}>
+                      <Text style={s.stepText}>−</Text>
+                    </Pressable>
+                    <Text style={s.stepTime}>{clock(m)}</Text>
+                    <Pressable style={[s.step, !canNudge(which, 1) && { opacity: 0.3 }]} disabled={!canNudge(which, 1)} onPress={() => nudge(which, 1)}
+                      accessibilityLabel={`${label === 'Starts' ? 'Start' : 'Finish'} 30 minutes later`}>
+                      <Text style={s.stepText}>+</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : (
+          <Text style={{ color: colors.text, fontSize: 14 }}>
+            <Text style={s.bold}>Tap the time you want to start.</Text>{' '}
+            <Text style={s.muted}>You get {durationText(MIN)} straight away and can make it longer.</Text>
+          </Text>
+        )}
+        {/* fixed height, so a message never pushes the calendar down */}
+        <Text style={[s.noteLine, note ? { color: colors.noteText } : null]} numberOfLines={2}>
+          {note || (chosen ? `− / + move the time by 30 minutes. Minimum ${durationText(MIN)}, maximum 4 hours.` : '')}
+        </Text>
+      </View>
 
       {!hours ? (
         <View style={[s.cal, { padding: 24, alignItems: 'center' }]}>
@@ -297,46 +337,6 @@ export function SlotPicker({
         </View>
       )}
 
-      <View style={s.yours}>
-        {chosen ? (
-          <>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.muted}>{current ? 'Your new time' : 'Your booking'}</Text>
-                <Text style={{ color: colors.text, fontWeight: '800', fontSize: 16, marginTop: 2 }}>
-                  {dateLabel(`${date}T12:00:00Z`)} · {clock(chosen.s)} → {clock(chosen.e)}
-                </Text>
-                <Text style={s.muted}>
-                  {chosen.e > DAY ? `(${dateLabel(`${addDays(date, 1)}T12:00:00Z`).split(' ')[0]} early morning) · ` : ''}{durationText(chosen.e - chosen.s)}
-                </Text>
-              </View>
-              <Pressable onPress={() => { setNote(''); commit(null); }} hitSlop={10}>
-                <Text style={{ color: colors.muted, textDecorationLine: 'underline', fontSize: 13 }}>Clear</Text>
-              </Pressable>
-            </View>
-            {([['start', 'Starts', chosen.s], ['end', 'Finishes', chosen.e]] as const).map(([which, label, m]) => (
-              <View key={which} style={s.stepper}>
-                <Text style={s.stepLabel}>{label}</Text>
-                <Pressable style={[s.step, !canNudge(which, -1) && { opacity: 0.3 }]} disabled={!canNudge(which, -1)} onPress={() => nudge(which, -1)}
-                  accessibilityLabel={`${label === 'Starts' ? 'Start' : 'Finish'} 30 minutes earlier`}>
-                  <Text style={s.stepText}>−</Text>
-                </Pressable>
-                <Text style={s.stepTime}>{clock(m)}</Text>
-                <Pressable style={[s.step, !canNudge(which, 1) && { opacity: 0.3 }]} disabled={!canNudge(which, 1)} onPress={() => nudge(which, 1)}
-                  accessibilityLabel={`${label === 'Starts' ? 'Start' : 'Finish'} 30 minutes later`}>
-                  <Text style={s.stepText}>+</Text>
-                </Pressable>
-              </View>
-            ))}
-            <Text style={[s.muted, { fontSize: 12, marginTop: 8 }]}>− / + move the time by 30 minutes. Minimum {durationText(MIN)}, maximum 4 hours.</Text>
-          </>
-        ) : (
-          <Text style={{ color: colors.text }}>
-            <Text style={s.bold}>Step 1:</Text> tap the time you want to start on the calendar.{' '}
-            <Text style={s.muted}>You get {durationText(MIN)} straight away and can make it longer.</Text>
-          </Text>
-        )}
-      </View>
     </View>
   );
 }
@@ -402,11 +402,12 @@ const useS = themed(() => StyleSheet.create({
   evCurrent: { backgroundColor: 'rgba(16,185,129,0.14)', borderWidth: 2, borderColor: colors.current, justifyContent: 'center' },
   evText: { fontSize: 11, lineHeight: 14 },
 
-  yours: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: 14, marginTop: 12 },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  stepLabel: { width: 70, color: colors.muted, fontWeight: '600', fontSize: 13 },
-  step: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: colors.text, fontSize: 22, fontWeight: '700' },
-  stepTime: { minWidth: 84, textAlign: 'center', color: colors.text, fontWeight: '700', fontSize: 15 },
+  yours: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 10, marginBottom: 12, height: 126 },
+  stepper: { flex: 1 },
+  stepLabel: { color: colors.muted, fontWeight: '600', fontSize: 12, marginBottom: 3 },
+  step: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  stepTime: { textAlign: 'center', color: colors.text, fontWeight: '700', fontSize: 13 },
+  noteLine: { position: 'absolute', left: 10, right: 10, bottom: 8, fontSize: 12, lineHeight: 16, color: colors.muted },
   muted: { color: colors.muted, fontSize: 13 },
 }));

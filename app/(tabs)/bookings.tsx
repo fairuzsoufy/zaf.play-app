@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Linking, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -58,16 +58,19 @@ export default function Bookings() {
     setRefreshing(false);
   }, [uid]);
 
+  const loadRef = useRef(load);
+  loadRef.current = load;
   useFocusEffect(useCallback(() => { load(); }, [load]));
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   // approvals, refunds and cancellations show up without pulling down
   useEffect(() => {
     if (!uid) return;
-    const ch = supabase.channel(`my-bookings-${uid}`)
-      .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'bookings', filter: `user_id=eq.${uid}` }, () => load())
+    // a fresh name every time: removeChannel is async, so reusing a name hands back the old, already-subscribed channel
+    const ch = supabase.channel(`my-bookings-${uid}-${Date.now()}`)
+      .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'bookings', filter: `user_id=eq.${uid}` }, () => loadRef.current())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [uid, load]);
+  }, [uid]);
 
   const holdExpired = (b: any) => b.status === 'pending' && b.payment_status === 'unpaid' && b.hold_expires_at && new Date(b.hold_expires_at).getTime() <= now;
   const requestOpen = (b: any) => b.cancel_request_status === 'pending' && ['pending', 'confirmed'].includes(b.status);
