@@ -5,8 +5,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, radius, themed } from '@/lib/theme';
-import { cairoToDate, dateLabel, durationText, egp, timeLabel } from '@/lib/format';
-import { FREE_CHANGE_HOURS, HOLD_MINUTES, INSTAPAY_FEE_TEXT, instapayFee, isLate, rescheduleCredit } from '@/lib/payment';
+import { cairoToDate, countdown, dateLabel, durationText, egp, timeLabel } from '@/lib/format';
+import { FREE_CHANGE_HOURS, FREE_CHANGE_MINUTES, freeChangeLeftMs, HOLD_MINUTES, INSTAPAY_FEE_TEXT, instapayFee, isLate, rescheduleCredit } from '@/lib/payment';
+import { PolicyNotice } from '@/components/PolicyNotice';
 import { Button, Note } from '@/components/ui';
 import { toast } from '@/components/Toast';
 import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
@@ -30,6 +31,8 @@ export default function ChangeBooking() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
 
   const loadBusy = useCallback(async (courtId: string) => {
     const { data } = await supabase.rpc('court_busy_slots', { p_court_id: courtId });
@@ -41,7 +44,7 @@ export default function ChangeBooking() {
     (async () => {
       const { data } = await supabase
         .from('bookings')
-        .select(`id,court_id,sport_id,start_time,end_time,status,payment_status,total_price,
+        .select(`id,court_id,sport_id,start_time,end_time,status,payment_status,total_price,confirmed_at,rescheduled_from,
           booking_extras(extra_id,name,unit_price,qty,amount),sport:sports(name),
           court:courts(id,name,is_indoor,late_fee_percent,min_booking_minutes,bookable_until,court_sports(sport_id,price_per_hour))`)
         .eq('id', id).maybeSingle();
@@ -74,7 +77,9 @@ export default function ChangeBooking() {
   if (!canChange) return <Text style={st.center}>This booking can't be changed. Only paid, upcoming bookings can.</Text>;
 
   const fee = Number(b.court?.late_fee_percent ?? 50);
-  const late = isLate(b.start_time);
+  // the first 10 minutes after confirmation: no late fee, even if the game is close (same as the website and the database)
+  const freeLeft = freeChangeLeftMs(b, now);
+  const late = isLate(b.start_time) && freeLeft <= 0;
   const paid = Number(b.total_price);
   const booked = (b.booking_extras ?? []) as any[];
   const oldExtras = booked.reduce((a, x) => a + Number(x.amount), 0);
@@ -143,7 +148,9 @@ export default function ChangeBooking() {
 
       <View style={[st.box, { borderColor: late && !keep ? colors.danger : colors.success }]}>
         <Text style={{ color: colors.text, lineHeight: 20 }}>
-          {keep || kind === 'none'
+          {freeLeft > 0 && isLate(b.start_time) && !keep && kind !== 'none'
+            ? `✅ Free change: you are within the first ${FREE_CHANGE_MINUTES} minutes after your booking was confirmed (${countdown(freeLeft)} left), so there is no late fee. The full ${egp(paid)} you paid counts toward the new time. Confirm before the timer ends.`
+            : keep || kind === 'none'
             ? `✅ Everything you paid (${egp(paid)}) still counts. Add time or extras and you only pay the difference.`
             : late
             ? `⚠️ Your game starts in less than ${FREE_CHANGE_HOURS} hours, so ${fee}% of what you paid (${egp(paid - credit)}) is kept as a fee. ${egp(credit)} counts toward the new time.`
@@ -210,6 +217,8 @@ export default function ChangeBooking() {
           </>
         )}
       </View>
+
+      <PolicyNotice feePercent={fee} showPayment={pick.start === null || due > 0} />
 
       {err && <Note kind="error">{err}</Note>}
       <Button

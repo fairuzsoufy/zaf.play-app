@@ -12,6 +12,7 @@ import { cleanInstapay, HOLD_MINUTES, INSTAPAY_HELP, isInstapay, MAX_PROOFS, MAX
 import { Button, Field, Note } from '@/components/ui';
 import { toast } from '@/components/Toast';
 import { askToNotify } from '@/components/BookingAlerts';
+import { PolicyNotice } from '@/components/PolicyNotice';
 import { dateLabel, timeLabel } from '@/lib/format';
 
 export default function Pay() {
@@ -41,7 +42,7 @@ export default function Pay() {
       .from('bookings')
       .select(`id,start_time,end_time,status,payment_status,total_price,amount_due,credit_amount,credit_used,hold_expires_at,rescheduled_from,
         cancellation_reason,discount_amount,booking_extras(name,qty,amount),payments(created_at,status),sport:sports(name),
-        court:courts(id,name,is_indoor,facility:facilities(name,city))`)
+        court:courts(id,name,is_indoor,late_fee_percent,facility:facilities(name,city))`)
       .eq('id', id).maybeSingle();
     setB(data);
     setLoading(false);
@@ -188,6 +189,7 @@ export default function Pay() {
             {err && <Note kind="error">{err}</Note>}
             <Button title="Send payment screenshot" onPress={submit} loading={sending} />
           </View>
+          <PolicyNotice feePercent={Number(b.court?.late_fee_percent ?? 50)} />
         </View>
       )}
     </ScrollView>

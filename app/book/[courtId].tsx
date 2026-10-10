@@ -9,6 +9,7 @@ import { cairoDate, cairoToDate, dateLabel, durationText, egp } from '@/lib/form
 import { HOLD_MINUTES } from '@/lib/payment';
 import { Button, Note } from '@/components/ui';
 import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
+import { PolicyNotice } from '@/components/PolicyNotice';
 
 type Extra = { id: string; name: string; price: number; max_qty: number; is_required: boolean; sport_id: string | null };
 
@@ -197,6 +198,8 @@ export default function BookCourt() {
           Next: pay by InstaPay and upload the screenshot. Your time is held for {HOLD_MINUTES} minutes.
         </Text>
       </View>
+
+      <PolicyNotice feePercent={Number(court.late_fee_percent ?? 50)} />
 
       {err && <Note kind="error">{err}</Note>}
       <Button title={session ? 'Continue to payment →' : 'Log in to continue →'} onPress={book} loading={saving} disabled={pick.start === null && !!session} />

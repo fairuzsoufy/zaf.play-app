@@ -40,3 +40,13 @@ export function cancelSplitPreview(total: number, feePercent: number, late: bool
 export function rescheduleCredit(total: number, feePercent: number, late: boolean) {
   return late ? Math.round(total * (100 - feePercent)) / 100 : total;
 }
+
+// after a booking is confirmed, its date/time can be changed for free for this long (even if late) — same as the website
+export const FREE_CHANGE_MINUTES = 10;
+// Milliseconds left of the free change window: the first FREE_CHANGE_MINUTES after the ORIGINAL booking was confirmed
+// (a booking that is itself a change has no new window). Same rule as the database (reschedule_booking). 0 = no window.
+export function freeChangeLeftMs(b: { confirmed_at?: string | null; rescheduled_from?: string | null; start_time?: string | null }, nowMs = Date.now()) {
+  if (!b.confirmed_at || b.rescheduled_from) return 0;
+  if (b.start_time && new Date(b.start_time).getTime() <= nowMs) return 0;
+  return Math.max(0, new Date(b.confirmed_at).getTime() + FREE_CHANGE_MINUTES * 60000 - nowMs);
+}

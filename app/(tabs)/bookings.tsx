@@ -7,17 +7,18 @@ import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed } from '@/lib/theme';
 import { countdown, dateLabel, egp, timeLabel } from '@/lib/format';
 import {
-  cancelSplitPreview, cleanInstapay, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT, INSTAPAY_HELP, isInstapay, isLate, REVIEW_MINUTES,
+  cancelSplitPreview, cleanInstapay, FREE_CHANGE_HOURS, FREE_CHANGE_MINUTES, freeChangeLeftMs, INSTAPAY_FEE_TEXT, INSTAPAY_HELP, isInstapay, isLate, REVIEW_MINUTES,
 } from '@/lib/payment';
 import { Button, Field, GradientFill, Note } from '@/components/ui';
 import { RefundTracker, refundInfo } from '@/components/RefundTracker';
+import { PolicyNotice } from '@/components/PolicyNotice';
 
 type Tab = 'upcoming' | 'past' | 'cancelled';
 
 const SELECT = `id,start_time,end_time,total_price,status,payment_status,hold_expires_at,amount_due,discount_amount,
   booking_extras(name,qty),open_games(id),credit_used,credit_issued,cancel_request_as_credit,rescheduled_from,credit_amount,
   retained_amount,refund_amount,refund_fee,refund_status,refund_to,refunded_at,refund_proof_path,cancel_request_status,cancel_request_decline_reason,cancel_requested_at,cancel_request_refund_to,
-  cancelled_at,cancelled_by,cancellation_reason,created_at,payments(created_at,status),
+  cancelled_at,cancelled_by,cancellation_reason,created_at,confirmed_at,payments(created_at,status),
   sport:sports(name,slug),court:courts(id,name,is_indoor,maps_url,late_fee_percent,facility:facilities(name,city))`;
 
 function badge(b: any, now: number): { label: string; color: string } {
@@ -73,7 +74,7 @@ export default function Bookings() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
   // tick every second only while a countdown is on screen (redrawing the list every second can swallow taps on Android)
   const ticking = rows.some((b) => (b.status === 'pending' && ['unpaid', 'pending_review'].includes(b.payment_status))
-    || b.cancel_request_status === 'pending' || b.refund_status === 'due');
+    || b.cancel_request_status === 'pending' || b.refund_status === 'due' || freeChangeLeftMs(b) > 0);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), ticking ? 1000 : 30000); return () => clearInterval(t); }, [ticking]);
   // approvals, refunds and cancellations show up without pulling down
   useEffect(() => {
@@ -205,6 +206,16 @@ export default function Bookings() {
                   )}
                 </View>
               </Pressable>
+            )}
+
+            {/* the first minutes after confirmation: the date / time can be changed for free */}
+            {paidUpcoming && b.status === 'confirmed' && !requestOpen(b) && !pendingChangeFor.has(b.id) && freeChangeLeftMs(b, now) > 0 && (
+              <View style={s.free}>
+                <Text style={{ color: colors.text, flex: 1, fontSize: 13 }}>
+                  ⏱ Free change for <Text style={{ fontWeight: '800', fontVariant: ['tabular-nums'] }}>{countdown(freeChangeLeftMs(b, now))}</Text> more, no late fee in the first {FREE_CHANGE_MINUTES} minutes, even if your game is close.
+                </Text>
+                <Button small title="Change" onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })} />
+              </View>
             )}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
@@ -350,6 +361,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
         </View>
       )}
       <View style={{ marginTop: 10 }}><Field label="Reason (optional)" value={reason} onChangeText={setReason} /></View>
+      <PolicyNotice feePercent={fee} showPayment={false} />
       {err && <Note kind="error">{err}</Note>}
       <Button title={moneySent ? 'Send cancellation request' : 'Yes, cancel it'} onPress={send} loading={busy} />
       <Pressable onPress={onClose}><Text style={[s.link, { textAlign: 'center' }]}>Keep my booking</Text></Pressable>
@@ -365,6 +377,10 @@ const useS = themed(() => StyleSheet.create({
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
   action: { paddingVertical: 4, paddingRight: 4 },
+  free: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, padding: 12, borderRadius: radius.md,
+    backgroundColor: 'rgba(46,211,160,0.1)', borderWidth: 1, borderColor: colors.success,
+  },
   review: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, padding: 12, borderRadius: radius.md,
     backgroundColor: colors.soft, borderWidth: 1, borderColor: colors.borderStrong,
