@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-na
 import { Link, useRouter } from 'expo-router';
 import { Button, Field, Note } from '@/components/ui';
 import { signIn } from '@/lib/auth';
-import { colors, fonts, useTheme } from '@/lib/theme';
+import { colors, useTheme } from '@/lib/theme';
 
 export default function Login() {
   useTheme();
@@ -26,7 +26,7 @@ export default function Login() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginBottom: 4 }}>Welcome back</Text>
+        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 4 }}>Welcome back</Text>
         <Text style={{ color: colors.muted, marginBottom: 22 }}>Log in with your email or username.</Text>
         {err && <Note kind="error">{err}</Note>}
         <Field

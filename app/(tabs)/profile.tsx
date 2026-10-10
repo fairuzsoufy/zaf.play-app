@@ -5,7 +5,8 @@ import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 import { dateLabel, egp } from '@/lib/format';
-import { Button, Card, Field, GradientFill, GradientText, Note, PressableScale } from '@/components/ui';
+import { Button, Card, Field, GradientFill, GradientText, GRADIENT, Note, PressableScale } from '@/components/ui';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/Icon';
 import { DeleteAccount } from '@/components/DeleteAccount';
 import { LegalLinks } from '@/components/LegalLinks';
@@ -14,7 +15,7 @@ import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components
 import { capitalizeWords, FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, PHONE_HELP } from '@/lib/validate';
 
 const KIND: Record<string, string> = { earned: 'Added from a cancelled booking', used: 'Used on a booking', restored: 'Returned (booking was not paid)' };
-const useCard = themed(() => ({ backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border }));
+const useCard = themed(() => ({ backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border }));
 
 export default function Profile() {
   const card = useCard();
@@ -111,13 +112,16 @@ export default function Profile() {
         <Note kind="ok">You are logged in as {me.role}. Owner and staff tools are on zafplay.com.</Note>
       )}
 
-      {/* who you are: initials and name */}
-      <View style={[card, { alignItems: 'center', paddingVertical: 22 }]}>
-        <View style={{ alignItems: 'center' }}>
-          <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: colors.primary, fontFamily: fonts.display, fontSize: 28 }}>{initials}</Text>
-          </View>
-          <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 22, marginTop: 10 }}>{me.full_name || 'Your name'}</Text>
+      {/* who you are: gradient banner, initials, name */}
+      <View style={[card, { padding: 0, overflow: 'hidden' }]}>
+        <View style={{ height: 86, overflow: 'hidden' }}><GradientFill /></View>
+        <View style={{ alignItems: 'center', marginTop: -44, paddingHorizontal: 16, paddingBottom: 18 }}>
+          <LinearGradient colors={GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 88, height: 88, borderRadius: 44, padding: 3 }}>
+            <View style={{ flex: 1, borderRadius: 42, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' }}>
+              <GradientText style={{ fontFamily: fonts.display, fontSize: 32 }}>{initials}</GradientText>
+            </View>
+          </LinearGradient>
+          <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginTop: 8 }}>{me.full_name || 'Your name'}</Text>
           {me.username ? <Text style={{ color: colors.primary, fontWeight: '700', marginTop: 2 }}>@{me.username}</Text> : null}
           {credit !== null && credit > 0 && (
             <View style={{ marginTop: 10, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.soft }}>
@@ -183,7 +187,7 @@ export default function Profile() {
           <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 17 }}>🎁 Invite friends · both get {ref.percent}% off</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
             <View style={{ flex: 1, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong, paddingVertical: 8, alignItems: 'center' }}>
-              <GradientText style={{ fontFamily: fonts.display, fontSize: 20, letterSpacing: 1.5 }}>{ref.code}</GradientText>
+              <GradientText style={{ fontFamily: fonts.display, fontSize: 22, letterSpacing: 2 }}>{ref.code}</GradientText>
             </View>
             <Button small title="Share" onPress={() => Share.share({ message: shareText })} />
             <PressableScale onPress={() => Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareText)}`)} accessibilityLabel="Share on WhatsApp"

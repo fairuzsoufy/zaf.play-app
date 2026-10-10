@@ -1,20 +1,19 @@
 import 'expo-sqlite/localStorage/install';
 import { createContext, createElement, useContext, useState, type ReactNode } from 'react';
 
-// Calm neutral surfaces with one accent colour (the logo's violet) for buttons and anything chosen.
-// The logo's blue → purple → pink gradient is kept for the logo itself.
+// Same colours as the website (app/globals.css there): near-black "ink" in dark mode, white in light mode,
+// and the logo's blue → purple → pink gradient for buttons and anything chosen.
 const dark = {
-  bg: '#0B0B0F',
-  card: '#15151B',
-  cardAlt: '#1E1E26',
-  border: '#26262F',
-  borderStrong: '#363642',
-  text: '#F5F5F7',
-  muted: '#9B9BA8',
-  primary: '#A594FF', // accent text (links, small highlights)
-  primaryAlt: '#A594FF', // links
-  accent: '#7357F6', // filled buttons and chosen items (white text on it)
-  soft: '#262142', // light accent background (pills, pressed)
+  bg: '#07060D',
+  card: '#11101C',
+  cardAlt: '#1A1828',
+  border: '#25233A',
+  borderStrong: '#34304F',
+  text: '#F4F5FB',
+  muted: '#9A95B6',
+  primary: '#A38BFF', // accent text (links, small highlights)
+  primaryAlt: '#7C9BFF', // links
+  soft: '#2A2350', // light accent background (pills, pressed)
   danger: '#FF5C6C',
   success: '#2ED3A0',
   warning: '#FFB84D',
@@ -34,17 +33,16 @@ const dark = {
 export type Palette = typeof dark;
 
 const light: Palette = {
-  bg: '#F6F6F8',
+  bg: '#F7F6FB',
   card: '#FFFFFF',
-  cardAlt: '#F2F2F5',
-  border: '#E8E8EE',
-  borderStrong: '#D4D4DD',
-  text: '#121217',
-  muted: '#6E6E7A',
+  cardAlt: '#F1EFF8',
+  border: '#E7E4F2',
+  borderStrong: '#D3CFE6',
+  text: '#171717',
+  muted: '#6B6785',
   primary: '#5B3FD6',
-  primaryAlt: '#5B3FD6',
-  accent: '#5B3FD6',
-  soft: '#EFEBFF',
+  primaryAlt: '#3B6CF0',
+  soft: '#ECE7FD',
   danger: '#DC2650',
   success: '#0F9F6E',
   warning: '#B7791F',
@@ -61,7 +59,7 @@ const light: Palette = {
   brandPink: '#F2507A',
 };
 
-export const radius = { sm: 8, md: 12, lg: 16, xl: 20 };
+export const radius = { sm: 8, md: 12, lg: 18, xl: 24 };
 
 export type Scheme = 'dark' | 'light';
 const THEME_KEY = 'zaf-theme'; // same key as the website
@@ -103,9 +101,9 @@ export function themed<T>(make: () => T): () => T {
   };
 }
 
-// Inter for titles, numbers and buttons: plain and upright, easy to read. Loaded in app/_layout.tsx.
+// The website's display font (Saira, italic, heavy) for titles, numbers and buttons. Loaded in app/_layout.tsx.
 export const fonts = {
-  display: 'Inter-Bold',
-  displayBold: 'Inter-SemiBold',
-  displaySemi: 'Inter-Medium',
+  display: 'Saira-ExtraBoldItalic',
+  displayBold: 'Saira-BoldItalic',
+  displaySemi: 'Saira-SemiBoldItalic',
 };

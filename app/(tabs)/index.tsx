@@ -10,7 +10,8 @@ import { colors, fonts, radius, themed } from '@/lib/theme';
 import { CourtCard } from '@/components/CourtCard';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
-import { Card, GradientFill, Note, PressableScale } from '@/components/ui';
+import { Card, GradientFill, GradientText, GRADIENT, Note, PressableScale } from '@/components/ui';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { CourtRow, Sport } from '@/lib/types';
 
 
@@ -55,11 +56,15 @@ function SportTile({ sport, count, index, onPress }: { sport: Sport; count: numb
         style={[s.tile, empty && { opacity: 0.45 }]}
         scaleTo={0.94}
       >
-        <View style={s.tileIcon}>
-          <SportIcon sport={sport} size={36} />
-        </View>
+        <LinearGradient colors={empty ? [colors.border, colors.border] : GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.ring}>
+          <View style={s.tileIcon}>
+            <SportIcon sport={sport} size={44} />
+          </View>
+        </LinearGradient>
         <Text style={s.tileName} numberOfLines={1}>{sport.name}</Text>
-        <Text style={[s.tileCount, !empty && { color: colors.primary }]}>{countLabel(count)}</Text>
+        <View style={[s.countPill, !empty && { backgroundColor: colors.soft }]}>
+          <Text style={[s.tileCount, !empty && { color: colors.primary }]}>{countLabel(count)}</Text>
+        </View>
       </PressableScale>
     </Animated.View>
   );
@@ -159,15 +164,15 @@ export default function Courts() {
       >
         <View style={[s.toggle, { top: insets.top + 8 }]}><ThemeToggle /></View>
         <View style={s.brand}>
-          <Logo size={110} />
-          <Text style={s.brandTag}>
-            Play. Compete. <Text style={{ color: colors.brandPink, fontFamily: fonts.display }}>Connect.</Text>
-          </Text>
+          <Logo size={130} />
+          <View style={{ flexDirection: 'row', marginTop: 6 }}>
+            <Text style={s.brandTag}>Play. Compete. </Text>
+            <GradientText style={[s.brandTag, { fontFamily: fonts.display }]}>Connect.</GradientText>
+          </View>
         </View>
 
         {err && <Note kind="error">{err}</Note>}
 
-        <Text style={s.section}>Choose a sport</Text>
 
         <View style={s.grid}>
           {orderedSports.map((x, i) => (
@@ -230,30 +235,30 @@ const useS = themed(() => StyleSheet.create({
   center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
   toggle: { position: 'absolute', right: 16, zIndex: 2 },
-  brand: { alignItems: 'center', marginTop: 4, marginBottom: 20 },
-  brandTag: { color: colors.muted, fontFamily: fonts.displaySemi, fontSize: 14, marginTop: 4 },
+  brand: { alignItems: 'center', marginBottom: 18 },
+  brandTag: { color: colors.muted, fontStyle: 'italic', fontSize: 15, letterSpacing: 0.4, marginTop: 6 },
 
-  section: { color: colors.text, fontFamily: fonts.display, fontSize: 18, marginBottom: 10 },
 
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
-  tileWrap: { width: '50%', padding: 5 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
+  tileWrap: { width: '50%', padding: 6 },
   tile: {
-    backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
-    paddingVertical: 18, paddingHorizontal: 14,
+    backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border,
+    paddingVertical: 22, paddingHorizontal: 12, alignItems: 'center',
+    shadowColor: colors.brandPurple, shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 3,
   },
-  tileIcon: {
-    width: 56, height: 56, borderRadius: 16, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-  },
-  tileName: { color: colors.text, fontFamily: fonts.displayBold, fontSize: 16 },
-  tileCount: { color: colors.muted, fontSize: 13, marginTop: 2 },
+  ring: { width: 82, height: 82, borderRadius: 41, padding: 2.5, marginBottom: 12 },
+  tileIcon: { flex: 1, borderRadius: 40, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' },
+  tileName: { color: colors.text, fontFamily: fonts.displayBold, fontSize: 18 },
+  countPill: { marginTop: 6, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: colors.cardAlt },
+  tileCount: { color: colors.muted, fontSize: 12, fontWeight: '700' },
 
   back: { alignSelf: 'flex-start', paddingVertical: 6 },
   backText: { color: colors.primaryAlt, fontSize: 16, fontWeight: '600' },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
   bannerIcon: {
-    width: 56, height: 56, borderRadius: 16, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center',
+    width: 60, height: 60, borderRadius: 30, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center',
   },
-  bannerTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 22 },
+  bannerTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 26 },
   bannerSub: { color: colors.muted, marginTop: 2 },
   change: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.cardAlt },
   changeText: { color: colors.text, fontWeight: '600' },

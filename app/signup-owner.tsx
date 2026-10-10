@@ -144,7 +144,7 @@ export default function OwnerSignup() {
         <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 14, marginBottom: 16 }}>
           <Pressable onPress={() => setHasCo(!hasCo)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 15 }}>I have a co-owner</Text>
-            <Switch value={hasCo} onValueChange={setHasCo} trackColor={{ true: colors.accent, false: colors.borderStrong }} thumbColor="#fff" />
+            <Switch value={hasCo} onValueChange={setHasCo} trackColor={{ true: colors.brandPurple, false: colors.borderStrong }} thumbColor="#fff" />
           </Pressable>
           {hasCo && (
             <View style={{ marginTop: 14 }}>

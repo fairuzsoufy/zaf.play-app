@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Linking, Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,14 +11,8 @@ import { countdown, egp } from '@/lib/format';
 import { cleanInstapay, HOLD_MINUTES, INSTAPAY_HELP, isInstapay, MAX_PROOFS, MAX_PROOF_MB, REVIEW_MINUTES, ZAF_INSTAPAY_LINK } from '@/lib/payment';
 import { Button, Field, Note } from '@/components/ui';
 import { toast } from '@/components/Toast';
+import { askToNotify } from '@/components/BookingAlerts';
 import { dateLabel, timeLabel } from '@/lib/format';
-
-function base64ToBytes(b64: string): Uint8Array {
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
 
 export default function Pay() {
   const insets = useSafeAreaInsets();
@@ -33,6 +27,14 @@ export default function Pay() {
   const [refundTo, setRefundTo] = useState('');
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const scroll = useRef<ScrollView>(null);
+  const typingRefund = useRef(false);
+
+  // the InstaPay field is near the bottom: once the keyboard is up, bring it (and the Send button) right above it
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidShow', () => { if (typingRefund.current) scroll.current?.scrollToEnd({ animated: true }); });
+    return () => sub.remove();
+  }, []);
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -64,7 +66,8 @@ export default function Pay() {
 
   async function choose() {
     const r = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: MAX_PROOFS, quality: 0.8, base64: true,
+      mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: MAX_PROOFS, quality: 0.8,
+      base64: true, // React Native can't read the picked file as bytes with fetch(); this gives us the bytes directly
     });
     if (!r.canceled) setFiles(r.assets.slice(0, MAX_PROOFS));
   }
@@ -77,8 +80,10 @@ export default function Pay() {
     setSending(true);
     const paths: string[] = [];
     for (const f of files) {
-      // fetch(uri).arrayBuffer() returns a few junk bytes for Android photos, so read the picture from the picker's base64
-      const body: ArrayBuffer | Uint8Array = f.base64 ? base64ToBytes(f.base64) : await (await fetch(f.uri)).arrayBuffer();
+      if (!f.base64) { setSending(false); return setErr('Could not read that screenshot. Please choose it again.'); }
+      const bin = atob(f.base64);
+      const body = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) body[i] = bin.charCodeAt(i);
       if (body.byteLength > MAX_PROOF_MB * 1024 * 1024) { setSending(false); return setErr(`Each file must be smaller than ${MAX_PROOF_MB} MB.`); }
       const ext = (f.mimeType?.split('/')[1] || f.uri.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
       const rand = `${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
@@ -91,6 +96,7 @@ export default function Pay() {
     setSending(false);
     if (error) { setErr(error.message); load(); return; }
     setFiles([]);
+    askToNotify();
     toast("Payment sent! We'll confirm it shortly.");
     router.replace('/bookings');
   }
@@ -107,7 +113,8 @@ export default function Pay() {
   const extrasSum = (b.booking_extras ?? []).reduce((a: number, x: any) => a + Number(x.amount), 0);
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior="padding" keyboardVerticalOffset={insets.top + (Platform.OS === 'ios' ? 44 : 56)}>
+    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: isChange ? 'Pay for your change' : 'Complete your booking' }} />
       <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{b.court?.name} · {b.sport?.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4 }}>{b.court?.facility?.name}, {b.court?.facility?.city}</Text>
@@ -177,7 +184,9 @@ export default function Pay() {
 
             <View style={{ height: 14 }} />
             <Field label="Your InstaPay for refunds" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))}
-              placeholder="e.g. 01012345678" keyboardType="number-pad" maxLength={11} autoCorrect={false} />
+              placeholder="e.g. 01012345678" keyboardType="number-pad" maxLength={11} autoCorrect={false}
+              onFocus={() => { typingRefund.current = true; setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 300); }}
+              onBlur={() => { typingRefund.current = false; }} />
             <Text style={{ color: colors.muted, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
               If this booking is ever cancelled, your money goes back here. {INSTAPAY_HELP}
             </Text>
@@ -187,5 +196,6 @@ export default function Pay() {
         </View>
       )}
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

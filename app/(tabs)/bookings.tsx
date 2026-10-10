@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Linking, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -15,7 +16,7 @@ type Tab = 'upcoming' | 'past' | 'cancelled';
 const SELECT = `id,start_time,end_time,total_price,status,payment_status,hold_expires_at,amount_due,discount_amount,
   booking_extras(name,qty),open_games(id),credit_used,credit_issued,cancel_request_as_credit,rescheduled_from,credit_amount,
   retained_amount,refund_amount,refund_fee,refund_status,refund_to,refunded_at,cancel_request_status,cancel_request_decline_reason,
-  cancelled_at,cancelled_by,cancellation_reason,created_at,
+  cancelled_at,cancelled_by,cancellation_reason,created_at,payments(created_at,status),
   sport:sports(name,slug),court:courts(id,name,is_indoor,maps_url,late_fee_percent,facility:facilities(name,city))`;
 
 function badge(b: any, now: number): { label: string; color: string } {
@@ -31,6 +32,7 @@ function badge(b: any, now: number): { label: string; color: string } {
 
 export default function Bookings() {
   const s = useS();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<any[]>([]);
@@ -61,7 +63,9 @@ export default function Bookings() {
   const loadRef = useRef(load);
   loadRef.current = load;
   useFocusEffect(useCallback(() => { load(); }, [load]));
-  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  // tick every second only while a countdown is on screen (redrawing the list every second can swallow taps on Android)
+  const ticking = rows.some((b) => b.status === 'pending' && ['unpaid', 'pending_review'].includes(b.payment_status));
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), ticking ? 1000 : 30000); return () => clearInterval(t); }, [ticking]);
   // approvals, refunds and cancellations show up without pulling down
   useEffect(() => {
     if (!uid) return;
@@ -103,8 +107,11 @@ export default function Bookings() {
   const tabs: [Tab, string][] = [['upcoming', 'Upcoming'], ['past', 'Played'], ['cancelled', 'Cancelled']];
 
   return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={insets.top + (Platform.OS === 'ios' ? 44 : 56)}>
     <FlatList
       data={lists[tab]}
+      removeClippedSubviews={false}
+      keyboardShouldPersistTaps="handled"
       keyExtractor={(r) => r.id}
       style={{ backgroundColor: colors.bg }}
       contentContainerStyle={{ padding: 16 }}
@@ -127,6 +134,8 @@ export default function Bookings() {
         const review = b.status === 'pending' && b.payment_status === 'pending_review';
         const canCancel = ['pending', 'confirmed'].includes(b.status) && new Date(b.start_time).getTime() > now && !holdExpired(b) && !requestOpen(b);
         const holdLeft = b.hold_expires_at ? new Date(b.hold_expires_at).getTime() - now : null;
+        const sentAt = (b.payments ?? []).filter((x: any) => x.status === 'pending').map((x: any) => new Date(x.created_at).getTime()).sort((x: number, y: number) => y - x)[0];
+        const reviewLeft = sentAt ? sentAt + REVIEW_MINUTES * 60000 - now : null;
         const refundAmt = Number(b.refund_amount || 0);
         let summary: string | null = null;
         if (holdExpired(b)) summary = 'Time released, the payment was not received';
@@ -168,19 +177,29 @@ export default function Bookings() {
               </View>
             )}
             {review && !requestOpen(b) && (
-              <Pressable onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })}>
-                <Text style={{ color: colors.primaryAlt, marginTop: 10 }}>⏳ Payment is being checked, approval within {REVIEW_MINUTES} minutes →</Text>
+              <Pressable onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })} style={s.review}>
+                <Text style={{ color: colors.text, flex: 1 }}>⏳ We received your payment screenshot. It will be approved within {REVIEW_MINUTES} minutes.</Text>
+                <View style={{ alignItems: 'flex-end' }}>
+                  {reviewLeft !== null && reviewLeft > 0 ? (
+                    <>
+                      <Text style={{ color: colors.muted, fontSize: 11 }}>approval within</Text>
+                      <Text style={{ color: colors.primaryAlt, fontWeight: '800', fontSize: 20, fontVariant: ['tabular-nums'] }}>{countdown(reviewLeft)}</Text>
+                    </>
+                  ) : (
+                    <Text style={{ color: colors.muted, fontSize: 12, maxWidth: 110, textAlign: 'right' }}>Taking a little longer, we're on it</Text>
+                  )}
+                </View>
               </Pressable>
             )}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
-              {b.court?.id && <Pressable onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
-              {b.court?.maps_url && <Pressable onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
+              {b.court?.id && <Pressable hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
+              {b.court?.maps_url && <Pressable hitSlop={10} style={s.action} onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
               {paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id) && (
-                <Pressable onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })}><Text style={s.link}>✏️ Modify booking</Text></Pressable>
+                <Pressable hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })}><Text style={s.link}>✏️ Modify booking</Text></Pressable>
               )}
               {canCancel && cancelId !== b.id && (
-                <Pressable onPress={() => setCancelId(b.id)}><Text style={[s.link, { color: colors.danger }]}>{awaiting ? 'Cancel booking' : 'Request cancellation'}</Text></Pressable>
+                <Pressable hitSlop={10} style={s.action} onPress={() => setCancelId(b.id)}><Text style={[s.link, { color: colors.danger }]}>{awaiting ? 'Cancel booking' : 'Request cancellation'}</Text></Pressable>
               )}
             </View>
 
@@ -208,6 +227,7 @@ export default function Bookings() {
         );
       }}
     />
+    </KeyboardAvoidingView>
   );
 }
 
@@ -329,6 +349,11 @@ const useS = themed(() => StyleSheet.create({
   title: { color: colors.text, fontFamily: fonts.display, fontSize: 20 },
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
+  action: { paddingVertical: 4, paddingRight: 4 },
+  review: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, padding: 12, borderRadius: radius.md,
+    backgroundColor: colors.soft, borderWidth: 1, borderColor: colors.borderStrong,
+  },
   box: { backgroundColor: colors.cardAlt, borderRadius: radius.md, padding: 12, marginTop: 12 },
   choice: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 10, marginBottom: 8 },
 }));
