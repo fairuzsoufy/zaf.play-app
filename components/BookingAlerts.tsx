@@ -1,18 +1,31 @@
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import { Platform, Vibration } from 'react-native';
+import { isRunningInExpoGo } from 'expo';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { dateLabel, timeLabel } from '@/lib/format';
 import { toast } from './Toast';
 
-// show our notifications even while the app is open
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
-});
+// Expo Go on Android throws as soon as expo-notifications is loaded, so only load it where it works
+// (an installed build, or Expo Go on iPhone). In Expo Go on Android the player gets the in-app banner and a buzz.
+type N = typeof import('expo-notifications');
+let mod: N | null | undefined;
+function notifications(): N | null {
+  if (mod !== undefined) return mod;
+  if (Platform.OS === 'android' && isRunningInExpoGo()) return (mod = null);
+  mod = require('expo-notifications') as N;
+  // show our notifications even while the app is open
+  mod.setNotificationHandler({
+    handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
+  });
+  return mod;
+}
 
 async function notify(title: string, body: string) {
   toast(`${title} ${body}`);
+  Vibration.vibrate(400);
+  const Notifications = notifications();
+  if (!Notifications) return;
   try {
     const { granted } = await Notifications.getPermissionsAsync();
     if (!granted && !(await Notifications.requestPermissionsAsync()).granted) return;
@@ -58,6 +71,8 @@ export function BookingAlerts() {
 
 // ask once, at a moment it makes sense (right after sending a payment), so the approval can show as a notification
 export async function askToNotify() {
+  const Notifications = notifications();
+  if (!Notifications) return;
   try {
     const { granted, canAskAgain } = await Notifications.getPermissionsAsync();
     if (!granted && canAskAgain) await Notifications.requestPermissionsAsync();
