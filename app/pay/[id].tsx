@@ -49,7 +49,7 @@ export default function Pay() {
   // live update the moment Zaf Play approves or rejects it
   useEffect(() => {
     if (!session) return;
-    const ch = supabase.channel(`pay-${id}`)
+    const ch = supabase.channel(`pay-${id}-${Date.now()}`)
       .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'bookings', filter: `id=eq.${id}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
