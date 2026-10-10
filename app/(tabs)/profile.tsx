@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/Icon';
 import { DeleteAccount } from '@/components/DeleteAccount';
 import { FriendsCard } from '@/components/Friends';
+import { PlayerStats } from '@/components/PlayerStats';
 import { LegalLinks } from '@/components/LegalLinks';
 import { toast } from '@/components/Toast';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
@@ -133,6 +134,8 @@ export default function Profile() {
           )}
         </View>
       </View>
+
+      {me.role === 'player' && <PlayerStats />}
 
       {credit !== null && ledger.length > 0 && (
         <View style={card}>

@@ -6,7 +6,7 @@ import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 import { Button } from './ui';
 
 // same as the website's lib/trust.ts (worked out by the database: private.player_trust)
-type Trust = { games: number; no_shows: number; level: 'new' | 'regular' | 'experienced' | 'veteran' };
+export type Trust = { games: number; no_shows: number; level: 'new' | 'regular' | 'experienced' | 'veteran' };
 const LEVEL_INFO: Record<Trust['level'], { emoji: string; label: string }> = {
   new: { emoji: '🌱', label: 'New player' },
   regular: { emoji: '🎾', label: 'Regular' },
@@ -19,7 +19,7 @@ type Found = { id: string; full_name: string; username: string | null };
 const PER_PAGE = 5;
 
 // "🎾 Regular · 12 games", and the no-shows if the court marked any (like the website's TrustChip)
-function TrustChip({ trust }: { trust?: Trust | null }) {
+export function TrustChip({ trust }: { trust?: Trust | null }) {
   useTheme();
   if (!trust) return null;
   const info = LEVEL_INFO[trust.level] || LEVEL_INFO.new;
