@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { View, type ColorValue } from 'react-native';
 import { colors, fonts, useTheme } from '@/lib/theme';
 import { Icon, type IconName } from '@/components/Icon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 // same line icons as the website's top bar
@@ -18,6 +19,9 @@ const toggle = () => <View style={{ marginRight: 16 }}><ThemeToggle size={18} />
 
 export default function TabsLayout() {
   useTheme();
+  // Android draws under the system buttons: lift the tab bar above them
+  const insets = useSafeAreaInsets();
+  const bottom = Math.max(insets.bottom, 8);
   return (
     <Tabs
       screenOptions={{
@@ -26,7 +30,7 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         headerTitleStyle: { fontFamily: fonts.display, fontSize: 24 },
         tabBarLabelStyle: { fontFamily: fonts.displaySemi, fontSize: 12 },
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border, paddingTop: 6 },
+        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border, paddingTop: 6, paddingBottom: bottom, height: 56 + bottom },
         headerRight: toggle,
         sceneStyle: { backgroundColor: colors.bg },
         tabBarActiveTintColor: colors.brandPink,
