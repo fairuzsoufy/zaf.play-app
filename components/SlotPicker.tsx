@@ -149,7 +149,9 @@ export function SlotPicker({
   };
   const bar = (which: 'start' | 'end') => PanResponder.create({
     onStartShouldSetPanResponder: () => true,
+    onStartShouldSetPanResponderCapture: () => true,
     onMoveShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponderCapture: () => true,
     onPanResponderTerminationRequest: () => false, // don't let the page scroll take the finger away
     onPanResponderGrant: () => {
       const c = api.current.chosen;
@@ -162,6 +164,9 @@ export function SlotPicker({
     onPanResponderRelease: endDrag,
     onPanResponderTerminate: endDrag,
   });
+  // stop the page scrolling the moment a bar is touched; on Android the scroll grabs the finger before a drag starts otherwise
+  const lockScroll = () => api.current.onDragging?.(true);
+  const unlockScroll = () => { if (!drag.current) api.current.onDragging?.(false); };
   const topBar = useRef(bar('start')).current;
   const bottomBar = useRef(bar('end')).current;
 
@@ -381,10 +386,10 @@ export function SlotPicker({
               )}
               {shown && (
                 <>
-                  <View {...topBar.panHandlers} style={[s.bar, { top: top(shown.s) - 11 }]} accessibilityLabel="Drag to change the start">
+                  <View {...topBar.panHandlers} onTouchStart={lockScroll} onTouchEnd={unlockScroll} hitSlop={{ top: 8, bottom: 8 }} style={[s.bar, { top: top(shown.s) - 11 }]} accessibilityLabel="Drag to change the start">
                     <View style={s.grip} />
                   </View>
-                  <View {...bottomBar.panHandlers} style={[s.bar, { top: top(shown.e) - 13 }]} accessibilityLabel="Drag to change the finish">
+                  <View {...bottomBar.panHandlers} onTouchStart={lockScroll} onTouchEnd={unlockScroll} hitSlop={{ top: 8, bottom: 8 }} style={[s.bar, { top: top(shown.e) - 13 }]} accessibilityLabel="Drag to change the finish">
                     <View style={s.grip} />
                   </View>
                 </>
@@ -456,8 +461,8 @@ const useS = themed(() => StyleSheet.create({
   evTaken: { backgroundColor: colors.taken, borderLeftWidth: 3, borderLeftColor: colors.borderStrong },
   evHold: { backgroundColor: colors.hold, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.primary },
   evMine: { justifyContent: 'center' },
-  bar: { position: 'absolute', left: 0, right: 0, height: 24, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  grip: { width: 44, height: 6, borderRadius: 3, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.brandPurple },
+  bar: { position: 'absolute', left: 0, right: 0, height: 28, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
+  grip: { width: 56, height: 8, borderRadius: 4, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.brandPurple },
   evCurrent: { backgroundColor: 'rgba(16,185,129,0.14)', borderWidth: 2, borderColor: colors.current, justifyContent: 'center' },
   evText: { fontSize: 11, lineHeight: 14 },
 
