@@ -21,7 +21,8 @@ const useCard = themed(() => ({ backgroundColor: colors.card, borderRadius: radi
 export default function Profile() {
   const card = useCard();
   const router = useRouter();
-  const params = useLocalSearchParams<{ edit?: string }>();
+  const params = useLocalSearchParams<{ edit?: string; complete?: string }>();
+  const [completing, setCompleting] = useState(false); // just signed in with Google: mobile, gender and username still needed
   const { session, loading: authLoading } = useAuth();
   const uid = session?.user.id;
   const [me, setMe] = useState<any>(null);
@@ -41,7 +42,8 @@ export default function Profile() {
   // opened from booking to add a missing mobile number: start in edit mode
   useEffect(() => {
     if (params.edit === '1') { setEditing(true); router.setParams({ edit: undefined }); }
-  }, [params.edit]);
+    if (params.complete === '1') { setCompleting(true); router.setParams({ complete: undefined }); }
+  }, [params.edit, params.complete]);
 
   const load = useCallback(async () => {
     if (!uid) return;
@@ -170,6 +172,7 @@ export default function Profile() {
           </>
         ) : (
           <View style={{ marginTop: 10 }}>
+            {completing && <Note kind="ok">Welcome to Zaf Play! One last step: add your mobile number, gender and a username, then save.</Note>}
             {msg && <Note kind={msg.kind}>{msg.text}</Note>}
             <Field label="Full name" value={fullName} onChangeText={setFullName} autoComplete="name" placeholder="First and last name" />
             <Field label="Mobile number" value={phone} onChangeText={(v) => setPhone(onlyDigits(v))} keyboardType="number-pad" maxLength={11} />

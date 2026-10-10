@@ -6,6 +6,7 @@ import { SITE_URL, supabase } from '@/lib/supabase';
 import { colors, useTheme } from '@/lib/theme';
 import { Button, Field, Note } from '@/components/ui';
 import { LegalLinks } from '@/components/LegalLinks';
+import { GoogleButton } from '@/components/GoogleButton';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
 import { suggestUsername } from '@/lib/username';
 import { FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, PHONE_HELP } from '@/lib/validate';
@@ -118,6 +119,7 @@ export default function Signup() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
         <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 4 }}>Join Zaf Play</Text>
         <Text style={{ color: colors.muted, marginBottom: 22 }}>Book courts in seconds.</Text>
+        <GoogleButton label="Sign up with Google" />
         {err && <Note kind="error">{err}</Note>}
         <Field label="Full name" value={fullName} onChangeText={setFullName} autoComplete="name" placeholder="First and last name"
           onBlur={async () => {
