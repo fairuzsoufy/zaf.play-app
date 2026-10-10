@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Image } from 'expo-image';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed } from '@/lib/theme';
@@ -11,12 +10,13 @@ import {
   cancelSplitPreview, cleanInstapay, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT, INSTAPAY_HELP, isInstapay, isLate, REVIEW_MINUTES,
 } from '@/lib/payment';
 import { Button, Field, GradientFill, Note } from '@/components/ui';
+import { RefundTracker, refundInfo } from '@/components/RefundTracker';
 
 type Tab = 'upcoming' | 'past' | 'cancelled';
 
 const SELECT = `id,start_time,end_time,total_price,status,payment_status,hold_expires_at,amount_due,discount_amount,
   booking_extras(name,qty),open_games(id),credit_used,credit_issued,cancel_request_as_credit,rescheduled_from,credit_amount,
-  retained_amount,refund_amount,refund_fee,refund_status,refund_to,refunded_at,refund_proof_path,cancel_request_status,cancel_request_decline_reason,
+  retained_amount,refund_amount,refund_fee,refund_status,refund_to,refunded_at,refund_proof_path,cancel_request_status,cancel_request_decline_reason,cancel_requested_at,cancel_request_refund_to,
   cancelled_at,cancelled_by,cancellation_reason,created_at,payments(created_at,status),
   sport:sports(name,slug),court:courts(id,name,is_indoor,maps_url,late_fee_percent,facility:facilities(name,city))`;
 
@@ -72,7 +72,8 @@ export default function Bookings() {
   loadRef.current = load;
   useFocusEffect(useCallback(() => { load(); }, [load]));
   // tick every second only while a countdown is on screen (redrawing the list every second can swallow taps on Android)
-  const ticking = rows.some((b) => b.status === 'pending' && ['unpaid', 'pending_review'].includes(b.payment_status));
+  const ticking = rows.some((b) => (b.status === 'pending' && ['unpaid', 'pending_review'].includes(b.payment_status))
+    || b.cancel_request_status === 'pending' || b.refund_status === 'due');
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), ticking ? 1000 : 30000); return () => clearInterval(t); }, [ticking]);
   // approvals, refunds and cancellations show up without pulling down
   useEffect(() => {
@@ -145,6 +146,8 @@ export default function Bookings() {
         const sentAt = (b.payments ?? []).filter((x: any) => x.status === 'pending').map((x: any) => new Date(x.created_at).getTime()).sort((x: number, y: number) => y - x)[0];
         const reviewLeft = sentAt ? sentAt + REVIEW_MINUTES * 60000 - now : null;
         const refundAmt = Number(b.refund_amount || 0);
+        // money involved in a cancellation (or a request): the website's step-by-step refund tracker
+        const tracked = (requestOpen(b) || (b.status === 'cancelled' && !(b.cancellation_reason || '').startsWith('Rescheduled'))) && !!refundInfo(b);
         let summary: string | null = null;
         if (holdExpired(b)) summary = 'Time released, the payment was not received';
         else if (b.status === 'cancelled') {
@@ -171,26 +174,13 @@ export default function Bookings() {
               </View>
             </View>
 
-            {summary && <Text style={{ color: colors.warning, marginTop: 10 }}>{summary}</Text>}
-            {b.refund_status === 'refunded' && b.refund_proof_path && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 6 }}>
-                  Transfer receipt{b.refund_to ? <Text style={{ color: colors.muted, fontWeight: '400' }}> · to {b.refund_to}</Text> : null}
-                </Text>
-                {!receipts[b.refund_proof_path] ? (
-                  <Text style={s.sub}>Loading the receipt...</Text>
-                ) : b.refund_proof_path.toLowerCase().endsWith('.pdf') ? (
-                  <Pressable hitSlop={10} style={s.action} onPress={() => Linking.openURL(receipts[b.refund_proof_path])}><Text style={s.link}>📄 Open the receipt (PDF)</Text></Pressable>
-                ) : (
-                  <Pressable onPress={() => Linking.openURL(receipts[b.refund_proof_path])} accessibilityLabel="Open the refund receipt full size">
-                    <Image source={{ uri: receipts[b.refund_proof_path] }} style={s.receipt} contentFit="cover" />
-                    <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>Tap to open full size</Text>
-                  </Pressable>
-                )}
-              </View>
+            {summary && !tracked && <Text style={{ color: colors.warning, marginTop: 10 }}>{summary}</Text>}
+            {tracked && (
+              <RefundTracker b={b} now={now} proofUrl={b.refund_proof_path ? receipts[b.refund_proof_path] : undefined}
+                onWithdraw={requestOpen(b) ? () => withdraw(b) : undefined} />
             )}
             {pendingChangeFor.has(b.id) && <Text style={{ color: colors.warning, marginTop: 10 }}>A change to a new time is waiting for payment. This booking stays until it's approved.</Text>}
-            {requestOpen(b) && <Pressable onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
+            {requestOpen(b) && !tracked && <Pressable onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
             {b.cancel_request_status === 'declined' && ['pending', 'confirmed'].includes(b.status) && (
               <Text style={{ color: colors.danger, marginTop: 8 }}>Your cancellation request was declined{b.cancel_request_decline_reason ? `: ${b.cancel_request_decline_reason}` : '.'} Your booking stays as it is.</Text>
             )}
@@ -375,7 +365,6 @@ const useS = themed(() => StyleSheet.create({
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
   action: { paddingVertical: 4, paddingRight: 4 },
-  receipt: { width: 140, height: 190, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.cardAlt },
   review: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, padding: 12, borderRadius: radius.md,
     backgroundColor: colors.soft, borderWidth: 1, borderColor: colors.borderStrong,
