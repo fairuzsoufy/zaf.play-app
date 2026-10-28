@@ -11,9 +11,10 @@ import { PolicyNotice } from '@/components/PolicyNotice';
 import { Button, Note } from '@/components/ui';
 import { toast } from '@/components/Toast';
 import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
+import { useRequestId } from '@/lib/requestId';
 
 // Modify a paid, upcoming booking: a new time (or more time around it) and/or different extras.
-// Same rules and maths as the website's /bookings/[id]/change page; the database does the real work (reschedule_booking).
+// Same rules and maths as the website's /bookings/[id]/change page; the database does the real work (reschedule_booking_v2).
 export default function ChangeBooking() {
   const insets = useSafeAreaInsets();
   const st = useSt();
@@ -28,6 +29,8 @@ export default function ChangeBooking() {
   const [extras, setExtras] = useState<any[]>([]);
   const [qty, setQty] = useState<Record<string, number>>({});
   const [pick, setPick] = useState<Pick>({ date: '', start: null, duration: 0 });
+  const [refundTo, setRefundTo] = useState<'' | 'credit' | 'instapay'>(''); // a cheaper change: how the difference comes back
+  const req = useRequestId();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -119,21 +122,24 @@ export default function ChangeBooking() {
   async function submit() {
     setErr(null);
     if (!changing) return setErr('Nothing changed yet. Pick a new time or change your extras.');
+    if (due < 0 && !refundTo) return setErr('Choose how you want the difference back: Zaf Play credit or InstaPay.');
     setSaving(true);
     const start = pick.start !== null ? cairoToDate(pick.date, pick.start) : new Date(b.start_time);
     const end = pick.start !== null ? new Date(start.getTime() + pick.duration * 60000) : new Date(b.end_time);
-    const { data, error } = await supabase.rpc('reschedule_booking', {
-      p_booking_id: b.id, p_new_start: start.toISOString(), p_new_end: end.toISOString(),
+    const { data, error } = await supabase.rpc('reschedule_booking_v2', {
+      p_request_id: req.get(), p_booking_id: b.id, p_new_start: start.toISOString(), p_new_end: end.toISOString(),
       p_extras: Object.entries(qty).map(([extra_id, n]) => ({ extra_id, qty: n })),
+      p_refund_as_credit: refundTo === 'credit',
     });
     setSaving(false);
     if (error) { setErr(error.message); loadBusy(b.court_id); return; }
+    req.done();
     const res = data as any;
     if (Number(res?.amount_due) > 0) {
       router.replace({ pathname: '/pay/[id]', params: { id: res.new_booking_id } });
     } else {
       const refund = Number(res?.refund || 0);
-      toast(refund > 0 ? `Booking changed · ${egp(refund)} refund on its way` : 'Your booking is changed');
+      toast(refundTo === 'credit' && due < 0 ? `Booking changed · ${egp(-due)} added to your credit` : refund > 0 ? `Booking changed · ${egp(refund)} refund on its way` : 'Your booking is changed');
       router.back();
     }
   }
@@ -209,9 +215,21 @@ export default function ChangeBooking() {
             )}
             <View style={{ borderTopWidth: 1, borderTopColor: colors.border, marginTop: 8, paddingTop: 8 }}>
               <Text style={{ color: colors.text, fontWeight: '800', fontSize: 17 }}>
-                {due > 0 ? `To pay by InstaPay: ${egp(due)}` : due < 0 ? `We refund you: ${egp(-due - instapayFee(-due))}` : 'Nothing to pay'}
+                {due > 0 ? `To pay by InstaPay: ${egp(due)}` : due < 0 ? `We refund you: ${egp(refundTo === 'credit' ? -due : -due - instapayFee(-due))}` : 'Nothing to pay'}
               </Text>
-              {due < 0 && <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{egp(-due)} minus InstaPay's transfer fee ({INSTAPAY_FEE_TEXT}): {egp(instapayFee(-due))}</Text>}
+              {due < 0 && (
+                <View style={{ marginTop: 8, gap: 8 }}>
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>How do you want the difference back?</Text>
+                  {([['credit', `Zaf Play credit: ${egp(-due)}`, 'Right away, no fee. It comes off your next booking.'],
+                    ['instapay', `InstaPay: ${egp(-due - instapayFee(-due))}`, `${egp(-due)} minus InstaPay's transfer fee (${INSTAPAY_FEE_TEXT}), sent by the end of the day.`]] as const).map(([v, t1, t2]) => (
+                    <Pressable key={v} onPress={() => { setRefundTo(v); setErr(null); }}
+                      style={{ borderWidth: 1, borderRadius: radius.md, padding: 10, borderColor: refundTo === v ? colors.brandPurple : colors.border, backgroundColor: refundTo === v ? colors.soft : 'transparent' }}>
+                      <Text style={{ color: colors.text, fontWeight: '700' }}>{refundTo === v ? '✓ ' : ''}{t1}</Text>
+                      <Text style={{ color: colors.muted, fontSize: 12 }}>{t2}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
               {due > 0 && <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>Your current booking stays until the extra payment is approved. The new time is held for {HOLD_MINUTES} minutes.</Text>}
             </View>
           </>

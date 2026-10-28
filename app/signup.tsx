@@ -9,7 +9,9 @@ import { LegalLinks } from '@/components/LegalLinks';
 import { GoogleButton } from '@/components/GoogleButton';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
 import { suggestUsername } from '@/lib/username';
-import { FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, PHONE_HELP } from '@/lib/validate';
+import { FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, passwordProblem, PHONE_HELP } from '@/lib/validate';
+import { checkSignupEmail } from '@/lib/signupEmail';
+import { CodeEntry } from '@/components/CodeEntry';
 
 function friendly(message: string): string {
   const m = message.toLowerCase();
@@ -38,8 +40,6 @@ export default function Signup() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState('');
-  const [wait, setWait] = useState(0);
-  const [info, setInfo] = useState<string | null>(null);
 
   const code = refCode.trim();
   const refBy = refName && refName.code === code ? refName.name : null;
@@ -51,11 +51,6 @@ export default function Signup() {
     }, 350);
     return () => clearTimeout(t);
   }, [code]);
-  useEffect(() => {
-    if (wait <= 0) return;
-    const t = setTimeout(() => setWait(wait - 1), 1000);
-    return () => clearTimeout(t);
-  }, [wait]);
 
   async function submit() {
     setErr(null);
@@ -65,13 +60,24 @@ export default function Signup() {
     if (!gender) return setErr('Please choose male or female.');
     if (userStatus !== 'ok') return setErr('Please choose an available username (3–20 characters: letters, numbers, _ and .).');
     if (code && refBy === '') return setErr('That referral code was not found. Check it, or leave it empty.');
-    if (password.length < 6) return setErr('Your password needs at least 6 characters.');
+    const pwErr = passwordProblem(password);
+    if (pwErr) return setErr(pwErr);
     setBusy(true);
     // is the email real? (the same check the website runs)
     try {
       const { data } = await supabase.functions.invoke('check-email', { body: { email: email.trim() } });
       if (data && !data.ok) { setBusy(false); return setErr(data.reason || 'Please check your email address.'); }
     } catch { /* let it through, the confirmation email is the real test */ }
+    // an email that already has something on Zaf Play (an account, an unfinished owner sign-up, a co-owner invite)
+    const mail = await checkSignupEmail(email, 'player');
+    if (!mail.ok) { setBusy(false); return setErr(mail.text); }
+    // say which detail is taken: a second account can't use the same mobile number
+    const { data: phoneTaken, error: phoneErr } = await supabase.rpc('phone_in_use', { p_phone: phone });
+    if (phoneErr) {
+      setBusy(false);
+      return setErr(phoneErr.message.includes('too_many_requests') ? 'Too many tries from this connection. Please wait a few minutes and try again.' : 'We couldn’t check your mobile number right now. Please try again in a minute.');
+    }
+    if (phoneTaken) { setBusy(false); return setErr('This mobile number is already used by another Zaf Play account. Log in instead, or use a different number.'); }
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -87,15 +93,11 @@ export default function Signup() {
     router.replace('/');
   }
 
-  async function resend() {
-    setInfo(null);
+  async function resend(): Promise<string | null> {
     const { error } = await supabase.auth.resend({ type: 'signup', email: sentTo, options: { emailRedirectTo: `${SITE_URL}/` } });
-    if (error) {
-      const m = error.message.toLowerCase();
-      return setInfo(m.includes('rate') || m.includes('seconds') ? 'Please wait a minute before asking for another email.' : 'Could not send the email right now. Please try again in a minute.');
-    }
-    setInfo('A new email is on its way. Use the newest one.');
-    setWait(60);
+    if (!error) return null;
+    const m = error.message.toLowerCase();
+    return m.includes('rate') || m.includes('seconds') ? 'Please wait a minute before asking for another code.' : 'Could not send the code right now. Please try again in a minute.';
   }
 
   if (sentTo) {
@@ -103,12 +105,9 @@ export default function Signup() {
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginBottom: 8 }}>Check your email</Text>
         <Text style={{ color: colors.muted, marginBottom: 14 }}>
-          We sent an email to {sentTo}. Tap the button in it and type the code to confirm your account, then come back here and log in.
+          We sent a code to {sentTo}. Type it here to confirm your account.
         </Text>
-        {info && <Note kind="ok">{info}</Note>}
-        <Button title={wait > 0 ? `Send the email again (${wait}s)` : 'Send the email again'} variant="ghost" disabled={wait > 0} onPress={resend} />
-        <View style={{ height: 12 }} />
-        <Button title="Go to log in" onPress={() => router.replace('/login')} />
+        <CodeEntry type="signup" email={sentTo} onResend={resend} onVerified={() => router.replace('/')} />
         <Pressable onPress={() => setSentTo('')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 16 }}>Wrong email? Go back</Text></Pressable>
       </ScrollView>
     );

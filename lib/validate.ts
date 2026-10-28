@@ -22,3 +22,12 @@ export function usernameBase(fullName: string) {
   if (base.length < 3) base = 'player' + base;
   return base.slice(0, 20);
 }
+
+// same password rule as the website (lib/validate.ts there)
+const PASSWORD_MIN = 8;
+export function passwordProblem(value: string): string {
+  if (value.length < PASSWORD_MIN) return `Your password needs at least ${PASSWORD_MIN} characters.`;
+  if (!/[A-Za-z]/.test(value) || !/\d/.test(value)) return 'Your password needs at least one letter and one number.';
+  if (/^(.)\1+$/.test(value) || /^(?:12345678|password1|qwerty12|abc12345|zafplay1)/i.test(value)) return 'This password is too easy to guess. Please choose another one.';
+  return '';
+}

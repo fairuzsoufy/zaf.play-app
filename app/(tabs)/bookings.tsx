@@ -11,13 +11,14 @@ import {
 } from '@/lib/payment';
 import { Button, Field, GradientFill, Note } from '@/components/ui';
 import { RefundTracker, refundInfo } from '@/components/RefundTracker';
+import { RefundChoice } from '@/components/RefundChoice';
 import { PolicyNotice } from '@/components/PolicyNotice';
 
 type Tab = 'upcoming' | 'past' | 'cancelled';
 
 const SELECT = `id,start_time,end_time,total_price,status,payment_status,hold_expires_at,amount_due,discount_amount,
   booking_extras(name,qty),open_games(id),credit_used,credit_issued,cancel_request_as_credit,rescheduled_from,credit_amount,
-  retained_amount,refund_amount,refund_fee,refund_status,refund_to,refunded_at,refund_proof_path,cancel_request_status,cancel_request_decline_reason,cancel_requested_at,cancel_request_refund_to,
+  retained_amount,refund_amount,refund_fee,refund_status,refund_as_credit,refund_to,refunded_at,refund_proof_path,cancel_request_status,cancel_request_decline_reason,cancel_requested_at,cancel_request_refund_to,
   cancelled_at,cancelled_by,cancellation_reason,created_at,confirmed_at,payments(created_at,status),
   sport:sports(name,slug),court:courts(id,name,is_indoor,maps_url,late_fee_percent,facility:facilities(name,city))`;
 
@@ -180,6 +181,7 @@ export default function Bookings() {
               <RefundTracker b={b} now={now} proofUrl={b.refund_proof_path ? receipts[b.refund_proof_path] : undefined}
                 onWithdraw={requestOpen(b) ? () => withdraw(b) : undefined} />
             )}
+            {!requestOpen(b) && <RefundChoice b={b} onChanged={load} />}
             {pendingChangeFor.has(b.id) && <Text style={{ color: colors.warning, marginTop: 10 }}>A change to a new time is waiting for payment. This booking stays until it's approved.</Text>}
             {requestOpen(b) && !tracked && <Pressable onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
             {b.cancel_request_status === 'declined' && ['pending', 'confirmed'].includes(b.status) && (

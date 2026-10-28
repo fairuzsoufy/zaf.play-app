@@ -7,7 +7,9 @@ import { colors, fonts, radius, useTheme } from '@/lib/theme';
 import { Button, Field, Note } from '@/components/ui';
 import { LegalLinks } from '@/components/LegalLinks';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
-import { capitalizeWords, FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, PHONE_HELP } from '@/lib/validate';
+import { capitalizeWords, FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits, passwordProblem, PHONE_HELP } from '@/lib/validate';
+import { checkSignupEmail } from '@/lib/signupEmail';
+import { CodeEntry } from '@/components/CodeEntry';
 
 // same rule as the website's isEnglishText
 const isEnglish = (v: string) => /^[A-Za-z0-9\s.,'’&()\-/#:+!?@]*$/.test(v);
@@ -53,6 +55,8 @@ export default function OwnerSignup() {
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
+  const [confirmed, setConfirmed] = useState(false);
+
   async function submit() {
     setErr(null);
     if (!fullName.trim() || !email.trim() || !phone || !password || !business.trim()) return setErr('Please fill in all fields.');
@@ -60,7 +64,8 @@ export default function OwnerSignup() {
     if (!isEgyptMobile(phone)) return setErr(PHONE_HELP);
     if (!gender) return setErr('Please choose male or female.');
     if (!isEnglish(business)) return setErr(`Business name: ${ENGLISH_HELP}`);
-    if (password.length < 6) return setErr('Your password needs at least 6 characters.');
+    const pwErr = passwordProblem(password);
+    if (pwErr) return setErr(pwErr);
     if (hasCo) {
       if (!isFullName(coName)) return setErr(`Co-owner: ${FULL_NAME_HELP}`);
       if (!coEmail.trim() || coEmail.trim().toLowerCase() === email.trim().toLowerCase()) return setErr('Co-owner: enter their own email (not yours).');
@@ -70,10 +75,17 @@ export default function OwnerSignup() {
     setBusy(true);
     const e1 = await emailProblem(email);
     if (e1) { setBusy(false); return setErr(e1); }
+    const mail = await checkSignupEmail(email, 'owner');
+    if (!mail.ok) { setBusy(false); return setErr(mail.text); }
     if (hasCo) {
       const e2 = await emailProblem(coEmail);
       if (e2) { setBusy(false); return setErr(`Co-owner email: ${e2}`); }
+      const { data: coTaken } = await supabase.rpc('co_owner_email_problem', { p_email: coEmail.trim() });
+      if (coTaken) { setBusy(false); return setErr(`Co-owner email: ${coTaken}`); }
     }
+    // a second account can't use the same mobile number
+    const { data: phoneTaken } = await supabase.rpc('phone_in_use', { p_phone: phone });
+    if (phoneTaken) { setBusy(false); return setErr('This mobile number is already used by another Zaf Play account. Log in instead, or use a different number.'); }
     // branches (area, address, InstaPay) are added from the dashboard after approval;
     // a co-owner gets their invite email once this account is approved
     const { data, error } = await supabase.auth.signUp({
@@ -114,9 +126,18 @@ export default function OwnerSignup() {
     return (
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom }}>
         <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginBottom: 6 }}>Almost there</Text>
-        <Text style={{ color: colors.muted, marginBottom: 20 }}>We sent an email to {email.trim().toLowerCase()}.</Text>
+        <Text style={{ color: colors.muted, marginBottom: 14 }}>We sent a code to {email.trim().toLowerCase()}. Type it here to confirm your email.</Text>
+        {confirmed ? <Note kind="ok">✅ Email confirmed.</Note> : (
+          <View style={{ marginBottom: 18 }}>
+            <CodeEntry type="signup" email={email.trim().toLowerCase()} onVerified={() => setConfirmed(true)}
+              onResend={async () => {
+                const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() });
+                return error ? (/rate|seconds/i.test(error.message) ? 'Please wait a minute before asking for another code.' : 'Could not send the code right now. Please try again in a minute.') : null;
+              }} />
+          </View>
+        )}
         <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16, paddingBottom: 4, marginBottom: 18 }}>
-          {step('1', 'Confirm your email', 'Tap the link in the email to activate your account.')}
+          {step('1', 'Confirm your email', 'Type the code from the email above.')}
           {step('2', 'We approve your account', 'The Zaf Play team reviews every new owner, usually within a day.' + (hasCo ? ' Your co-owner gets their sign-up email once you are approved.' : ''))}
           {step('3', 'Add your courts', 'On zafplay.com, add your branch (area, address and InstaPay for your earnings), then your courts, prices and hours. Once we check them, players can book.')}
         </View>

@@ -131,7 +131,7 @@ export default function BookCourt() {
     const start = cairoToDate(pick.date, pick.start);
     const end = new Date(start.getTime() + pick.duration * 60000);
     const { data, error } = await supabase.rpc('create_booking', {
-      p_court_id: courtId, p_sport_id: sport!.id, p_start: start.toISOString(), p_end: end.toISOString(),
+      p_request_id: req.get(), p_court_id: courtId, p_sport_id: sport!.id, p_start: start.toISOString(), p_end: end.toISOString(),
       p_extras: Object.entries(qty).filter(([, n]) => n > 0).map(([extra_id, n]) => ({ extra_id, qty: n })),
     });
     setSaving(false);
@@ -140,6 +140,7 @@ export default function BookCourt() {
       loadBusy();
       return;
     }
+    req.done();
     router.replace({ pathname: '/pay/[id]', params: { id: (data as any).booking_id } });
   }
 

@@ -14,6 +14,17 @@ import { toast } from '@/components/Toast';
 import { askToNotify } from '@/components/BookingAlerts';
 import { PolicyNotice } from '@/components/PolicyNotice';
 import { dateLabel, timeLabel } from '@/lib/format';
+import { useRequestId } from '@/lib/requestId';
+import { RefundChoice } from '@/components/RefundChoice';
+
+const LATE_PAY_MINUTES = 60; // must match submit_payment_proof: a screenshot can still come this long after the hold
+
+// why a screenshot sent after the hold ran out became a refund: the database saves the true reason
+function lateReason(reason: string | null | undefined) {
+  const r = (reason || '').replace(/\s*Full refund due\.?$/, '').trim();
+  if (!r || /already taken/.test(r)) return `Your ${HOLD_MINUTES} minutes ran out before the screenshot arrived, so the booking was not kept.`;
+  return r.replace('the 5 minutes', `the ${HOLD_MINUTES} minutes`);
+}
 
 export default function Pay() {
   const insets = useSafeAreaInsets();
@@ -22,6 +33,8 @@ export default function Pay() {
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [b, setB] = useState<any>(null);
+  const [group, setGroup] = useState<any[]>([]); // separate times booked together, paid with one transfer
+  const req = useRequestId();
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
   const [files, setFiles] = useState<ImagePicker.ImagePickerAsset[]>([]);
@@ -41,9 +54,14 @@ export default function Pay() {
     const { data } = await supabase
       .from('bookings')
       .select(`id,start_time,end_time,status,payment_status,total_price,amount_due,credit_amount,credit_used,hold_expires_at,rescheduled_from,
-        cancellation_reason,discount_amount,booking_extras(name,qty,amount),payments(created_at,status),sport:sports(name),
+        cancellation_reason,cancelled_by,group_id,refund_to,refund_status,refund_amount,refund_fee,refund_as_credit,discount_amount,booking_extras(name,qty,amount),payments(created_at,status),sport:sports(name,slug),
         court:courts(id,name,is_indoor,late_fee_percent,facility:facilities(name,city))`)
       .eq('id', id).maybeSingle();
+    if ((data as any)?.group_id) {
+      const { data: g } = await supabase.from('bookings').select('id,start_time,end_time,status,payment_status,amount_due')
+        .eq('group_id', (data as any).group_id).order('start_time');
+      setGroup((g as any[]) || []);
+    } else setGroup([]);
     setB(data);
     setLoading(false);
   }, [id]);
@@ -76,7 +94,7 @@ export default function Pay() {
     setErr(null);
     if (!session) return;
     if (files.length === 0) return setErr('Please choose the screenshot of your InstaPay transfer.');
-    if (!isInstapay(refundTo)) return setErr(`Please add your InstaPay for refunds: ${INSTAPAY_HELP}`);
+    if (!b?.refund_to && !isInstapay(refundTo)) return setErr(`Please add your InstaPay for refunds: ${INSTAPAY_HELP}`);
     setSending(true);
     const paths: string[] = [];
     for (const f of files) {
@@ -88,9 +106,13 @@ export default function Pay() {
       if (upErr) { setSending(false); return setErr(`Upload failed: ${upErr}`); }
       paths.push(path);
     }
-    const { error } = await supabase.rpc('submit_payment_proof', { p_booking_id: id, p_proof_path: paths.join(','), p_refund_to: refundTo.trim() });
+    const refund = b?.refund_to ? null : refundTo.trim();
+    const { error } = b?.group_id
+      ? await supabase.rpc('submit_group_payment_proof', { p_request_id: req.get(), p_group_id: b.group_id, p_proof_path: paths.join(','), p_refund_to: refund })
+      : await supabase.rpc('submit_payment_proof', { p_request_id: req.get(), p_booking_id: id, p_proof_path: paths.join(','), p_refund_to: refund });
     setSending(false);
     if (error) { setErr(error.message); load(); return; }
+    req.done();
     setFiles([]);
     askToNotify();
     toast("Payment sent! We'll confirm it shortly.");
@@ -106,6 +128,39 @@ export default function Pay() {
   const sentAt = (b.payments ?? []).filter((p: any) => p.status === 'pending').map((p: any) => new Date(p.created_at).getTime()).sort((x: number, y: number) => y - x)[0];
   const reviewLeft = sentAt ? sentAt + REVIEW_MINUTES * 60000 - now : null;
   const isChange = !!b.rescheduled_from;
+  // the hold ran out while the player was paying: for an hour they can still send the screenshot.
+  // If the time is still free the booking comes back; if not, the database records a full refund.
+  const lateRefund = (b.payments ?? []).some((p: any) => p.status === 'late');
+  const expiredByTimer = b.payment_status === 'unpaid' && !!b.hold_expires_at && (b.status === 'pending' || (b.status === 'cancelled' && b.cancelled_by === 'system'));
+  const latePayable = expired && expiredByTimer && !lateRefund && now - new Date(b.hold_expires_at).getTime() < LATE_PAY_MINUTES * 60000;
+  const groupUnpaid = group.filter((g) => g.payment_status === 'unpaid' && g.status !== 'cancelled');
+  const amountDue = b.group_id && b.payment_status === 'unpaid' ? groupUnpaid.reduce((a, g) => a + Number(g.amount_due), 0) || Number(b.amount_due) : Number(b.amount_due);
+  const bookAgain = () => router.replace({ pathname: '/court/[id]', params: { id: b.court?.id } });
+  const proofPicker = (
+    <>
+      {files.length > 0 && (
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+          {files.map((f) => <Image key={f.uri} source={{ uri: f.uri }} style={{ width: 90, height: 120, borderRadius: radius.sm }} contentFit="cover" />)}
+        </View>
+      )}
+      <Button title={files.length ? 'Choose other screenshots' : `Choose screenshot (up to ${MAX_PROOFS})`} variant="ghost" onPress={choose} />
+      <View style={{ height: 14 }} />
+      {b.refund_to ? (
+        <Text style={{ color: colors.muted, marginBottom: 12 }}>Refunds go to {b.refund_to}.</Text>
+      ) : (
+        <>
+          <Field label="Your InstaPay for refunds" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))}
+            placeholder="e.g. 01012345678" keyboardType="number-pad" maxLength={11} autoCorrect={false}
+            onFocus={() => { typingRefund.current = true; setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 300); }}
+            onBlur={() => { typingRefund.current = false; }} />
+          <Text style={{ color: colors.muted, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
+            If this booking is ever cancelled, your money goes back here. {INSTAPAY_HELP}
+          </Text>
+        </>
+      )}
+      {err && <Note kind="error">{err}</Note>}
+    </>
+  );
   const extrasSum = (b.booking_extras ?? []).reduce((a: number, x: any) => a + Number(x.amount), 0);
 
   return (
@@ -137,10 +192,37 @@ export default function Pay() {
         </View>
       )}
 
-      {expired && (
+      {expired && lateRefund && (
+        <View>
+          <Note kind="ok">
+            We got your screenshot. {lateReason(b.cancellation_reason)} So we'll send {egp(b.refund_amount)} back to your InstaPay{b.refund_to ? ` (${b.refund_to})` : ''} in full by the end of the day, once we've checked the transfer.
+          </Note>
+          <RefundChoice b={b} onChanged={load} />
+          <View style={{ height: 12 }} />
+          <Button title="Pick another time" onPress={bookAgain} />
+        </View>
+      )}
+
+      {expired && !lateRefund && !latePayable && (
         <View>
           <Note kind="error">{b.cancellation_reason || `The ${HOLD_MINUTES} minutes to send the payment have passed, so the time was released.`}</Note>
-          <Button title="Book again" onPress={() => router.replace({ pathname: '/court/[id]', params: { id: b.court?.id } })} />
+          {expiredByTimer && <Text style={{ color: colors.muted, marginBottom: 12 }}>Already sent the money? Message us on Instagram @zaf.play with your screenshot and we'll refund you.</Text>}
+          <Button title="Book again" onPress={bookAgain} />
+        </View>
+      )}
+
+      {latePayable && (
+        <View>
+          <Text style={{ fontSize: 40, textAlign: 'center' }}>⏱️</Text>
+          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center' }}>Your {HOLD_MINUTES} minutes ran out</Text>
+          <Text style={{ color: colors.muted, textAlign: 'center', marginBottom: 14 }}>The time may still be free.</Text>
+          <Button title="Hold it again" onPress={() => router.replace({ pathname: '/book/[courtId]', params: { courtId: b.court?.id, sport: b.sport?.slug } })} />
+          <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border, marginTop: 14 }}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>Already sent the money?</Text>
+            <Text style={{ color: colors.muted, marginBottom: 10 }}>Add the screenshot. If the time was taken, you get it all back.</Text>
+            {proofPicker}
+            {files.length > 0 && <Button title="Send" onPress={submit} loading={sending} />}
+          </View>
         </View>
       )}
 
@@ -164,29 +246,15 @@ export default function Pay() {
               </>
             )}
             <Text style={{ color: colors.muted, marginTop: 10 }}>Amount to send</Text>
-            <Text style={{ color: colors.text, fontSize: 30, fontWeight: '800' }}>{egp(b.amount_due)}</Text>
+            <Text style={{ color: colors.text, fontSize: 30, fontWeight: '800' }}>{egp(amountDue)}</Text>
+            {groupUnpaid.length > 1 && <Text style={{ color: colors.muted }}>One transfer for {groupUnpaid.length} times booked together.</Text>}
 
-            <Text style={{ color: colors.muted, marginTop: 12 }}>1. Send exactly {egp(b.amount_due)} to Zaf Play by InstaPay.</Text>
+            <Text style={{ color: colors.muted, marginTop: 12 }}>1. Send exactly {egp(amountDue)} to Zaf Play by InstaPay.</Text>
             <View style={{ marginVertical: 10 }}><Button title="Open InstaPay to pay →" onPress={() => Linking.openURL(ZAF_INSTAPAY_LINK)} /></View>
             <Text style={{ color: colors.muted }}>2. Take a screenshot of the successful transfer.</Text>
             <Text style={{ color: colors.muted, marginBottom: 10 }}>3. Add it here and press Send.</Text>
 
-            {files.length > 0 && (
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-                {files.map((f) => <Image key={f.uri} source={{ uri: f.uri }} style={{ width: 90, height: 120, borderRadius: radius.sm }} contentFit="cover" />)}
-              </View>
-            )}
-            <Button title={files.length ? 'Choose other screenshots' : `Choose screenshot (up to ${MAX_PROOFS})`} variant="ghost" onPress={choose} />
-
-            <View style={{ height: 14 }} />
-            <Field label="Your InstaPay for refunds" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))}
-              placeholder="e.g. 01012345678" keyboardType="number-pad" maxLength={11} autoCorrect={false}
-              onFocus={() => { typingRefund.current = true; setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 300); }}
-              onBlur={() => { typingRefund.current = false; }} />
-            <Text style={{ color: colors.muted, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
-              If this booking is ever cancelled, your money goes back here. {INSTAPAY_HELP}
-            </Text>
-            {err && <Note kind="error">{err}</Note>}
+            {proofPicker}
             <Button title="Send payment screenshot" onPress={submit} loading={sending} />
           </View>
           <PolicyNotice feePercent={Number(b.court?.late_fee_percent ?? 50)} />
