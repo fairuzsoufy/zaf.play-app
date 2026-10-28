@@ -1,16 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, radius, themed } from '@/lib/theme';
-import { dateTimeText, egp, levelText, whenText } from '@/lib/format';
+import { dateTimeText, egp, levelText, teamSizeText, untilText, whenText } from '@/lib/format';
 import { HOLD_MINUTES } from '@/lib/payment';
 import { Button, GradientFill } from '@/components/ui';
 import { TrustChip } from '@/components/Friends';
 
-type Tab = 'open' | 'mine';
+type Tab = 'open' | 'tournaments' | 'mine';
 
+const TEAM_STATUS: Record<string, string> = {
+  forming: 'Waiting for teammates',
+  ready: 'Ready, captain pays',
+  review: 'Payment being checked',
+  confirmed: 'In ✓',
+  withdrawn: 'Withdrawn',
+  rejected: 'Not accepted',
+  expired: 'Not completed in time',
+};
 const SPOT_STATUS: Record<string, string> = {
   holding: `Pay within ${HOLD_MINUTES} min`,
   review: 'Payment being checked',
@@ -19,7 +28,7 @@ const SPOT_STATUS: Record<string, string> = {
   rejected: 'Payment not accepted',
 };
 
-// Games: open games anyone can join, and my own games and invitations (the website's /games).
+// Games: open games anyone can join, tournaments, and my own games, teams and invitations (the website's /games).
 export default function Games() {
   const s = useS();
   const router = useRouter();
@@ -30,6 +39,7 @@ export default function Games() {
   const [sport, setSport] = useState('');
   const [city, setCity] = useState('');
   const [games, setGames] = useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<any[]>([]);
   const [mine, setMine] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -37,10 +47,12 @@ export default function Games() {
   const [busy, setBusy] = useState('');
 
   const load = useCallback(async () => {
-    const g = await supabase.rpc('list_open_games', { p_sport: sport || null, p_city: city || null });
+    const args = { p_sport: sport || null, p_city: city || null };
+    const [g, t] = await Promise.all([supabase.rpc('list_open_games', args), supabase.rpc('list_tournaments', args)]);
     // a failed load keeps what is on screen and says so, instead of showing "No open games"
-    setLoadFailed(!!g.error);
+    setLoadFailed(!!(g.error || t.error));
     if (!g.error) setGames((g.data as any[]) || []);
+    if (!t.error) setTournaments((t.data as any[]) || []);
     if (session) {
       const { data } = await supabase.rpc('my_games');
       setMine(data);
@@ -70,6 +82,14 @@ export default function Games() {
     return () => { supabase.removeChannel(ch); };
   }, [load]);
 
+  async function answer(teamId: string, accept: boolean) {
+    setBusy(teamId);
+    const { error } = await supabase.rpc('respond_team_invite', { p_team_id: teamId, p_accept: accept });
+    setBusy('');
+    if (error) Alert.alert('Could not answer', error.message);
+    load();
+  }
+
   async function declineGame(gameId: string) {
     setBusy(gameId);
     await supabase.rpc('decline_game_invite', { p_game_id: gameId });
@@ -79,6 +99,8 @@ export default function Games() {
 
   const open = (id: string) => router.push({ pathname: '/game/[id]', params: { id } });
   const gameInvites = (mine?.game_invites as any[]) || [];
+  const invites = (mine?.invites as any[]) || [];
+  const openT = (code: string) => router.push({ pathname: '/tournament/[code]', params: { code } });
   // one card per game: my live spot first
   const myGames = (() => {
     const by = new Map<string, any[]>();
@@ -89,7 +111,8 @@ export default function Games() {
 
   const tabs: { key: Tab; label: string; n?: number }[] = [
     { key: 'open', label: 'Open games', n: games.length },
-    ...(session ? [{ key: 'mine' as Tab, label: 'My games', n: gameInvites.length || undefined }] : []),
+    { key: 'tournaments', label: 'Tournaments', n: tournaments.length },
+    ...(session ? [{ key: 'mine' as Tab, label: 'My games', n: invites.length + gameInvites.length || undefined }] : []),
   ];
 
   return (
@@ -106,16 +129,23 @@ export default function Games() {
         </Pressable>
       )}
 
-      <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+      {invites.length > 0 && tab !== 'mine' && (
+        <Pressable onPress={() => setTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
+          <Text style={{ color: colors.text, fontWeight: '700' }}>You have {invites.length} team invitation{invites.length > 1 ? 's' : ''}</Text>
+          <Text style={{ color: colors.muted, marginTop: 2 }}>Tap to answer.</Text>
+        </Pressable>
+      )}
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, flexGrow: 0 }}>
         {tabs.map((t) => (
           <Pressable key={t.key} onPress={() => setTab(t.key)} style={[s.tab, tab === t.key && s.tabOn]}>
             {tab === t.key && <GradientFill />}
             <Text style={{ color: tab === t.key ? '#fff' : colors.muted, fontWeight: '600' }}>{t.label}{t.n ? ` (${t.n})` : ''}</Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
 
-      {tab === 'open' && (
+      {tab !== 'mine' && (
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
             <Chip on={!sport} label="All sports" onPress={() => setSport('')} />
@@ -125,8 +155,13 @@ export default function Games() {
             <Chip on={!city} label="All areas" onPress={() => setCity('')} />
             {cities.map((c) => <Chip key={c} on={city === c} label={c} onPress={() => setCity(c)} />)}
           </ScrollView>
-
           {loadFailed && <Text style={{ color: colors.warning, marginBottom: 10 }}>We couldn't load the latest games. Pull down to try again.</Text>}
+        </>
+      )}
+
+      {tab === 'open' && (
+        <>
+
           {!loading && games.length === 0 && !loadFailed && (
             <View style={[s.card, { alignItems: 'center' }]}>
               <Text style={{ fontSize: 28 }}>🙌</Text>
@@ -175,8 +210,55 @@ export default function Games() {
         </>
       )}
 
+      {tab === 'tournaments' && (
+        <>
+          {!loading && tournaments.length === 0 && (
+            <View style={[s.card, { alignItems: 'center' }]}>
+              <Text style={{ color: colors.text, fontWeight: '800' }}>No tournaments yet</Text>
+              <Text style={{ color: colors.muted, marginTop: 4, textAlign: 'center' }}>Follow us on Instagram to hear first when the next one opens.</Text>
+            </View>
+          )}
+          {tournaments.map((t) => {
+            const now = Date.now();
+            const opens = new Date(t.reg_opens_at).getTime();
+            const closes = new Date(t.reg_closes_at).getTime();
+            const isOpen = t.status === 'approved' && now >= opens && now < closes;
+            const state = t.status !== 'approved' ? 'Registration closed' : now < opens ? `Opens ${untilText(t.reg_opens_at)}` : now < closes ? `Closes ${untilText(t.reg_closes_at)}` : 'Registration closed';
+            return (
+              <Pressable key={t.id} onPress={() => openT(t.code)} style={s.card}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                  <Text style={{ color: colors.text, fontWeight: '700', flex: 1 }}>🏆 {t.title}</Text>
+                  <Text style={[s.pill, { color: isOpen ? colors.success : colors.muted }]}>{state}</Text>
+                </View>
+                <Text style={{ color: colors.muted, marginTop: 2 }}>{t.sport} · {teamSizeText(t.team_size)}</Text>
+                <Text style={{ color: colors.text, marginTop: 6 }}>{dateTimeText(t.starts_at)} · {t.court}, {t.branch}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+                  <Text style={{ color: colors.muted }}>{t.confirmed}/{t.max_teams} teams</Text>
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>{Number(t.entry_fee) > 0 ? `${egp(t.entry_fee)} / team` : 'Free'}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </>
+      )}
+
       {tab === 'mine' && mine && (
         <>
+          {invites.length > 0 && (
+            <>
+              <Text style={s.h2}>Team invitations</Text>
+              {invites.map((i: any) => (
+                <View key={i.team_id} style={s.card}>
+                  <Text style={{ color: colors.text }}><Text style={{ fontWeight: '700' }}>{i.captain}</Text> invited you to team <Text style={{ fontWeight: '700' }}>{i.team}</Text></Text>
+                  <Pressable onPress={() => openT(i.code)}><Text style={{ color: colors.muted, marginTop: 2, textDecorationLine: 'underline' }}>{i.tournament} · {dateTimeText(i.starts_at)}</Text></Pressable>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <View style={{ flex: 1 }}><Button small title="Accept" loading={busy === i.team_id} onPress={() => answer(i.team_id, true)} /></View>
+                    <View style={{ flex: 1 }}><Button small variant="ghost" title="Decline" disabled={busy === i.team_id} onPress={() => answer(i.team_id, false)} /></View>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
           {gameInvites.length > 0 && (
             <>
               <Text style={s.h2}>Game invitations</Text>
@@ -209,6 +291,22 @@ export default function Games() {
                 <Text style={{ color: colors.muted, marginTop: 6, fontSize: 12 }}>
                   💸 Refund {egp(g.refund_amount)} {g.refund_status === 'refunded' ? `sent ✓${g.refunded_at ? ` · ${dateTimeText(g.refunded_at)}` : ''}` : 'on its way'}
                 </Text>
+              )}
+            </Pressable>
+          ))}
+          <Text style={s.h2}>My tournament teams</Text>
+          {((mine.teams as any[]) || []).length === 0 && <Text style={{ color: colors.muted }}>None yet.</Text>}
+          {((mine.teams as any[]) || []).map((t) => (
+            <Pressable key={t.team_id} onPress={() => openT(t.code)} style={s.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>{t.team}{t.is_captain ? ' (captain)' : ''}</Text>
+                  <Text style={{ color: colors.muted }}>{t.tournament} · {dateTimeText(t.starts_at)}</Text>
+                </View>
+                <Text style={[s.pill, { color: t.status === 'confirmed' ? colors.success : colors.primary }]}>{TEAM_STATUS[t.status] || t.status}</Text>
+              </View>
+              {t.refund_status && t.refund_status !== 'none' && (
+                <Text style={{ color: colors.muted, marginTop: 6, fontSize: 12 }}>Refund {egp(t.refund_amount)} {t.refund_status === 'refunded' ? 'sent ✓' : 'on its way'}</Text>
               )}
             </Pressable>
           ))}

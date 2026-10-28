@@ -9,6 +9,7 @@ import { Button, Card, Field, GradientFill, GradientText, GRADIENT, Note, Pressa
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/Icon';
 import { DeleteAccount } from '@/components/DeleteAccount';
+import { AccountStatus, BlockedNotice } from '@/components/BlockedNotice';
 import { FriendsCard } from '@/components/Friends';
 import { ChangeEmail } from '@/components/ChangeEmail';
 import { PlayerStats } from '@/components/PlayerStats';
@@ -128,6 +129,7 @@ export default function Profile() {
           </LinearGradient>
           <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginTop: 8 }}>{me.full_name || 'Your name'}</Text>
           {me.username ? <Text style={{ color: colors.primary, fontWeight: '700', marginTop: 2 }}>@{me.username}</Text> : null}
+          {me.role === 'player' && <View style={{ marginTop: 6 }}><AccountStatus /></View>}
           {credit !== null && credit > 0 && (
             <View style={{ marginTop: 10, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.soft }}>
               <Text style={{ color: colors.success, fontWeight: '800' }}>💳 {egp(credit)} credit</Text>
@@ -136,6 +138,7 @@ export default function Profile() {
         </View>
       </View>
 
+      {me.role === 'player' && <BlockedNotice />}
       {me.role === 'player' && <PlayerStats />}
 
       {credit !== null && ledger.length > 0 && (

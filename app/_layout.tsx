@@ -47,6 +47,8 @@ function App() {
           <Stack.Screen name="court/[id]" options={{ title: '' }} />
           <Stack.Screen name="book/[courtId]" options={{ title: 'Book a time' }} />
           <Stack.Screen name="game/[id]" options={{ title: 'Open game' }} />
+          <Stack.Screen name="tournament/[code]" options={{ title: 'Tournament' }} />
+          <Stack.Screen name="appeal" options={{ title: 'Appeal a restriction' }} />
           <Stack.Screen name="pay/[id]" options={{ title: 'Complete your booking' }} />
           <Stack.Screen name="change/[id]" options={{ title: 'Modify booking' }} />
           <Stack.Screen name="login" options={{ title: 'Log in', presentation: 'modal' }} />

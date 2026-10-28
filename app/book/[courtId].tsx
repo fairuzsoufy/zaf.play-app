@@ -11,6 +11,7 @@ import { useRequestId } from '@/lib/requestId';
 import { Button, Note } from '@/components/ui';
 import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
 import { PolicyNotice } from '@/components/PolicyNotice';
+import { BlockedNotice } from '@/components/BlockedNotice';
 
 const LEVELS = [
   { v: 'beginner', label: 'Beginner' },
@@ -64,7 +65,7 @@ export default function BookCourt() {
     (async () => {
       const { data: c } = await supabase
         .from('courts')
-        .select('id,name,is_indoor,bookable_until,min_booking_minutes,late_fee_percent,facility:facilities(name),court_sports(price_per_hour,sport:sports(id,name,slug))')
+        .select('id,name,is_indoor,bookable_until,min_booking_minutes,late_fee_percent,facility_id,facility:facilities(name),court_sports(price_per_hour,sport:sports(id,name,slug))')
         .eq('id', courtId).maybeSingle();
       const offered = ((c as any)?.court_sports ?? []).filter((x: any) => x.sport);
       const picked = offered.find((x: any) => x.sport.slug === sportSlug) ?? (offered.length === 1 ? offered[0] : null);
@@ -309,6 +310,7 @@ export default function BookCourt() {
       </View>
 
       <PolicyNotice feePercent={Number(court.late_fee_percent ?? 50)} />
+      <BlockedNotice facilityId={court.facility_id} />
 
       {err && <Note kind="error">{err}</Note>}
       <Button title={!session ? 'Log in to continue →' : openMode ? `Host game · pay my spot${pick.start !== null ? ` ${egp(seatsAmount)}` : ''} →` : 'Continue to payment →'}
