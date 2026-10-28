@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Text, View, type ColorValue } from 'react-native';
+import { View, type ColorValue } from 'react-native';
+import { Text } from '@/components/AppText';
 import { colors, fonts, useTheme } from '@/lib/theme';
 import { Icon, type IconName } from '@/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

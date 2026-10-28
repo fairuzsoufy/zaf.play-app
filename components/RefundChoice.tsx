@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { supabase } from '@/lib/supabase';
 import { colors, radius, useTheme } from '@/lib/theme';
 import { egp } from '@/lib/format';

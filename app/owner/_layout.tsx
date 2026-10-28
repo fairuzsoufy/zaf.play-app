@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, ScrollView, Text } from 'react-native';
+import { Modal, ScrollView } from 'react-native';
+import { Text } from '@/components/AppText';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';

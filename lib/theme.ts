@@ -103,11 +103,14 @@ export function themed<T>(make: () => T): () => T {
   };
 }
 
-// The website's fonts: Bricolage Grotesque for titles, numbers and buttons, Figtree for text. Loaded in app/_layout.tsx.
+// The website's fonts: Bricolage Grotesque for titles, numbers and buttons, Figtree for text (components/AppText.tsx). Loaded in app/_layout.tsx.
 export const fonts = {
   display: 'Bricolage-ExtraBold',
   displayBold: 'Bricolage-Bold',
   displaySemi: 'Bricolage-SemiBold',
   body: 'Figtree-Regular',
-  bodyBold: 'Figtree-SemiBold',
+  bodyMedium: 'Figtree-Medium',
+  bodySemi: 'Figtree-SemiBold',
+  bodyBold: 'Figtree-Bold',
+  bodyHeavy: 'Figtree-ExtraBold',
 };

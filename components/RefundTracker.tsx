@@ -1,4 +1,5 @@
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { Image } from 'expo-image';
 import { colors, radius, themed } from '@/lib/theme';
 import { countdown, egp } from '@/lib/format';

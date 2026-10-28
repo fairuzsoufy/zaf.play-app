@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Alert, Linking, ScrollView, Text, View } from 'react-native';
+import { Alert, Linking, ScrollView, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { canOnBranch } from '@/lib/access';

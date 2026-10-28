@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { supabase } from '@/lib/supabase';
 import { dateTimeText } from '@/lib/format';
 import { searchMatches } from '@/lib/courtTimes';

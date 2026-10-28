@@ -1,6 +1,7 @@
 import 'expo-sqlite/localStorage/install';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { AR } from './ownerAr';
 import { colors } from './theme';
 

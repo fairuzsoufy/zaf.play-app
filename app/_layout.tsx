@@ -5,7 +5,10 @@ import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-gr
 import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
 import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque/600SemiBold';
 import { Figtree_400Regular } from '@expo-google-fonts/figtree/400Regular';
+import { Figtree_500Medium } from '@expo-google-fonts/figtree/500Medium';
 import { Figtree_600SemiBold } from '@expo-google-fonts/figtree/600SemiBold';
+import { Figtree_700Bold } from '@expo-google-fonts/figtree/700Bold';
+import { Figtree_800ExtraBold } from '@expo-google-fonts/figtree/800ExtraBold';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '@/lib/auth';
 import { Splash } from '@/components/Splash';
@@ -17,7 +20,8 @@ export default function RootLayout() {
   // the website's fonts; the splash covers the first moment while they load
   useFonts({
     [fonts.display]: BricolageGrotesque_800ExtraBold, [fonts.displayBold]: BricolageGrotesque_700Bold, [fonts.displaySemi]: BricolageGrotesque_600SemiBold,
-    [fonts.body]: Figtree_400Regular, [fonts.bodyBold]: Figtree_600SemiBold,
+    [fonts.body]: Figtree_400Regular, [fonts.bodyMedium]: Figtree_500Medium, [fonts.bodySemi]: Figtree_600SemiBold,
+    [fonts.bodyBold]: Figtree_700Bold, [fonts.bodyHeavy]: Figtree_800ExtraBold,
   });
   return (
     <ThemeProvider>

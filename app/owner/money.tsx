@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { supabase } from '@/lib/supabase';
 import { hm12 } from '@/lib/format';
 import { useT } from '@/lib/ownerLang';

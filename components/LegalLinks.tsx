@@ -1,4 +1,5 @@
-import { Linking, Text } from 'react-native';
+import { Linking } from 'react-native';
+import { Text } from '@/components/AppText';
 import { SITE_URL } from '@/lib/supabase';
 import { colors, useTheme } from '@/lib/theme';
 

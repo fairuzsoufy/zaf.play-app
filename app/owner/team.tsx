@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { PERMISSIONS, type PermissionKey } from '@/lib/access';
 import { capitalizeWords, isEgyptMobile, onlyDigits, PHONE_HELP } from '@/lib/validate';

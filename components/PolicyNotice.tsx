@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { colors, fonts, radius, themed } from '@/lib/theme';
 import { FREE_CHANGE_HOURS, FREE_CHANGE_MINUTES, HOLD_MINUTES, INSTAPAY_FEE_TEXT, REVIEW_MINUTES } from '@/lib/payment';
 

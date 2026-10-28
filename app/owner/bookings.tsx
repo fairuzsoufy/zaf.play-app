@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Linking, ScrollView, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { useRouter, type Href } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { branchScope } from '@/lib/access';

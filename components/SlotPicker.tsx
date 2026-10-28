@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { colors, radius, themed, useTheme } from '@/lib/theme';
 import { addDays, cairoDate, cairoToDate, countdown, dateLabel, durationText, hm12, weekdayOf } from '@/lib/format';
 import { GradientFill } from './ui';

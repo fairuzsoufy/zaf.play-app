@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Linking, Text, View } from 'react-native';
+import { Linking, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadPhoto } from '@/lib/supabase';

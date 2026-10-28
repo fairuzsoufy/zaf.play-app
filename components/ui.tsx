@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, Pressable, StyleSheet, Text, TextInput, View,
-  type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
+  ActivityIndicator, Animated, Pressable, StyleSheet, View, type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
+import { Text, TextInput } from '@/components/AppText';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
