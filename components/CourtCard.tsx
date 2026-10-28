@@ -9,7 +9,7 @@ import { egp } from '@/lib/format';
 import { GradientFill, PressableScale } from './ui';
 import type { CourtRow } from '@/lib/types';
 
-export function firstPhoto(c: CourtRow): string | null {
+function firstPhoto(c: CourtRow): string | null {
   const p = c.court_photos
     .filter((x) => x.status === 'approved')
     .sort((a, b) => a.sort_order - b.sort_order)[0];

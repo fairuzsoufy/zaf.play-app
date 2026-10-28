@@ -26,12 +26,6 @@ export function GradientText({ children, style }: { children: React.ReactNode; s
   );
 }
 
-// A big screen title in the website's display font.
-export function Title({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
-  useTheme();
-  return <Text style={[{ color: colors.text, fontFamily: fonts.display, fontSize: 28, lineHeight: 34 }, style]}>{children}</Text>;
-}
-
 // Pressable that springs down a little when touched, so taps feel alive.
 export function PressableScale({ style, children, scaleTo = 0.96, ...rest }: Omit<PressableProps, 'style'> & { style?: StyleProp<ViewStyle>; scaleTo?: number; children: React.ReactNode }) {
   const v = useRef(new Animated.Value(1)).current;

@@ -16,7 +16,7 @@ const DAYS_SHOWN = 14;
 const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0); };
 const clock = (m: number) => hm12(`${String(Math.floor((m % DAY) / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`);
 
-export function hoursFor(rules: Rule[], date: string) {
+function hoursFor(rules: Rule[], date: string) {
   const r = rules.find((x) => x.day_of_week === weekdayOf(date));
   if (!r || r.is_closed) return null;
   const open = toMin(r.open_time);
@@ -26,14 +26,14 @@ export function hoursFor(rules: Rule[], date: string) {
 }
 
 // true when the court is closed that day, or its hours are over (not even the shortest booking still fits)
-export function dayIsOver(rules: Rule[], date: string, minMinutes: number, now = Date.now()) {
+function dayIsOver(rules: Rule[], date: string, minMinutes: number, now = Date.now()) {
   const h = hoursFor(rules, date);
   if (!h) return true;
   return cairoToDate(date, h.close - minMinutes).getTime() <= now;
 }
 
 // the first day from `from` on that still has bookable hours (or `from` itself if none in the next two weeks)
-export function firstOpenDay(rules: Rule[], from: string, minMinutes: number, maxDate?: string) {
+function firstOpenDay(rules: Rule[], from: string, minMinutes: number, maxDate?: string) {
   for (let i = 0; i < DAYS_SHOWN; i++) {
     const d = addDays(from, i);
     if (maxDate && d > maxDate) break;

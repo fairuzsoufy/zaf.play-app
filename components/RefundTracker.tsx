@@ -4,7 +4,7 @@ import { colors, radius, themed } from '@/lib/theme';
 import { countdown, egp } from '@/lib/format';
 import { cancelSplitPreview, FREE_CHANGE_HOURS, INSTAPAY_FEE_TEXT } from '@/lib/payment';
 
-export const REFUND_MINUTES = 60; // same as the website: Zaf Play sends a refund within this time after the request
+const REFUND_MINUTES = 60; // same as the website: Zaf Play sends a refund within this time after the request
 
 function at(iso: string) {
   return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Africa/Cairo' })
