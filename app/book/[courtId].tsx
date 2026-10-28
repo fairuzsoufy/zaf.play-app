@@ -23,7 +23,8 @@ type Extra = { id: string; name: string; price: number; max_qty: number; is_requ
 export default function BookCourt() {
   const insets = useSafeAreaInsets();
   const st = useSt();
-  const { courtId, sport: sportSlug, host } = useLocalSearchParams<{ courtId: string; sport?: string; host?: string }>();
+  const { courtId, sport: sportSlug, host, date: dateIn, start: startIn, dur: durIn } =
+    useLocalSearchParams<{ courtId: string; sport?: string; host?: string; date?: string; start?: string; dur?: string }>();
   const router = useRouter();
   const { session } = useAuth();
   const [court, setCourt] = useState<any>(null);
@@ -32,7 +33,10 @@ export default function BookCourt() {
   const [busy, setBusy] = useState<Busy[]>([]);
   const [extras, setExtras] = useState<Extra[]>([]);
   const [qty, setQty] = useState<Record<string, number>>({});
-  const [pick, setPick] = useState<Pick>({ date: cairoDate(), start: null, duration: 0 });
+  // a free time tapped on the Book screen arrives already picked (start in minutes after that day's midnight)
+  const [pick, setPick] = useState<Pick>(() => dateIn && /^\d{4}-\d{2}-\d{2}$/.test(dateIn)
+    ? { date: dateIn, start: startIn ? Number(startIn) : null, duration: startIn && durIn ? Number(durIn) : 0 }
+    : { date: cairoDate(), start: null, duration: 0 });
   const [credit, setCredit] = useState(0);
   const [rewardPercent, setRewardPercent] = useState(0);
   const [loading, setLoading] = useState(true);

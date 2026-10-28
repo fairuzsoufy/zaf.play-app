@@ -62,7 +62,13 @@
           "microphonePermission": false
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Zaf Play uses your location only when you tap Near me, to show the courts closest to you."
+        }
+      ]
     ],
     "scheme": "zafplay",
     "extra": {
