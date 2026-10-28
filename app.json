@@ -16,7 +16,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#000000",
+        "backgroundColor": "#0B1030",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
@@ -45,11 +45,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F6F6F8",
+          "backgroundColor": "#0B1030",
           "image": "./assets/zaf-logo.png",
           "imageWidth": 200,
           "dark": {
-            "backgroundColor": "#0B0B0F",
+            "backgroundColor": "#0B1030",
             "image": "./assets/zaf-logo.png"
           }
         }

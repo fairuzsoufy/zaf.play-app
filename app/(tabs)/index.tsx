@@ -344,7 +344,7 @@ export default function Book() {
   const header = (
     <View>
       <View style={s.top}>
-        <Logo size={44} />
+        <Logo width={96} />
         <View style={{ flex: 1, flexDirection: 'row' }}>
           <Text style={s.brandTag}>Play. Compete. </Text>
           <GradientText style={[s.brandTag, { fontFamily: fonts.display }]}>Connect.</GradientText>
@@ -484,7 +484,7 @@ export default function Book() {
         >
           {pins.map((p) => (
             <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} onPress={(e) => { e.stopPropagation(); setSelected(p.id); }}
-              title={p.name} description={`${p.count} court${p.count === 1 ? '' : 's'} · from ${egp(p.price)}/h`} pinColor={selected === p.id ? colors.brandPink : colors.brandPurple} />
+              title={p.name} description={`${p.count} court${p.count === 1 ? '' : 's'} · from ${egp(p.price)}/h`} pinColor={selected === p.id ? colors.brandPink : colors.accent} />
           ))}
         </MapView>
         {selected && (

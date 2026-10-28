@@ -40,7 +40,6 @@ export function Splash() {
           <Defs>
             <LinearGradient id="zafRing" x1="0" y1="0" x2="1" y2="1">
               <Stop offset="0" stopColor={colors.brandBlue} />
-              <Stop offset="0.5" stopColor={colors.brandPurple} />
               <Stop offset="1" stopColor={colors.brandPink} />
             </LinearGradient>
           </Defs>
@@ -51,7 +50,7 @@ export function Splash() {
           />
         </Svg>
         <Animated.View style={[s.logo, { opacity: logoIn, transform: [{ scale: logoIn.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }] }]}>
-          <Logo size={SIZE * 0.76} />
+          <Logo variant="stack" width={SIZE * 0.56} />
         </Animated.View>
       </View>
       <Animated.View style={{ opacity: tagIn, transform: [{ translateY: tagIn.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
@@ -65,7 +64,7 @@ export function Splash() {
 
 const useS = themed(() => StyleSheet.create({
   wrap: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  logo: { position: 'absolute', top: SIZE * 0.12, left: SIZE * 0.12 },
+  logo: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   tag: { color: colors.muted, fontFamily: fonts.displaySemi, fontSize: 17, marginTop: 16 },
-  tagStrong: { color: colors.brandPink, fontFamily: fonts.display },
+  tagStrong: { color: colors.brandPinkBright, fontFamily: fonts.display },
 }));

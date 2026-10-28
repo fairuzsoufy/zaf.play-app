@@ -348,7 +348,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
         <View style={{ marginTop: 12 }}>
           <Text style={{ color: colors.text, marginBottom: 6 }}>How would you like your money back?</Text>
           {[[false, 'To my InstaPay', 'Zaf Play sends it within 1 hour (the InstaPay fee comes out of it).'], [true, 'Keep it as Zaf Play credit', 'No transfer fee. It is taken off your next booking automatically.']].map(([v, t, d]: any) => (
-            <Pressable key={String(v)} onPress={() => setAsCredit(v)} style={[s.choice, asCredit === v && { borderColor: colors.brandPurple }]}>
+            <Pressable key={String(v)} onPress={() => setAsCredit(v)} style={[s.choice, asCredit === v && { borderColor: colors.accent }]}>
               <Text style={{ color: colors.text, fontWeight: '600' }}>{asCredit === v ? '◉ ' : '○ '}{t}</Text>
               <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{d}</Text>
             </Pressable>
@@ -374,7 +374,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
 const useS = themed(() => StyleSheet.create({
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
   tabOn: { borderColor: 'transparent', overflow: 'hidden' },
-  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.brandPurple },
+  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.accent },
   title: { color: colors.text, fontFamily: fonts.display, fontSize: 20 },
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },

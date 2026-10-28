@@ -35,7 +35,7 @@ export function Chip({ label, on, onPress }: { label: string; on: boolean; onPre
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }}
       style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 1, marginRight: 8, marginBottom: 8,
-        borderColor: on ? colors.brandPurple : colors.border, backgroundColor: on ? colors.soft : colors.card }}>
+        borderColor: on ? colors.accent : colors.border, backgroundColor: on ? colors.soft : colors.card }}>
       <Text style={{ color: on ? colors.text : colors.muted, fontWeight: '600', fontSize: 13 }}>{label}</Text>
     </Pressable>
   );

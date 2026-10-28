@@ -462,7 +462,7 @@ const useS = themed(() => StyleSheet.create({
   evHold: { backgroundColor: colors.hold, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.primary },
   evMine: { justifyContent: 'center' },
   bar: { position: 'absolute', left: 0, right: 0, height: 28, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  grip: { width: 56, height: 8, borderRadius: 4, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.brandPurple },
+  grip: { width: 56, height: 8, borderRadius: 4, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.accent },
   evCurrent: { backgroundColor: 'rgba(16,185,129,0.14)', borderWidth: 2, borderColor: colors.current, justifyContent: 'center' },
   evText: { fontSize: 11, lineHeight: 14 },
 

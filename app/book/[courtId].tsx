@@ -249,7 +249,7 @@ export default function BookCourt() {
             <Text style={{ color: colors.text, fontWeight: '700' }}>Invite players to share the cost</Text>
             <Text style={{ color: colors.muted, fontSize: 12 }}>Others join and pay their spot</Text>
           </View>
-          <Switch value={openMode} onValueChange={(v) => { setOpenMode(v); setErr(null); }} trackColor={{ true: colors.brandPurple, false: colors.cardAlt }} />
+          <Switch value={openMode} onValueChange={(v) => { setOpenMode(v); setErr(null); }} trackColor={{ true: colors.accent, false: colors.cardAlt }} />
         </View>
         {openMode && (
           <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, gap: 12 }}>
@@ -349,7 +349,7 @@ function Chip({ on, label, onPress }: { on: boolean; label: string; onPress: () 
   useTheme();
   return (
     <Pressable onPress={onPress} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, borderWidth: 1,
-      borderColor: on ? colors.brandPurple : colors.border, backgroundColor: on ? colors.soft : 'transparent' }}>
+      borderColor: on ? colors.accent : colors.border, backgroundColor: on ? colors.soft : 'transparent' }}>
       <Text style={{ color: on ? colors.text : colors.muted, fontWeight: '600' }}>{label}</Text>
     </Pressable>
   );

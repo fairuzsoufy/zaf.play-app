@@ -73,7 +73,7 @@ export default function ChangeBooking() {
   }, [id, session, loadBusy]);
 
   if (!session) return <Text style={st.center}>Please log in to change your booking.</Text>;
-  if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.brandPurple} />;
+  if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.accent} />;
   if (!b) return <Text style={st.center}>Booking not found.</Text>;
 
   const canChange = ['pending', 'confirmed'].includes(b.status) && b.payment_status === 'paid' && new Date(b.start_time).getTime() > Date.now();
@@ -223,7 +223,7 @@ export default function ChangeBooking() {
                   {([['credit', `Zaf Play credit: ${egp(-due)}`, 'Right away, no fee. It comes off your next booking.'],
                     ['instapay', `InstaPay: ${egp(-due - instapayFee(-due))}`, `${egp(-due)} minus InstaPay's transfer fee (${INSTAPAY_FEE_TEXT}), sent by the end of the day.`]] as const).map(([v, t1, t2]) => (
                     <Pressable key={v} onPress={() => { setRefundTo(v); setErr(null); }}
-                      style={{ borderWidth: 1, borderRadius: radius.md, padding: 10, borderColor: refundTo === v ? colors.brandPurple : colors.border, backgroundColor: refundTo === v ? colors.soft : 'transparent' }}>
+                      style={{ borderWidth: 1, borderRadius: radius.md, padding: 10, borderColor: refundTo === v ? colors.accent : colors.border, backgroundColor: refundTo === v ? colors.soft : 'transparent' }}>
                       <Text style={{ color: colors.text, fontWeight: '700' }}>{refundTo === v ? '✓ ' : ''}{t1}</Text>
                       <Text style={{ color: colors.muted, fontSize: 12 }}>{t2}</Text>
                     </Pressable>

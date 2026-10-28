@@ -283,7 +283,7 @@ function Demand({ from, to, fromHour, toHour }: { from: string; to: string; from
                 <View key={h.hour} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
                   <Text style={{ width: 66, color: colors.muted, fontSize: 12 }}>{hour(h.hour)}</Text>
                   <View style={{ flex: 1, height: 12, borderRadius: 4, backgroundColor: colors.cardAlt, overflow: 'hidden' }}>
-                    <View style={{ height: '100%', width: `${Math.min(p, 100)}%`, backgroundColor: colors.brandPurple }} />
+                    <View style={{ height: '100%', width: `${Math.min(p, 100)}%`, backgroundColor: colors.accent }} />
                   </View>
                   <Text style={{ width: 80, color: colors.text, fontSize: 12, textAlign: 'right' }}>{p}% · {h.bookings}{h.waitlist > 0 ? ` 🔔${h.waitlist}` : ''}</Text>
                 </View>

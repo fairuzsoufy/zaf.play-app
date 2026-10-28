@@ -1,9 +1,11 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import { Saira_800ExtraBold_Italic } from '@expo-google-fonts/saira/800ExtraBold_Italic';
-import { Saira_700Bold_Italic } from '@expo-google-fonts/saira/700Bold_Italic';
-import { Saira_600SemiBold_Italic } from '@expo-google-fonts/saira/600SemiBold_Italic';
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
+import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
+import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque/600SemiBold';
+import { Figtree_400Regular } from '@expo-google-fonts/figtree/400Regular';
+import { Figtree_600SemiBold } from '@expo-google-fonts/figtree/600SemiBold';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '@/lib/auth';
 import { Splash } from '@/components/Splash';
@@ -12,8 +14,11 @@ import { BookingAlerts } from '@/components/BookingAlerts';
 import { colors, fonts, ThemeProvider, useTheme } from '@/lib/theme';
 
 export default function RootLayout() {
-  // the website's display font; the splash covers the first moment while it loads
-  useFonts({ [fonts.display]: Saira_800ExtraBold_Italic, [fonts.displayBold]: Saira_700Bold_Italic, [fonts.displaySemi]: Saira_600SemiBold_Italic });
+  // the website's fonts; the splash covers the first moment while they load
+  useFonts({
+    [fonts.display]: BricolageGrotesque_800ExtraBold, [fonts.displayBold]: BricolageGrotesque_700Bold, [fonts.displaySemi]: BricolageGrotesque_600SemiBold,
+    [fonts.body]: Figtree_400Regular, [fonts.bodyBold]: Figtree_600SemiBold,
+  });
   return (
     <ThemeProvider>
       <AuthProvider>

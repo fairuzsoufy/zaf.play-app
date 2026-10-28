@@ -9,7 +9,7 @@ import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 import { useT, withoutArabic } from '@/lib/ownerLang';
 
 // The website's brand gradient (blue → purple → pink), used for buttons and anything chosen.
-export const GRADIENT = [colors.brandBlue, colors.brandPurple, colors.brandPink] as const;
+export const GRADIENT = [colors.brandBlue, colors.brandPink] as const;
 
 // Fills its parent with the gradient; the parent needs overflow: 'hidden' and rounded corners.
 export function GradientFill({ style }: { style?: object }) {
@@ -110,8 +110,8 @@ const useS = themed(() => StyleSheet.create({
   },
   btnSmall: { paddingVertical: 10, paddingHorizontal: 16 },
   btnPrimary: {
-    backgroundColor: colors.brandPurple,
-    shadowColor: colors.brandPurple, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6,
+    backgroundColor: colors.accent,
+    shadowColor: colors.accent, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
   btnGhost: { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border },
   btnText: { color: '#fff', fontFamily: fonts.displayBold, fontSize: 17, letterSpacing: 0.3 },
@@ -124,7 +124,7 @@ const useS = themed(() => StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 14 },
   glowWrap: {
     borderRadius: radius.xl, padding: 1.5, marginBottom: 14,
-    shadowColor: colors.brandPurple, shadowOpacity: 0.35, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
+    shadowColor: colors.accent, shadowOpacity: 0.35, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
   },
   glowInner: { borderWidth: 0, borderRadius: radius.xl - 1.5 },
 }));
