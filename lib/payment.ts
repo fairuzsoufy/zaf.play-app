@@ -50,3 +50,12 @@ export function freeChangeLeftMs(b: { confirmed_at?: string | null; rescheduled_
   if (b.start_time && new Date(b.start_time).getTime() <= nowMs) return 0;
   return Math.max(0, new Date(b.confirmed_at).getTime() + FREE_CHANGE_MINUTES * 60000 - nowMs);
 }
+
+// owners' earnings go to an 11-digit mobile number or an InstaPay link (https://…), like the website
+export const isOwnerInstapay = (v: string) => isEgyptMobile(v.trim()) || /^https:\/\/\S+$/i.test(v.trim());
+// while typing: a number keeps digits only (max 11); a link is kept as typed (without spaces)
+export function cleanOwnerInstapay(value: string) {
+  const v = value.replace(/\s/g, '');
+  return /^\d/.test(v) ? v.replace(/\D/g, '').slice(0, 11) : v;
+}
+export const OWNER_INSTAPAY_HELP = 'An 11-digit mobile number (01xxxxxxxxx) or your InstaPay link (https://...).';

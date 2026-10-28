@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator, Animated, Pressable, StyleSheet, Text, TextInput, View,
   type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
@@ -6,6 +6,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
+import { useT, withoutArabic } from '@/lib/ownerLang';
 
 // The website's brand gradient (blue → purple → pink), used for buttons and anything chosen.
 export const GRADIENT = [colors.brandBlue, colors.brandPurple, colors.brandPink] as const;
@@ -72,11 +73,23 @@ export function Button({
 export function Field(props: TextInputProps & { label: string }) {
   const s = useS();
   const { scheme } = useTheme();
-  const { label, style, ...rest } = props;
+  const { owner, t } = useT();
+  const [arabicNote, setArabicNote] = useState(false);
+  const { label, style, onChangeText, ...rest } = props;
+  // on the owner screens Arabic is for reading only: Arabic letters never reach the form or the database
+  function change(text: string) {
+    const kept = owner ? withoutArabic(text) : null;
+    if (kept !== null) {
+      setArabicNote(true);
+      setTimeout(() => setArabicNote(false), 4000);
+    }
+    onChangeText?.(kept ?? text);
+  }
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput aria-label={label} placeholderTextColor={colors.muted} keyboardAppearance={scheme} style={[s.input, style]} {...rest} />
+      <TextInput aria-label={label} placeholderTextColor={colors.muted} keyboardAppearance={scheme} style={[s.input, style]} {...rest} onChangeText={change} />
+      {arabicNote && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: 12, marginTop: 4 }}>{t('Please type in English (A–Z). Arabic letters can’t be used in fields.')}</Text>}
     </View>
   );
 }

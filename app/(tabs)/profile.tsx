@@ -114,9 +114,10 @@ export default function Profile() {
 
   return (
     <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      {me.role !== 'player' && (
-        <Note kind="ok">You are logged in as {me.role}. Owner and staff tools are on zafplay.com.</Note>
+      {(me.role === 'owner' || me.role === 'staff') && (
+        <View style={{ marginBottom: 14 }}><Button title="Open the owner dashboard" onPress={() => router.push('/owner')} /></View>
       )}
+      {me.role === 'admin' && <Note kind="ok">You are logged in as admin. Admin tools are on zafplay.com.</Note>}
 
       {/* who you are: gradient banner, initials, name */}
       <View style={[card, { padding: 0, overflow: 'hidden' }]}>
