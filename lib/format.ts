@@ -66,3 +66,18 @@ export function countdown(ms: number): string {
   const t = Math.floor(ms / 1000);
   return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
 }
+
+// "Sat 31 Oct · 6:30 PM – 8:00 PM", like the website's whenText
+export function whenText(start: string, end?: string | null): string {
+  return `${dateLabel(start)} · ${timeLabel(start)}${end ? ` – ${timeLabel(end)}` : ''}`;
+}
+
+export const dateTimeText = (iso: string) => `${dateLabel(iso)}, ${timeLabel(iso)}`;
+
+const LEVEL_TEXT: Record<string, string> = { any: 'Any level', beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+
+// 'any' or one / two levels saved as 'beginner,intermediate'
+export function levelText(level: string | null | undefined): string {
+  if (!level || level === 'any') return LEVEL_TEXT.any;
+  return level.split(',').map((l) => LEVEL_TEXT[l] || l).join(' + ');
+}

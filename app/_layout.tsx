@@ -46,6 +46,7 @@ function App() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
           <Stack.Screen name="court/[id]" options={{ title: '' }} />
           <Stack.Screen name="book/[courtId]" options={{ title: 'Book a time' }} />
+          <Stack.Screen name="game/[id]" options={{ title: 'Open game' }} />
           <Stack.Screen name="pay/[id]" options={{ title: 'Complete your booking' }} />
           <Stack.Screen name="change/[id]" options={{ title: 'Modify booking' }} />
           <Stack.Screen name="login" options={{ title: 'Log in', presentation: 'modal' }} />

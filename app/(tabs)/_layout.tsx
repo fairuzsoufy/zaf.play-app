@@ -42,6 +42,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Play', headerShown: false, tabBarIcon: icon('ball'), tabBarLabel: label('Play') }} />
+      <Tabs.Screen name="games" options={{ title: 'Games', tabBarIcon: icon('users'), tabBarLabel: label('Games') }} />
       <Tabs.Screen name="bookings" options={{ title: 'My bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('My bookings') }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
     </Tabs>
