@@ -58,4 +58,3 @@ export function cleanOwnerInstapay(value: string) {
   const v = value.replace(/\s/g, '');
   return /^\d/.test(v) ? v.replace(/\D/g, '').slice(0, 11) : v;
 }
-export const OWNER_INSTAPAY_HELP = 'An 11-digit mobile number (01xxxxxxxxx) or your InstaPay link (https://...).';

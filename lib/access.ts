@@ -44,3 +44,14 @@ export type PermissionKey = (typeof PERMISSIONS)[number]['key'];
 
 // the branches this person works on: null means all of the owner's branches
 export const branchScope = (a: Access) => (a.is_owner || a.all_branches ? null : a.branch_ids || []);
+
+// may this person do `perm` on this branch? Same rules as the website's canOnBranch.
+export function canOnBranch(a: Access | null, facility: { id: string; owner_id: string } | null | undefined, perm: 'view_bookings' | 'manage_bookings' | 'view_finances' | 'manage_branches'): boolean {
+  if (!a || !facility) return false;
+  // frozen: my_access only gives the view permissions, so a frozen team sees everything and changes nothing
+  if (a.role === 'owner') return facility.owner_id === a.user_id && (a.status === 'active' || (a.status === 'frozen' && !!a[perm]));
+  if (a.role !== 'staff' || a.owner_id !== facility.owner_id) return false;
+  if (a.status !== 'active' && a.status !== 'invited' && a.status !== 'frozen') return false;
+  if (!a[perm]) return false;
+  return !!a.all_branches || (a.branch_ids || []).includes(facility.id);
+}

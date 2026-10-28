@@ -822,4 +822,17 @@ export const AR: Record<string, string> = {
   "Up to 31 days at a time. To open part of it again, tap those times in the calendar above.": "حتى 31 يومًا في المرة. لفتح جزء منها مرة أخرى، اضغط على تلك المواعيد في التقويم بالأعلى.",
   // ---- fields are English only ----
   'Please type in English (A–Z). Arabic letters can’t be used in fields.': 'من فضلك اكتب بالإنجليزية (A–Z). لا يمكن استخدام الحروف العربية في الخانات.',
+  // ---- app: courts screens ----
+  'Block slots': 'غلق مواعيد',
+  'Plans': 'الخطط',
+  'Reason': 'السبب',
+  'Done': 'تم',
+  'Time': 'الوقت',
+  'Back': 'رجوع',
+  "You don't have access to this court.": 'ليس لديك صلاحية على هذا الملعب.',
+  "You don't have access to this branch.": 'ليس لديك صلاحية على هذا الفرع.',
+  'Add a court': 'إضافة ملعب',
+  'Add a court to {name}': 'إضافة ملعب إلى {name}',
+  'Create Court': 'إنشاء الملعب',
+  'Each time is 30 minutes. Tap as many as you like, then press Block. Tap a blocked time to open it again. Struck-through times are booked by players.': 'كل موعد مدته 30 دقيقة. اختر ما تريد ثم اضغط غلق. اضغط على موعد مغلق لفتحه مرة أخرى. المواعيد المشطوبة محجوزة من اللاعبين.',
 }

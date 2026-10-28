@@ -91,15 +91,6 @@ export function Pager({ page, total, onChange, size = PAGE_SIZE }: { page: numbe
   );
 }
 
-// a list of choices shown as chips, for a select box on the website
-export function Picker<T extends string>({ options, value, onChange }: { options: { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
-  return (
-    <Chips>
-      {options.map((o) => <Chip key={o.value} label={o.label} on={o.value === value} onPress={() => onChange(o.value)} />)}
-    </Chips>
-  );
-}
-
 // a panel that slides up from the bottom (the website's Sheet), closed by tapping outside or ×
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   const { t, lang } = useT();

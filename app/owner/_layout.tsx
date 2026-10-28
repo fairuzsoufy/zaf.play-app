@@ -82,6 +82,10 @@ function OwnerShell() {
         <Stack.Screen name="tournaments" options={title('Tournaments')} />
         <Stack.Screen name="blocked" options={title('Blocked players')} />
         <Stack.Screen name="team" options={title('Team')} />
+        <Stack.Screen name="branch/[id]" options={title('Branch')} />
+        <Stack.Screen name="court-new/[id]" options={title('Add a court')} />
+        <Stack.Screen name="hours/[id]" options={title('Working hours')} />
+        <Stack.Screen name="block/[id]" options={title('Block slots')} />
       </Stack>
       {!pathname.startsWith('/owner/agreement') && <InstapayGate />}
     </OwnerContext.Provider>
