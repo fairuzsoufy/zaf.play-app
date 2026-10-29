@@ -1,35 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { supabase } from '@/lib/supabase';
 import { hm12 } from '@/lib/format';
 import { useT } from '@/lib/ownerLang';
-import { colors, radius } from '@/lib/theme';
+import { colors } from '@/lib/theme';
+import { defaultGroup, egp0, RANGES, Tile } from '@/components/revenue';
+import { PayoutDetails, ProofGallery } from '@/components/payouts';
 import { Box, Chip, Chips, fmtEGP, H2, LinkButton, Loading, Muted, Pager, PAGE_SIZE, useOwner } from '@/components/owner';
 
 type View_ = 'overview' | 'demand' | 'transfers';
-type Group = 'day' | 'week' | 'month';
 
-const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return d; };
-const egp0 = (n: number | string) => `${Number(n).toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
-
-// the website's quick date ranges (DateRangePicker)
-const RANGES: { label: string; get: () => [string, string] }[] = [
-  { label: 'Today', get: () => [ymd(new Date()), ymd(new Date())] },
-  { label: 'Yesterday', get: () => [ymd(daysAgo(1)), ymd(daysAgo(1))] },
-  { label: 'Last 7 days', get: () => [ymd(daysAgo(6)), ymd(new Date())] },
-  { label: 'Last 30 days', get: () => [ymd(daysAgo(29)), ymd(new Date())] },
-  { label: 'This month', get: () => { const t = new Date(); return [ymd(new Date(t.getFullYear(), t.getMonth(), 1)), ymd(new Date(t.getFullYear(), t.getMonth() + 1, 0))]; } },
-  { label: 'Last month', get: () => { const t = new Date(); return [ymd(new Date(t.getFullYear(), t.getMonth() - 1, 1)), ymd(new Date(t.getFullYear(), t.getMonth(), 0))]; } },
-  { label: 'Last 3 months', get: () => [ymd(daysAgo(89)), ymd(new Date())] },
-  { label: 'This year', get: () => { const t = new Date(); return [ymd(new Date(t.getFullYear(), 0, 1)), ymd(new Date(t.getFullYear(), 11, 31))]; } },
-];
-
-function defaultGroup(from: string, to: string): Group {
-  const days = (new Date(to).getTime() - new Date(from).getTime()) / 86400000;
-  return days > 180 ? 'month' : days > 45 ? 'week' : 'day';
-}
 const hourText = (h: number) => (h === 24 ? 'Midnight' : hm12(`${String(h % 24).padStart(2, '0')}:00`));
 
 // Owner → Money, like the website: bookings and money (Overview), busy hours (Demand) and what Zaf Play sent
@@ -77,18 +58,6 @@ export default function OwnerMoney() {
       {view === 'demand' && bookings && <Demand from={from} to={to} fromHour={fromHour} toHour={toHour} />}
       {view === 'transfers' && finances && <Earnings showTransfers={!!access.see_transfers} />}
     </ScrollView>
-  );
-}
-
-function Tile({ label, value, sub, strong }: { label: string; value: string; sub?: string; strong?: boolean }) {
-  return (
-    <View style={{ width: '50%', padding: 4 }}>
-      <View style={{ borderWidth: 1, borderColor: strong ? colors.success : colors.border, borderRadius: radius.lg, padding: 12, backgroundColor: colors.card }}>
-        <Text style={{ color: strong ? colors.success : colors.muted, fontSize: 12 }}>{label}</Text>
-        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 2 }}>{value}</Text>
-        {!!sub && <Muted style={{ fontSize: 11 }}>{sub}</Muted>}
-      </View>
-    </View>
   );
 }
 
@@ -477,99 +446,6 @@ function Earnings({ showTransfers }: { showTransfers: boolean }) {
           ))}
           <Pager page={payoutPage} total={payoutTotal} onChange={setPayoutPage} />
         </>
-      )}
-    </View>
-  );
-}
-
-// "Show the bookings in this transfer"
-function PayoutDetails({ payoutId }: { payoutId: string }) {
-  const { t, locale } = useT();
-  const [open, setOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<{ bookings: any[]; deductions: any[] } | null>(null);
-  const [error, setError] = useState('');
-
-  async function toggle() {
-    if (open) return setOpen(false);
-    setOpen(true);
-    if (data) return;
-    const { data: d, error: e } = await supabase.rpc('payout_details', { p_payout_id: payoutId });
-    if (e) setError(e.message);
-    else setData({ bookings: (d as any)?.bookings || [], deductions: (d as any)?.deductions || [] });
-  }
-
-  const when = (s: string, e: string) => {
-    const o = { timeZone: 'Africa/Cairo', hour: 'numeric', minute: '2-digit', hour12: true } as const;
-    return `${new Date(s).toLocaleString(locale, { ...o, weekday: 'short', day: 'numeric', month: 'short' })}–${new Date(e).toLocaleTimeString(locale, o)}`.replace(/am|pm/g, (x) => x.toUpperCase());
-  };
-  const shown = (data?.bookings || []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const net = (data?.bookings || []).reduce((a, b) => a + Number(b.owner_net), 0) - (data?.deductions || []).reduce((a, d) => a + Number(d.amount), 0);
-
-  return (
-    <View style={{ marginTop: 6 }}>
-      <LinkButton title={open ? t('Hide the bookings') : t('Show the bookings in this transfer')} onPress={toggle} />
-      {open && (
-        <View style={{ marginTop: 6 }}>
-          {!!error && <Text style={{ color: colors.danger }}>{error}</Text>}
-          {!data && !error && <Muted>{t('Loading...')}</Muted>}
-          {data && (
-            <>
-              {shown.map((b) => (
-                <View key={b.id} style={{ paddingVertical: 6, borderTopWidth: 1, borderColor: colors.border }}>
-                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>{when(b.start_time, b.end_time)}</Text>
-                  <Muted style={{ fontSize: 12 }}>{b.court} · {b.sport} · {b.branch}{b.player ? ` · ${b.player}` : ''}</Muted>
-                  {b.status === 'cancelled' && <Text style={{ color: colors.warning, fontSize: 12 }}>{t('late cancellation fee')}</Text>}
-                  <Muted style={{ fontSize: 12 }}>{t('Paid')} {fmtEGP(b.price)} · Zaf Play − {fmtEGP(b.commission)} ({Number(b.commission_rate)}%) · {t('You get')} {fmtEGP(b.owner_net)}</Muted>
-                </View>
-              ))}
-              {data.deductions.map((d, i) => (
-                <View key={`d${i}`} style={{ paddingVertical: 6, borderTopWidth: 1, borderColor: colors.border }}>
-                  <Text style={{ color: Number(d.amount) < 0 ? colors.success : colors.danger, fontSize: 13, fontWeight: '700' }}>
-                    {Number(d.amount) < 0 ? t('Tournament share') : t('Deduction')} · {d.branch}: {Number(d.amount) < 0 ? `+ ${fmtEGP(-Number(d.amount))}` : `− ${fmtEGP(d.amount)}`}
-                  </Text>
-                  <Muted style={{ fontSize: 12 }}>{d.reason}</Muted>
-                </View>
-              ))}
-              <Text style={{ color: colors.text, fontWeight: '800', marginTop: 6 }}>
-                {t('{n} booking(s)', { n: data.bookings.length })}{data.deductions.length > 0 ? ` · ${t('{n} deduction(s)', { n: data.deductions.length })}` : ''} · {fmtEGP(net)}
-              </Text>
-              <Pager page={page} total={data.bookings.length} onChange={setPage} />
-            </>
-          )}
-        </View>
-      )}
-    </View>
-  );
-}
-
-// the transfer receipts Zaf Play uploaded (private files, opened with a short-lived link)
-function ProofGallery({ paths }: { paths: string[] }) {
-  const [items, setItems] = useState<{ url: string; isPdf: boolean }[] | null>(null);
-  const [error, setError] = useState('');
-  if (!paths.length) return null;
-
-  async function toggle() {
-    if (items) return setItems(null);
-    const { data, error: e } = await supabase.storage.from('payout-proofs').createSignedUrls(paths, 3600);
-    if (e) return setError('Could not load the proof files.');
-    setItems((data || []).filter((d) => d.signedUrl).map((d) => ({ url: d.signedUrl as string, isPdf: (d.path || '').toLowerCase().endsWith('.pdf') })));
-  }
-
-  return (
-    <View style={{ marginTop: 4 }}>
-      <LinkButton title={items ? 'Hide proof' : `View transfer proof (${paths.length})`} onPress={toggle} />
-      {!!error && <Text style={{ color: colors.danger, fontSize: 12 }}>{error}</Text>}
-      {items && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
-          {items.map((it, i) => (
-            <Pressable key={i} onPress={() => Linking.openURL(it.url)}>
-              {it.isPdf
-                ? <View style={{ width: 90, height: 120, borderRadius: 8, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.text }}>📄 PDF {i + 1}</Text></View>
-                : <Image source={{ uri: it.url }} style={{ width: 90, height: 120, borderRadius: 8 }} />}
-            </Pressable>
-          ))}
-        </View>
       )}
     </View>
   );

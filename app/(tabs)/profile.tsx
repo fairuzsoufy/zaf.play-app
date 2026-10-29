@@ -119,7 +119,7 @@ export default function Profile() {
       {(me.role === 'owner' || me.role === 'staff') && (
         <View style={{ marginBottom: 14 }}><Button title="Open the owner dashboard" onPress={() => router.push('/owner')} /></View>
       )}
-      {me.role === 'admin' && <Note kind="ok">You are logged in as admin. Admin tools are on zafplay.com.</Note>}
+      {me.role === 'admin' && <Button title="Open the admin screens" onPress={() => router.push('/admin')} />}
 
       {/* who you are: gradient banner, initials, name */}
       <View style={[card, { padding: 0, overflow: 'hidden' }]}>
