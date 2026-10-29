@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Alert, AppState } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
@@ -20,10 +21,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Same rules as the website: a login lasts 24 hours, and one account has one login at a time, so logging in
+  // on another phone or browser ends this one. Checked every minute and whenever the app comes back to the front.
+  useEffect(() => {
+    if (!session) return;
+    let ended = false;
+    async function check() {
+      if (ended || !session) return;
+      const expired = loginExpired(session);
+      let replaced = false;
+      if (!expired) {
+        const { data, error } = await supabase.rpc('my_login_is_current');
+        replaced = !error && data === false;
+      }
+      if (!expired && !replaced) return;
+      ended = true;
+      await supabase.auth.signOut({ scope: 'local' });
+      Alert.alert("You've been logged out", expired
+        ? 'For your safety a login lasts 24 hours. Please log in again.'
+        : 'Your account was logged in on another phone or browser, or your password or email changed. Please log in again.');
+    }
+    check();
+    const t = setInterval(check, 60_000);
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && check());
+    return () => { clearInterval(t); sub.remove(); };
+  }, [session?.user.id, session?.access_token]);
+
   return <AuthContext.Provider value={{ session, loading }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
+
+// when this login started: the access token keeps the original log-in time ("amr") through every refresh
+function loginExpired(session: Session) {
+  let started: number | null = null;
+  try {
+    const part = session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const claims = JSON.parse(atob(part.padEnd(part.length + ((4 - (part.length % 4)) % 4), '=')));
+    const stamps = (claims.amr || []).map((a: { timestamp?: number }) => Number(a.timestamp)).filter((x: number) => x > 0);
+    if (stamps.length) started = Math.min(...stamps) * 1000;
+  } catch {}
+  return started !== null && Date.now() - started >= 24 * 60 * 60 * 1000;
+}
 
 // Same rule as the website: anything with "@" in the middle is an email; anything else
 // (with or without a leading "@") is a username that the database turns into an email.
