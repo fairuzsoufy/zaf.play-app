@@ -1,6 +1,7 @@
 import 'expo-sqlite/localStorage/install';
 import { AppState } from 'react-native';
 import { createClient } from '@supabase/supabase-js';
+import * as SecureStore from 'expo-secure-store';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -9,9 +10,50 @@ if (!url || !key) {
   throw new Error('Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY (copy .env.example to .env).');
 }
 
+// The login is kept in the phone's Keychain / Keystore (encrypted), not in plain app storage.
+// SecureStore holds about 2 KB per key and a session is bigger, so it is split into numbered chunks.
+// A login saved by an older build in plain storage is moved over once and then deleted there.
+const CHUNK = 1800;
+const safeKey = (k: string) => k.replace(/[^A-Za-z0-9._-]/g, '_');
+const secureStorage = {
+  async getItem(k: string): Promise<string | null> {
+    const base = safeKey(k);
+    const n = Number(await SecureStore.getItemAsync(`${base}.n`));
+    if (n > 0) {
+      const parts: string[] = [];
+      for (let i = 0; i < n; i++) {
+        const part = await SecureStore.getItemAsync(`${base}.${i}`);
+        if (part == null) return null;
+        parts.push(part);
+      }
+      return parts.join('');
+    }
+    const old = localStorage.getItem(k);
+    if (old != null) {
+      await secureStorage.setItem(k, old);
+      localStorage.removeItem(k);
+    }
+    return old;
+  },
+  async setItem(k: string, v: string): Promise<void> {
+    const base = safeKey(k);
+    await secureStorage.removeItem(k);
+    const n = Math.ceil(v.length / CHUNK);
+    for (let i = 0; i < n; i++) await SecureStore.setItemAsync(`${base}.${i}`, v.slice(i * CHUNK, (i + 1) * CHUNK));
+    await SecureStore.setItemAsync(`${base}.n`, String(n));
+  },
+  async removeItem(k: string): Promise<void> {
+    const base = safeKey(k);
+    const n = Number(await SecureStore.getItemAsync(`${base}.n`));
+    for (let i = 0; i < n; i++) await SecureStore.deleteItemAsync(`${base}.${i}`);
+    await SecureStore.deleteItemAsync(`${base}.n`);
+    localStorage.removeItem(k);
+  },
+};
+
 export const supabase = createClient(url, key, {
   auth: {
-    storage: localStorage,
+    storage: secureStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
