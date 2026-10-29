@@ -14,6 +14,7 @@ import { AccountStatus, BlockedNotice } from '@/components/BlockedNotice';
 import { FriendsCard } from '@/components/Friends';
 import { ChangeEmail } from '@/components/ChangeEmail';
 import { LoginSecurity } from '@/components/LoginSecurity';
+import { ThemePicker } from '@/components/ThemeToggle';
 import { PlayerStats } from '@/components/PlayerStats';
 import { LegalLinks } from '@/components/LegalLinks';
 import { toast } from '@/components/Toast';
@@ -99,7 +100,8 @@ export default function Profile() {
         <Button title="Log in" onPress={() => router.push('/login')} />
         <View style={{ height: 10 }} />
         <Button title="Create an account" variant="ghost" onPress={() => router.push('/signup')} />
-        <Pressable onPress={() => router.push('/signup-owner')} hitSlop={8}>
+        <View style={{ marginTop: 20 }}><ThemePicker /></View>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/signup-owner')} hitSlop={8}>
           <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 14 }}>
             Own courts? <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>Sign up as a court owner</Text>
           </Text>
@@ -197,6 +199,7 @@ export default function Profile() {
       </View>
 
       {me.email && <ChangeEmail current={me.email} />}
+      <ThemePicker />
       <LoginSecurity />
 
       {me.role === 'player' && <FriendsCard />}

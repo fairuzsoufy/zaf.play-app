@@ -138,7 +138,7 @@ export default function AdminApprovals() {
                     {photos.length > 0 && (
                       <ScrollView horizontal style={{ marginVertical: 6 }}>
                         {photos.map((p: any) => (
-                          <Pressable key={p.id} onPress={() => { const u = photoUrl(p.path); if (u) Linking.openURL(u); }}>
+                          <Pressable accessibilityRole="button" key={p.id} onPress={() => { const u = photoUrl(p.path); if (u) Linking.openURL(u); }}>
                             <Image source={{ uri: photoUrl(p.path) || undefined }} style={{ width: 96, height: 64, borderRadius: 6, marginRight: 6 }} />
                           </Pressable>
                         ))}

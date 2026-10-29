@@ -114,7 +114,7 @@ function CardTimes({ c, date: dateIn, onTime }: { c: BookCourt; date: string; on
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
         <View style={[s.time, { borderColor: colors.border }]}><Text style={{ color: colors.muted, fontSize: 13 }}>{dateIn !== cairoDate() ? 'Full this day' : date !== dateIn ? 'Full tonight' : 'Full today'}</Text></View>
         {next && (
-          <Pressable onPress={() => onTime(next.date, next.start, dur)} style={s.time}>
+          <Pressable accessibilityRole="button" onPress={() => onTime(next.date, next.start, dur)} style={s.time}>
             <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>Next: {dayWord(next.date)} {startLabel(next.start)}</Text>
           </Pressable>
         )}
@@ -124,11 +124,11 @@ function CardTimes({ c, date: dateIn, onTime }: { c: BookCourt; date: string; on
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
       {spreadStarts(starts, 3).map((m) => (
-        <Pressable key={m} onPress={() => onTime(date, m, dur)} style={[s.time, s.timeFree]}>
+        <Pressable accessibilityRole="button" key={m} onPress={() => onTime(date, m, dur)} style={[s.time, s.timeFree]}>
           <Text style={{ color: colors.success, fontSize: 13, fontWeight: '700' }}>{startLabel(m)}</Text>
         </Pressable>
       ))}
-      <Pressable onPress={() => onTime(date)} style={s.time}><Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>More</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => onTime(date)} style={s.time}><Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>More</Text></Pressable>
     </View>
   );
 }
@@ -358,7 +358,7 @@ export default function Book() {
         <TextInput ref={searchRef} value={query} onChangeText={setQuery} onFocus={() => setFocus(true)}
           placeholder="Search courts, clubs, areas" placeholderTextColor={colors.muted} keyboardAppearance={scheme}
           autoCorrect={false} returnKeyType="search" style={s.searchInput} accessibilityLabel="Search courts, clubs, areas" />
-        {searchOpen && <Pressable onPress={closeSearch} hitSlop={10} accessibilityLabel="Close search"><Text style={{ color: colors.muted, fontSize: 18 }}>✕</Text></Pressable>}
+        {searchOpen && <Pressable accessibilityRole="button" onPress={closeSearch} hitSlop={10} accessibilityLabel="Close search"><Text style={{ color: colors.muted, fontSize: 18 }}>✕</Text></Pressable>}
       </View>
 
       {searchOpen ? (
@@ -368,9 +368,9 @@ export default function Book() {
               <View style={s.panel}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={s.panelTitle}>Recent searches</Text>
-                  <Pressable onPress={() => { setRecent([]); saveRecent([]); }}><Text style={{ color: colors.muted, fontSize: 12, textDecorationLine: 'underline' }}>Clear</Text></Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => { setRecent([]); saveRecent([]); }}><Text style={{ color: colors.muted, fontSize: 12, textDecorationLine: 'underline' }}>Clear</Text></Pressable>
                 </View>
-                {recent.map((r) => <Pressable key={r} onPress={() => setQuery(r)} style={s.resultRow}><Text style={{ color: colors.text }}>🕘 {r}</Text></Pressable>)}
+                {recent.map((r) => <Pressable accessibilityRole="button" key={r} onPress={() => setQuery(r)} style={s.resultRow}><Text style={{ color: colors.text }}>🕘 {r}</Text></Pressable>)}
               </View>
             ) : <Text style={{ color: colors.muted }}>Type at least 2 letters, for example a club or an area.</Text>
           )}
@@ -378,22 +378,22 @@ export default function Book() {
             <View style={s.panel}>
               {nothing && <Text style={{ color: colors.muted }}>Nothing found for “{q}”. Try another word.</Text>}
               {results.sportHits.map((x) => (
-                <Pressable key={x.slug} onPress={() => { remember(query); pickSport(x.slug); closeSearch(); }} style={s.resultRow}>
+                <Pressable accessibilityRole="button" key={x.slug} onPress={() => { remember(query); pickSport(x.slug); closeSearch(); }} style={s.resultRow}>
                   <Text style={{ color: colors.text, fontWeight: '700' }}>{x.emoji || '🏅'} {x.name}</Text><Text style={{ color: colors.muted, fontSize: 12 }}>Sport</Text>
                 </Pressable>
               ))}
               {results.areaHits.map((a) => (
-                <Pressable key={a.name} onPress={() => { remember(query); pickArea(a.name); closeSearch(); }} style={s.resultRow}>
+                <Pressable accessibilityRole="button" key={a.name} onPress={() => { remember(query); pickArea(a.name); closeSearch(); }} style={s.resultRow}>
                   <Text style={{ color: colors.text, fontWeight: '700' }}>📍 {a.name}</Text><Text style={{ color: colors.muted, fontSize: 12 }}>{a.n} court{a.n === 1 ? '' : 's'}</Text>
                 </Pressable>
               ))}
               {results.clubs.map((x) => (
-                <Pressable key={x.id} onPress={() => { remember(query); setArea(''); setClub(x.id); closeSearch(); }} style={s.resultRow}>
+                <Pressable accessibilityRole="button" key={x.id} onPress={() => { remember(query); setArea(''); setClub(x.id); closeSearch(); }} style={s.resultRow}>
                   <Text style={{ color: colors.text, fontWeight: '700', flex: 1 }} numberOfLines={1}>🏟 {x.name}</Text><Text style={{ color: colors.muted, fontSize: 12 }}>{x.area} · {x.n} court{x.n === 1 ? '' : 's'}</Text>
                 </Pressable>
               ))}
               {results.courtHits.map((c) => (
-                <Pressable key={c.key} onPress={() => { remember(query || c.name); closeSearch(); openCourt(c); }} style={s.resultRow}>
+                <Pressable accessibilityRole="button" key={c.key} onPress={() => { remember(query || c.name); closeSearch(); openCourt(c); }} style={s.resultRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{c.branchName} · {c.name}</Text>
                     <Text style={{ color: colors.muted, fontSize: 12 }} numberOfLines={1}>{sportOf(c.sport)?.name || c.sport} · {c.area} · {c.price} EGP/h</Text>
@@ -426,9 +426,9 @@ export default function Book() {
                 const on = date === d;
                 const dt = new Date(`${d}T12:00:00Z`);
                 return (
-                  <Pressable key={d} onPress={() => setDate(d)} style={[s.day, on && s.chipOn]} accessibilityState={{ selected: on }}>
+                  <Pressable accessibilityRole="button" key={d} onPress={() => setDate(d)} style={[s.day, on && s.chipOn]} accessibilityState={{ selected: on }}>
                     {on && <GradientFill />}
-                    <Text style={{ color: on ? '#fff' : colors.muted, fontSize: 11, fontWeight: '700' }}>{i === 0 ? 'TODAY' : dt.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }).toUpperCase()}</Text>
+                    <Text style={{ color: on ? '#fff' : colors.muted, fontSize: 12, fontWeight: '700' }}>{i === 0 ? 'TODAY' : dt.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }).toUpperCase()}</Text>
                     <Text style={{ color: on ? '#fff' : colors.text, fontSize: 18, fontWeight: '800' }}>{dt.getUTCDate()}</Text>
                   </Pressable>
                 );
@@ -438,7 +438,7 @@ export default function Book() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             <View style={s.seg}>
               {(['list', 'map'] as const).map((v) => (
-                <Pressable key={v} onPress={() => { setView(v); setSelected(null); }} style={[s.segBtn, view === v && s.chipOn]}>
+                <Pressable accessibilityRole="button" key={v} onPress={() => { setView(v); setSelected(null); }} style={[s.segBtn, view === v && s.chipOn]}>
                   {view === v && <GradientFill />}
                   <Text style={{ color: view === v ? '#fff' : colors.muted, fontWeight: '600' }}>{v === 'list' ? 'List' : 'Map'}</Text>
                 </Pressable>
@@ -447,14 +447,14 @@ export default function Book() {
             {places.length > 1 && (
               <View style={s.seg}>
                 {([['', 'All'], ['indoor', 'Indoor'], ['outdoor', 'Outdoor']] as const).map(([p, l]) => (
-                  <Pressable key={l} onPress={() => pickPlace(p)} style={[s.segBtn, place === p && s.chipOn]}>
+                  <Pressable accessibilityRole="button" key={l} onPress={() => pickPlace(p)} style={[s.segBtn, place === p && s.chipOn]}>
                     {place === p && <GradientFill />}
                     <Text style={{ color: place === p ? '#fff' : colors.muted, fontWeight: '600' }}>{l}</Text>
                   </Pressable>
                 ))}
               </View>
             )}
-            <Pressable onPress={nearMe} style={[s.segBtn, s.seg, loc && s.chipOn]} disabled={locBusy}>
+            <Pressable accessibilityRole="button" onPress={nearMe} style={[s.segBtn, s.seg, loc && s.chipOn]} disabled={locBusy}>
               {loc && <GradientFill />}
               {locBusy ? <ActivityIndicator size="small" color={colors.muted} /> : <Text style={{ color: loc ? '#fff' : colors.muted, fontWeight: '600' }}>{loc ? '📍 Near me ✕' : '📍 Near me'}</Text>}
             </Pressable>

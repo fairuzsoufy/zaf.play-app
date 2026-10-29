@@ -255,7 +255,7 @@ export default function OpenGame() {
                 <View key={i.username} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, gap: 8 }}>
                   <Text style={{ color: colors.text, flex: 1 }}>{i.name} <Text style={{ color: colors.muted }}>@{i.username}</Text></Text>
                   <Text style={{ color: colors.muted, fontSize: 12 }}>{INVITE_STATE[i.state || (i.status === 'declined' ? 'declined' : 'invited')]}</Text>
-                  {!i.joined && <Pressable onPress={() => uninvite(i.username)}><Text style={{ color: colors.muted, textDecorationLine: 'underline', fontSize: 12 }}>Remove</Text></Pressable>}
+                  {!i.joined && <Pressable accessibilityRole="button" onPress={() => uninvite(i.username)}><Text style={{ color: colors.muted, textDecorationLine: 'underline', fontSize: 12 }}>Remove</Text></Pressable>}
                 </View>
               ))}
               <TextInput value={friendQ} onChangeText={setFriendQ} autoCapitalize="none" autoCorrect={false} placeholderTextColor={colors.muted}
@@ -270,7 +270,7 @@ export default function OpenGame() {
               {!!q && !friends.some((f) => f.username.toLowerCase() === q) && (
                 <View style={{ marginTop: 8 }}><Button small variant="ghost" title={`Invite @${q} & add to my friends`} disabled={busy} onPress={() => invite(q)} /></View>
               )}
-              <Pressable onPress={() => setVisibility(g.visibility === 'private' ? 'public' : 'private')} style={{ marginTop: 12 }}>
+              <Pressable accessibilityRole="button" onPress={() => setVisibility(g.visibility === 'private' ? 'public' : 'private')} style={{ marginTop: 12 }}>
                 <Text style={{ color: colors.muted, fontSize: 12 }}>
                   Game type: <Text style={{ fontWeight: '700' }}>{g.visibility === 'private' ? 'Private' : 'Public'}</Text> ·{' '}
                   <Text style={{ textDecorationLine: 'underline' }}>{g.visibility === 'private' ? 'Make it public (show under Games)' : 'Make it private (hide from Games)'}</Text>
@@ -382,7 +382,7 @@ export default function OpenGame() {
               {me.refund_status === 'refunded' ? `was sent to your InstaPay ✓${me.refunded_at ? ` (${dateTimeText(me.refunded_at)})` : ''}` : 'is on its way to your InstaPay.'}
             </Text>
             {!!proofUrl && (
-              <Pressable onPress={() => Linking.openURL(proofUrl)} style={{ marginTop: 8 }}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(proofUrl)} style={{ marginTop: 8 }}>
                 <Text style={{ color: colors.muted, fontSize: 12 }}>Proof of the transfer, tap to enlarge</Text>
                 <Image source={{ uri: proofUrl }} style={{ width: 140, height: 180, borderRadius: radius.sm, marginTop: 4 }} contentFit="cover" />
               </Pressable>
@@ -391,21 +391,21 @@ export default function OpenGame() {
         )}
 
         {active && g.status === 'open' && (me.status === 'paid' || me.status === 'holding') && !g.is_host && (
-          <Pressable disabled={busy} onPress={() => confirm('Leave this game?', 'Your spot opens for someone else and your money is sent back to your InstaPay.', 'Yes, leave', leave)}>
+          <Pressable accessibilityRole="button" disabled={busy} onPress={() => confirm('Leave this game?', 'Your spot opens for someone else and your money is sent back to your InstaPay.', 'Yes, leave', leave)}>
             <Text style={s.link}>
               {me.status === 'paid' ? `Leave this game (refund ${egp(Number(me.amount) - instapayFee(Number(me.amount)))} after InstaPay's fee)` : "Leave this game (you haven't paid, nothing to refund)"}
             </Text>
           </Pressable>
         )}
         {g.is_host && g.status === 'open' && !hostTimeUp && active && Number(me?.seats) > 1 && me?.status !== 'review' && (
-          <Pressable disabled={busy} onPress={() => confirm('Release one friend spot?', 'One of the spots you paid for opens up for someone else. Only that one spot is refunded to your InstaPay (minus the transfer fee). Your own spot and your other friends stay.', 'Yes, release it', releaseSpot)}>
+          <Pressable accessibilityRole="button" disabled={busy} onPress={() => confirm('Release one friend spot?', 'One of the spots you paid for opens up for someone else. Only that one spot is refunded to your InstaPay (minus the transfer fee). Your own spot and your other friends stay.', 'Yes, release it', releaseSpot)}>
             <Text style={s.link}>
               Release one friend spot{me?.status === 'paid' ? ` (refund ${egp(Number(g.price_per_spot) - instapayFee(Number(g.price_per_spot)))} for that spot only)` : " (you haven't paid yet, nothing to refund)"}
             </Text>
           </Pressable>
         )}
         {g.is_host && g.status === 'open' && !hostTimeUp && (
-          <Pressable disabled={busy} onPress={() => confirm('Cancel this game?', 'The court is released and everyone else who paid gets their money back in full. The InstaPay transfer fees of all those refunds are deducted from YOUR refund.', 'Yes, cancel the game', cancelGame)}>
+          <Pressable accessibilityRole="button" disabled={busy} onPress={() => confirm('Cancel this game?', 'The court is released and everyone else who paid gets their money back in full. The InstaPay transfer fees of all those refunds are deducted from YOUR refund.', 'Yes, cancel the game', cancelGame)}>
             <Text style={[s.link, { color: colors.danger }]}>Cancel the game (everyone who paid gets 100% back)</Text>
           </Pressable>
         )}
@@ -428,7 +428,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   const s = useS();
   return (
     <View style={[s.card, { flex: 1, marginBottom: 0, padding: 10 }]}>
-      <Text style={{ color: colors.muted, fontSize: 11 }}>{label}</Text>
+      <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
       <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13, marginTop: 2 }}>{value}</Text>
     </View>
   );

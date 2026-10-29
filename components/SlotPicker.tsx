@@ -285,7 +285,7 @@ export function SlotPicker({
                   <Text style={[s.muted, { fontWeight: '400' }]}> · {durationText((shown ?? chosen).e - (shown ?? chosen).s)}</Text>
                 </Text>
               </View>
-              <Pressable onPress={() => { setNote(''); commit(null); }} hitSlop={10}>
+              <Pressable accessibilityRole="button" onPress={() => { setNote(''); commit(null); }} hitSlop={10}>
                 <Text style={{ color: colors.muted, textDecorationLine: 'underline', fontSize: 13 }}>Clear</Text>
               </Pressable>
             </View>
@@ -294,12 +294,12 @@ export function SlotPicker({
                 <View key={which} style={s.stepper}>
                   <Text style={s.stepLabel}>{label}</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Pressable style={[s.step, !canNudge(which, -1) && { opacity: 0.3 }]} disabled={!canNudge(which, -1)} onPress={() => nudge(which, -1)}
+                    <Pressable accessibilityRole="button" style={[s.step, !canNudge(which, -1) && { opacity: 0.3 }]} disabled={!canNudge(which, -1)} onPress={() => nudge(which, -1)}
                       accessibilityLabel={`${label === 'Starts' ? 'Start' : 'Finish'} 30 minutes earlier`}>
                       <Text style={s.stepText}>−</Text>
                     </Pressable>
                     <Text style={s.stepTime}>{clock(m)}</Text>
-                    <Pressable style={[s.step, !canNudge(which, 1) && { opacity: 0.3 }]} disabled={!canNudge(which, 1)} onPress={() => nudge(which, 1)}
+                    <Pressable accessibilityRole="button" style={[s.step, !canNudge(which, 1) && { opacity: 0.3 }]} disabled={!canNudge(which, 1)} onPress={() => nudge(which, 1)}
                       accessibilityLabel={`${label === 'Starts' ? 'Start' : 'Finish'} 30 minutes later`}>
                       <Text style={s.stepText}>+</Text>
                     </Pressable>
@@ -442,13 +442,13 @@ const useS = themed(() => StyleSheet.create({
   dayTab: { borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center', overflow: 'hidden' },
   dayTabOn: { borderColor: 'transparent' },
   dayTop: { color: colors.text, fontWeight: '700', fontSize: 13 },
-  dayBottom: { color: colors.muted, fontWeight: '600', fontSize: 11, marginTop: 1 },
+  dayBottom: { color: colors.muted, fontWeight: '600', fontSize: 12, marginTop: 1 },
 
   note: { backgroundColor: colors.noteBg, borderWidth: 1, borderColor: colors.noteBorder, borderRadius: radius.md, padding: 10, marginBottom: 12 },
   noteText: { color: colors.noteText, fontSize: 13 },
 
   cal: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, overflow: 'hidden' },
-  glabel: { position: 'absolute', right: 8, fontSize: 11, color: colors.muted },
+  glabel: { position: 'absolute', right: 8, fontSize: 12, color: colors.muted },
   glabelMid: { color: colors.primary, fontWeight: '700' },
   col: { flex: 1, borderLeftWidth: 1, borderLeftColor: colors.border },
   cell: { height: ROW, borderBottomWidth: 1, borderBottomColor: colors.border },
@@ -457,7 +457,7 @@ const useS = themed(() => StyleSheet.create({
   cellPast: { backgroundColor: colors.past },
   cellPressed: { backgroundColor: colors.soft },
   midline: { position: 'absolute', left: 0, right: 0, borderTopWidth: 2, borderStyle: 'dashed', borderTopColor: colors.primary },
-  midText: { position: 'absolute', right: 4, top: -9, fontSize: 10, fontWeight: '700', color: colors.primary, backgroundColor: colors.card, paddingHorizontal: 4 },
+  midText: { position: 'absolute', right: 4, top: -9, fontSize: 12, fontWeight: '700', color: colors.primary, backgroundColor: colors.card, paddingHorizontal: 4 },
 
   ev: { position: 'absolute', left: 3, right: 3, borderRadius: 7, paddingHorizontal: 6, paddingVertical: 3, overflow: 'hidden' },
   evTaken: { backgroundColor: colors.taken, borderLeftWidth: 3, borderLeftColor: colors.borderStrong },
@@ -466,7 +466,7 @@ const useS = themed(() => StyleSheet.create({
   bar: { position: 'absolute', left: 0, right: 0, height: 28, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
   grip: { width: 56, height: 8, borderRadius: 4, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.accent },
   evCurrent: { backgroundColor: 'rgba(16,185,129,0.14)', borderWidth: 2, borderColor: colors.current, justifyContent: 'center' },
-  evText: { fontSize: 11, lineHeight: 14 },
+  evText: { fontSize: 12, lineHeight: 14 },
 
   yours: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 10, marginBottom: 12, height: 126 },
   stepper: { flex: 1 },

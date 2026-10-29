@@ -195,7 +195,7 @@ export default function Tournament() {
                   {m.status === 'accepted' ? 'In' : m.status === 'declined' ? 'Declined' : 'Invited'}
                 </Text>
                 {my.is_captain && !m.is_captain && m.status !== 'accepted' && ['forming', 'ready'].includes(my.status) && (
-                  <Pressable onPress={() => setSwapFor(swapFor === m.user_id ? null : m.user_id)}><Text style={s.link}>Replace</Text></Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => setSwapFor(swapFor === m.user_id ? null : m.user_id)}><Text style={s.link}>Replace</Text></Pressable>
                 )}
               </View>
             ))}
@@ -231,17 +231,17 @@ export default function Tournament() {
             {!!my.reject_reason && my.status === 'ready' && <Text style={{ color: colors.danger }}>Last payment wasn't accepted: {my.reject_reason}</Text>}
             {my.status === 'review' && <Text style={{ color: colors.muted }}>We check payments within {REVIEW_MINUTES} minutes. This page updates by itself.</Text>}
             {my.is_captain && ['forming', 'ready'].includes(my.status) && (
-              <Pressable onPress={() => ask('Withdraw your team?', 'Your team is removed from the tournament.', () => run(() => supabase.rpc('withdraw_team', { p_team_id: my.id }), 'Your team was withdrawn.'))}>
+              <Pressable accessibilityRole="button" onPress={() => ask('Withdraw your team?', 'Your team is removed from the tournament.', () => run(() => supabase.rpc('withdraw_team', { p_team_id: my.id }), 'Your team was withdrawn.'))}>
                 <Text style={s.link}>Withdraw team</Text>
               </Pressable>
             )}
             {my.is_captain && my.status === 'confirmed' && regOpen && (
-              <Pressable onPress={() => ask('Withdraw your team?', "Your place is released and the entry fee is sent back to your InstaPay (minus InstaPay's small fee).", () => run(() => supabase.rpc('withdraw_team', { p_team_id: my.id }), 'Your team was withdrawn.'))}>
+              <Pressable accessibilityRole="button" onPress={() => ask('Withdraw your team?', "Your place is released and the entry fee is sent back to your InstaPay (minus InstaPay's small fee).", () => run(() => supabase.rpc('withdraw_team', { p_team_id: my.id }), 'Your team was withdrawn.'))}>
                 <Text style={s.link}>Withdraw team (refund {egp(Number(my.amount) - instapayFee(Number(my.amount)))})</Text>
               </Pressable>
             )}
             {!my.is_captain && my.my_status === 'accepted' && ['forming', 'ready'].includes(my.status) && (
-              <Pressable onPress={() => ask('Leave this team?', 'Your captain can invite someone else.', () => run(() => supabase.rpc('leave_team', { p_team_id: my.id }), 'You left the team.'))}>
+              <Pressable accessibilityRole="button" onPress={() => ask('Leave this team?', 'Your captain can invite someone else.', () => run(() => supabase.rpc('leave_team', { p_team_id: my.id }), 'You left the team.'))}>
                 <Text style={s.link}>Leave team</Text>
               </Pressable>
             )}
@@ -256,7 +256,7 @@ export default function Tournament() {
                 {mates.map((m) => (
                   <View key={m.id} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ color: colors.text }}>{m.full_name} {m.username ? <Text style={{ color: colors.muted }}>@{m.username}</Text> : null}</Text>
-                    <Pressable onPress={() => setMates(mates.filter((x) => x.id !== m.id))}><Text style={s.link}>Remove</Text></Pressable>
+                    <Pressable accessibilityRole="button" onPress={() => setMates(mates.filter((x) => x.id !== m.id))}><Text style={s.link}>Remove</Text></Pressable>
                   </View>
                 ))}
                 {!!session && mates.length < t.team_size - 1 && <PlayerSearch exclude={mates.map((m) => m.id)} onPick={(p) => setMates([...mates, p])} />}
@@ -287,7 +287,7 @@ export default function Tournament() {
             <Button small title={t.status === 'scheduled' ? 'Make the schedule again (new draw)' : 'Make the schedule'} disabled={busy}
               onPress={() => run(() => supabase.rpc('make_tournament_schedule', { p_id: t.id }), '✅ Schedule made. Enter the scores below as the games finish.')} />
           )}
-          <Pressable onPress={() => ask('Cancel the tournament?', 'The court is released and every paid team gets its entry fee back in full.', () => run(() => supabase.rpc('cancel_tournament', { p_id: t.id, p_reason: null }), 'Tournament cancelled.'))}>
+          <Pressable accessibilityRole="button" onPress={() => ask('Cancel the tournament?', 'The court is released and every paid team gets its entry fee back in full.', () => run(() => supabase.rpc('cancel_tournament', { p_id: t.id, p_reason: null }), 'Tournament cancelled.'))}>
             <Text style={[s.link, { color: colors.danger }]}>Cancel tournament</Text>
           </Pressable>
           {t.status === 'approved' && <Text style={{ color: colors.muted, fontSize: 12 }}>Registration also closes by itself at the closing time. Teams that haven't paid by then are removed.</Text>}
@@ -339,7 +339,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   const s = useS();
   return (
     <View style={[s.card, { width: '48%', padding: 10 }]}>
-      <Text style={{ color: colors.muted, fontSize: 11 }}>{label}</Text>
+      <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
       <Text style={{ color: colors.text, fontWeight: '700', marginTop: 2 }}>{value}</Text>
     </View>
   );

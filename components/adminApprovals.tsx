@@ -378,7 +378,7 @@ export function AdminPhotos() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
             {g.photos.map((p) => (
               <View key={p.id} style={{ width: '47%' }}>
-                <Pressable onPress={() => { const u = photoUrl(p.path); if (u) Linking.openURL(u); }}>
+                <Pressable accessibilityRole="button" onPress={() => { const u = photoUrl(p.path); if (u) Linking.openURL(u); }}>
                   <Image source={{ uri: photoUrl(p.path) || undefined }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 8 }} />
                 </Pressable>
                 {decliningId === p.id ? (

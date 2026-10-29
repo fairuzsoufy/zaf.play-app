@@ -239,7 +239,7 @@ export function PlayerHistory({ userId, bookingId, name, currentBookingId }: { u
                   <Text style={{ width: 20, textAlign: 'center' }}>{e.icon}</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: toneColor(e.tone), fontSize: 13 }}>{e.text}</Text>
-                    <Text style={{ color: colors.muted, fontSize: 11 }}>{dateTimeText(e.at)}</Text>
+                    <Text style={{ color: colors.muted, fontSize: 12 }}>{dateTimeText(e.at)}</Text>
                   </View>
                 </View>
               ))}

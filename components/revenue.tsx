@@ -33,7 +33,7 @@ export function Tile({ label, value, sub, strong }: { label: string; value: stri
       <View style={{ borderWidth: 1, borderColor: strong ? colors.success : colors.border, borderRadius: radius.lg, padding: 12, backgroundColor: colors.card }}>
         <Text style={{ color: strong ? colors.success : colors.muted, fontSize: 12 }}>{label}</Text>
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 2 }}>{value}</Text>
-        {!!sub && <Muted style={{ fontSize: 11 }}>{sub}</Muted>}
+        {!!sub && <Muted style={{ fontSize: 12 }}>{sub}</Muted>}
       </View>
     </View>
   );

@@ -143,7 +143,7 @@ export default function AdminCatalog() {
           {!!editing?.icon_url && <Muted style={{ fontSize: 12 }}>Uses a picture now — pick an emoji to replace it</Muted>}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
             {EMOJI_IDEAS.map((e) => (
-              <Pressable key={e} onPress={() => setSportEmoji(e)} style={{ width: 38, height: 38, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center',
+              <Pressable accessibilityRole="button" key={e} onPress={() => setSportEmoji(e)} style={{ width: 38, height: 38, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center',
                 borderColor: sportEmoji === e ? colors.primary : colors.border, backgroundColor: sportEmoji === e ? colors.card : 'transparent' }}>
                 <Text style={{ fontSize: 18 }}>{e}</Text>
               </Pressable>

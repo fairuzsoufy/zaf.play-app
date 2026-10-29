@@ -91,7 +91,7 @@ export default function CourtPage() {
         )}
 
         {court.maps_url ? (
-          <Pressable onPress={() => Linking.openURL(court.maps_url!)} style={{ marginTop: 12 }}>
+          <Pressable accessibilityRole="button" onPress={() => Linking.openURL(court.maps_url!)} style={{ marginTop: 12 }}>
             <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>📍 Open in Maps</Text>
           </Pressable>
         ) : null}

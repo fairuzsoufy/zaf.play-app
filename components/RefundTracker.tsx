@@ -112,7 +112,7 @@ export function RefundTracker({ b, now, proofUrl, onWithdraw }: { b: any; now: n
           <View style={{ alignItems: 'flex-end' }}>
             {left > 0 ? (
               <>
-                <Text style={{ color: colors.muted, fontSize: 11 }}>expected within</Text>
+                <Text style={{ color: colors.muted, fontSize: 12 }}>expected within</Text>
                 <Text style={s.timer}>{countdown(left)}</Text>
               </>
             ) : (
@@ -127,7 +127,7 @@ export function RefundTracker({ b, now, proofUrl, onWithdraw }: { b: any; now: n
         {steps.map((st, i) => (
           <View key={st.label} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
             <View style={[s.dot, st.done ? s.dotDone : st.current ? s.dotNow : null]}>
-              <Text style={{ fontSize: 11, fontWeight: '800', color: st.done ? colors.success : st.current ? colors.warning : colors.muted }}>{st.done ? '✓' : i + 1}</Text>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: st.done ? colors.success : st.current ? colors.warning : colors.muted }}>{st.done ? '✓' : i + 1}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: st.done || st.current ? colors.text : colors.muted, fontWeight: '700', fontSize: 13 }}>{st.label}</Text>
@@ -164,9 +164,9 @@ export function RefundTracker({ b, now, proofUrl, onWithdraw }: { b: any; now: n
           {!proofUrl ? (
             <Text style={s.body}>Loading the receipt...</Text>
           ) : isPdf ? (
-            <Pressable hitSlop={10} onPress={() => Linking.openURL(proofUrl)}><Text style={s.link}>📄 Open the receipt (PDF)</Text></Pressable>
+            <Pressable accessibilityRole="button" hitSlop={10} onPress={() => Linking.openURL(proofUrl)}><Text style={s.link}>📄 Open the receipt (PDF)</Text></Pressable>
           ) : (
-            <Pressable onPress={() => Linking.openURL(proofUrl)} accessibilityLabel="Open the refund receipt full size">
+            <Pressable accessibilityRole="button" onPress={() => Linking.openURL(proofUrl)} accessibilityLabel="Open the refund receipt full size">
               <Image source={{ uri: proofUrl }} style={s.receipt} contentFit="cover" />
               <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>Tap to open full size</Text>
             </Pressable>

@@ -252,9 +252,9 @@ export default function OwnerCalendar() {
       <View style={{ padding: 16, paddingBottom: 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <DayButton label="‹" onPress={() => setDate(addDays(date, -1))} />
-          <Pressable onPress={() => setDate(today)} style={{ flex: 1, alignItems: 'center', padding: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card }}>
+          <Pressable accessibilityRole="button" onPress={() => setDate(today)} style={{ flex: 1, alignItems: 'center', padding: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card }}>
             <Text style={{ color: colors.text, fontWeight: '800' }}>📅 {dayLabel}</Text>
-            {date !== today && <Text style={{ color: colors.primaryAlt, fontSize: 11 }}>{t('Today')}</Text>}
+            {date !== today && <Text style={{ color: colors.primaryAlt, fontSize: 12 }}>{t('Today')}</Text>}
           </Pressable>
           <DayButton label="›" onPress={() => setDate(addDays(date, 1))} />
         </View>
@@ -279,7 +279,7 @@ export default function OwnerCalendar() {
           {([['zaf', 'Zaf Play'], ['walk', t('Walk-in')], ['hold', t('Paying now')], ['block', t('Blocked')]] as const).map(([k, label]) => (
             <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: KIND_COLOR[k] }} />
-              <Text style={{ color: colors.muted, fontSize: 11 }}>{label}</Text>
+              <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
             </View>
           ))}
         </View>
@@ -294,7 +294,7 @@ export default function OwnerCalendar() {
           <View style={{ flexDirection: 'row' }}>
             <View style={{ width: 62, paddingTop: 36 }}>
               {slots.map((m) => (
-                <Text key={m} style={{ height: ROW, color: colors.muted, fontSize: 10, textAlign: 'right', paddingRight: 6 }}>{m % 60 === 0 ? hm(m) : ''}</Text>
+                <Text key={m} style={{ height: ROW, color: colors.muted, fontSize: 12, textAlign: 'right', paddingRight: 6 }}>{m % 60 === 0 ? hm(m) : ''}</Text>
               ))}
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -302,14 +302,14 @@ export default function OwnerCalendar() {
                 <View key={c.id} style={{ width: shown.length === 1 ? 280 : COL, borderLeftWidth: 1, borderColor: colors.border }}>
                   <View style={{ height: 36, justifyContent: 'center', paddingHorizontal: 4 }}>
                     <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '800', textAlign: 'center', fontSize: 13 }}>{c.name}</Text>
-                    {branches.length > 1 && !branch && <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 10, textAlign: 'center' }}>{c.facility?.name}</Text>}
+                    {branches.length > 1 && !branch && <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, textAlign: 'center' }}>{c.facility?.name}</Text>}
                   </View>
                   <View style={{ height: slots.length * ROW }}>
                     {slots.map((m, i) => {
                       const taken = busyAt(c.id, m);
                       const past = m + SLOT <= nowMin;
                       return (
-                        <Pressable key={m} disabled={!!taken || past || !canManage} onPress={() => openNew(c.id, m)}
+                        <Pressable accessibilityRole="button" key={m} disabled={!!taken || past || !canManage} onPress={() => openNew(c.id, m)}
                           accessibilityLabel={`${c.name} ${hm(m)} ${t('free')}`}
                           style={({ pressed }) => ({ position: 'absolute', left: 0, right: 0, top: i * ROW, height: ROW,
                             borderTopWidth: m % 60 === 0 ? 1 : 0.5, borderColor: colors.border, borderStyle: m % 60 === 0 ? 'solid' : 'dashed',
@@ -326,8 +326,8 @@ export default function OwnerCalendar() {
                         <Pressable key={r.id} onPress={() => openRow(r)} accessibilityRole="button"
                           style={{ position: 'absolute', left: 3, right: 3, top: ((s - dayStart) / SLOT) * ROW + 1, height: ((e - s) / SLOT) * ROW - 2,
                             backgroundColor: KIND_COLOR[kind], borderRadius: 8, paddingHorizontal: 5, paddingVertical: 2, overflow: 'hidden' }}>
-                          <Text numberOfLines={1} style={{ color: '#fff', fontWeight: '800', fontSize: 11 }}>{who}</Text>
-                          {e - s > SLOT && <Text numberOfLines={1} style={{ color: '#fff', fontSize: 10, opacity: 0.9 }}>{hm(minOf(r.start_time))}–{hm(minOf(r.end_time))}</Text>}
+                          <Text numberOfLines={1} style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>{who}</Text>
+                          {e - s > SLOT && <Text numberOfLines={1} style={{ color: '#fff', fontSize: 12, opacity: 0.9 }}>{hm(minOf(r.start_time))}–{hm(minOf(r.end_time))}</Text>}
                         </Pressable>
                       );
                     })}

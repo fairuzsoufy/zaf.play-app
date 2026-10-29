@@ -33,7 +33,7 @@ export function RefundChoice({ b, onChanged }: { b: any; onChanged?: () => void 
   return (
     <View style={{ marginTop: 10, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 10, gap: 8 }}>
       <Text style={{ color: colors.text, fontWeight: '700' }}>Waiting for your refund? Choose how to get it:</Text>
-      <Pressable onPress={toCredit} disabled={busy} style={{ borderRadius: radius.md, padding: 10, backgroundColor: colors.soft, opacity: busy ? 0.5 : 1 }}>
+      <Pressable accessibilityRole="button" onPress={toCredit} disabled={busy} style={{ borderRadius: radius.md, padding: 10, backgroundColor: colors.soft, opacity: busy ? 0.5 : 1 }}>
         <Text style={{ color: colors.text, fontWeight: '700' }}>Add {egp(dueAmount)} to my Zaf Play credit</Text>
         <Text style={{ color: colors.muted, fontSize: 12 }}>{unchecked ? 'Added as soon as we have checked your transfer.' : 'Right now, no InstaPay fee. It comes off your next booking.'}</Text>
       </Pressable>

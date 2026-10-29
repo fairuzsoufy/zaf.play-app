@@ -131,7 +131,7 @@ export default function Bookings() {
       ListHeaderComponent={
         <View style={{ flexDirection: 'row', marginBottom: 14 }}>
           {tabs.map(([t, label]) => (
-            <Pressable key={t} onPress={() => { setTab(t); setCancelId(null); }} style={[s.tab, tab === t && s.tabOn]}>
+            <Pressable accessibilityRole="button" key={t} onPress={() => { setTab(t); setCancelId(null); }} style={[s.tab, tab === t && s.tabOn]}>
               {tab === t && <GradientFill />}
               <Text style={{ color: tab === t ? '#fff' : colors.muted, fontWeight: '600' }}>{label} ({lists[t].length})</Text>
             </Pressable>
@@ -175,7 +175,7 @@ export default function Bookings() {
                 {(b.booking_extras ?? []).length > 0 && <Text style={s.sub}>Extras: {b.booking_extras.map((x: any) => `${x.name} × ${x.qty}`).join(', ')}</Text>}
               </View>
               <View style={{ alignSelf: 'flex-start', borderRadius: 999, borderWidth: 1, borderColor: bd.color, paddingHorizontal: 10, paddingVertical: 3 }}>
-                <Text style={{ color: bd.color, fontSize: 11, fontWeight: '800', textTransform: 'capitalize' }}>{bd.label}</Text>
+                <Text style={{ color: bd.color, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' }}>{bd.label}</Text>
               </View>
             </View>
 
@@ -186,7 +186,7 @@ export default function Bookings() {
             )}
             {!requestOpen(b) && <RefundChoice b={b} onChanged={load} />}
             {pendingChangeFor.has(b.id) && <Text style={{ color: colors.warning, marginTop: 10 }}>A change to a new time is waiting for payment. This booking stays until it's approved.</Text>}
-            {requestOpen(b) && !tracked && <Pressable onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
+            {requestOpen(b) && !tracked && <Pressable accessibilityRole="button" onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
             {b.cancel_request_status === 'declined' && ['pending', 'confirmed'].includes(b.status) && (
               <Text style={{ color: colors.danger, marginTop: 8 }}>Your cancellation request was declined{b.cancel_request_decline_reason ? `: ${b.cancel_request_decline_reason}` : '.'} Your booking stays as it is.</Text>
             )}
@@ -198,12 +198,12 @@ export default function Bookings() {
               </View>
             )}
             {review && !requestOpen(b) && (
-              <Pressable onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })} style={s.review}>
+              <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })} style={s.review}>
                 <Text style={{ color: colors.text, flex: 1 }}>⏳ We received your payment screenshot. It will be approved within {REVIEW_MINUTES} minutes.</Text>
                 <View style={{ alignItems: 'flex-end' }}>
                   {reviewLeft !== null && reviewLeft > 0 ? (
                     <>
-                      <Text style={{ color: colors.muted, fontSize: 11 }}>approval within</Text>
+                      <Text style={{ color: colors.muted, fontSize: 12 }}>approval within</Text>
                       <Text style={{ color: colors.primaryAlt, fontWeight: '800', fontSize: 20, fontVariant: ['tabular-nums'] }}>{countdown(reviewLeft)}</Text>
                     </>
                   ) : (
@@ -224,13 +224,13 @@ export default function Bookings() {
             )}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
-              {b.court?.id && <Pressable hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
-              {b.court?.maps_url && <Pressable hitSlop={10} style={s.action} onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
+              {b.court?.id && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
+              {b.court?.maps_url && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
               {paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id) && (
-                <Pressable hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })}><Text style={s.link}>✏️ Modify booking</Text></Pressable>
+                <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })}><Text style={s.link}>✏️ Modify booking</Text></Pressable>
               )}
               {canCancel && cancelId !== b.id && (
-                <Pressable hitSlop={10} style={s.action} onPress={() => setCancelId(b.id)}><Text style={[s.link, { color: colors.danger }]}>{awaiting ? 'Cancel booking' : 'Request cancellation'}</Text></Pressable>
+                <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => setCancelId(b.id)}><Text style={[s.link, { color: colors.danger }]}>{awaiting ? 'Cancel booking' : 'Request cancellation'}</Text></Pressable>
               )}
             </View>
 
@@ -247,7 +247,7 @@ export default function Bookings() {
             )}
 
             {phones[b.id] && b.status !== 'cancelled' && !requestOpen(b) && (
-              <Pressable onPress={() => Linking.openURL(`tel:${phones[b.id]}`)} style={{ marginTop: 12 }}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(`tel:${phones[b.id]}`)} style={{ marginTop: 12 }}>
                 <Text style={{ color: colors.success }}>📞 Need help on court? Call {phones[b.id]}</Text>
               </Pressable>
             )}
@@ -280,13 +280,13 @@ function Rate({ bookingId, onDone, onClose }: { bookingId: string; onDone: () =>
       <Text style={{ color: colors.text, fontWeight: '600' }}>How was this court?</Text>
       <View style={{ flexDirection: 'row', marginVertical: 8 }}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable key={n} onPress={() => setStars(n)}><Text style={{ fontSize: 34, color: n <= stars ? colors.warning : colors.border }}>★</Text></Pressable>
+          <Pressable accessibilityRole="button" key={n} onPress={() => setStars(n)}><Text style={{ fontSize: 34, color: n <= stars ? colors.warning : colors.border }}>★</Text></Pressable>
         ))}
       </View>
       <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 8 }}>Your rating can't be changed after you save it.</Text>
       {err && <Note kind="error">{err}</Note>}
       <Button title="Save rating" onPress={save} loading={busy} />
-      <Pressable onPress={onClose}><Text style={[s.link, { textAlign: 'center' }]}>Cancel</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={onClose}><Text style={[s.link, { textAlign: 'center' }]}>Cancel</Text></Pressable>
     </View>
   );
 }
@@ -351,7 +351,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
         <View style={{ marginTop: 12 }}>
           <Text style={{ color: colors.text, marginBottom: 6 }}>How would you like your money back?</Text>
           {[[false, 'To my InstaPay', 'Zaf Play sends it within 1 hour (the InstaPay fee comes out of it).'], [true, 'Keep it as Zaf Play credit', 'No transfer fee. It is taken off your next booking automatically.']].map(([v, t, d]: any) => (
-            <Pressable key={String(v)} onPress={() => setAsCredit(v)} style={[s.choice, asCredit === v && { borderColor: colors.accent }]}>
+            <Pressable accessibilityRole="button" key={String(v)} onPress={() => setAsCredit(v)} style={[s.choice, asCredit === v && { borderColor: colors.accent }]}>
               <Text style={{ color: colors.text, fontWeight: '600' }}>{asCredit === v ? '◉ ' : '○ '}{t}</Text>
               <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{d}</Text>
             </Pressable>
@@ -369,7 +369,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
       <PolicyNotice feePercent={fee} showPayment={false} />
       {err && <Note kind="error">{err}</Note>}
       <Button title={moneySent ? 'Send cancellation request' : 'Yes, cancel it'} onPress={send} loading={busy} />
-      <Pressable onPress={onClose}><Text style={[s.link, { textAlign: 'center' }]}>Keep my booking</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={onClose}><Text style={[s.link, { textAlign: 'center' }]}>Keep my booking</Text></Pressable>
     </View>
   );
 }

@@ -224,7 +224,7 @@ export default function AdminLeads() {
           const isOpen = openId === l.id;
           return (
             <Card key={l.id}>
-              <Pressable onPress={() => open(isOpen ? null : l.id)}>
+              <Pressable accessibilityRole="button" onPress={() => open(isOpen ? null : l.id)}>
                 <Line bold size={15}>{l.business_name}</Line>
                 <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                   {st && <Badge tone={st.tone} text={st.label} />}

@@ -4,7 +4,6 @@ import { Text } from '@/components/AppText';
 import { colors, fonts, useTheme } from '@/lib/theme';
 import { Icon, type IconName } from '@/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemeToggle } from '@/components/ThemeToggle';
 
 // same line icons as the website's top bar
 // the chosen tab sits on a soft pill with a small gradient bar under it
@@ -21,8 +20,6 @@ const label = (text: string) => ({ color }: { color: ColorValue }) => (
   <Text allowFontScaling={false} style={{ color, fontFamily: fonts.displaySemi, fontSize: 12, marginTop: 2, paddingHorizontal: 4 }}>{text}</Text>
 );
 
-const toggle = () => <View style={{ marginRight: 16 }}><ThemeToggle size={18} /></View>;
-
 export default function TabsLayout() {
   useTheme();
   // Android draws under the system buttons: lift the tab bar above them, with some breathing room
@@ -36,7 +33,6 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         headerTitleStyle: { fontFamily: fonts.display, fontSize: 24, paddingRight: 6 },
         tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border, paddingTop: 8, paddingBottom: bottom, height: 60 + bottom },
-        headerRight: toggle,
         sceneStyle: { backgroundColor: colors.bg },
         tabBarActiveTintColor: colors.brandPink,
         tabBarInactiveTintColor: colors.muted,

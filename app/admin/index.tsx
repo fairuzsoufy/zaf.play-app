@@ -81,14 +81,14 @@ export default function AdminHome() {
         {SECTIONS.map((s) => {
           const n = counts[s.id] || 0;
           return (
-            <Pressable key={s.id} onPress={() => (READY.has(s.id) ? router.push(`/admin/${s.id}` as any) : Linking.openURL(`${SITE_URL}/admin/${s.id === 'payments' ? '' : s.id}`))}
+            <Pressable accessibilityRole="button" key={s.id} onPress={() => (READY.has(s.id) ? router.push(`/admin/${s.id}` as any) : Linking.openURL(`${SITE_URL}/admin/${s.id === 'payments' ? '' : s.id}`))}
               style={{ width: '48%', backgroundColor: colors.card, borderWidth: 1, borderColor: n ? colors.warning : colors.border, borderRadius: radius.lg, padding: 12, minHeight: 96 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 22 }}>{s.icon}</Text>
                 {n > 0 && <Text style={{ backgroundColor: colors.warning, color: '#1a1200', fontWeight: '800', fontSize: 12, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' }}>{n}</Text>}
               </View>
               <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 15, marginTop: 6 }}>{s.label}</Text>
-              <Text style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>{READY.has(s.id) ? s.hint : 'Opens zafplay.com for now'}</Text>
+              <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{READY.has(s.id) ? s.hint : 'Opens zafplay.com for now'}</Text>
             </Pressable>
           );
         })}

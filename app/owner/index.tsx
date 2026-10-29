@@ -247,7 +247,7 @@ export default function OwnerDashboard() {
 function Stat({ label, value, good }: { label: string; value: string; good?: boolean }) {
   return (
     <View style={{ flex: 1, borderRadius: radius.md, padding: 8, backgroundColor: good ? 'rgba(46,211,160,0.1)' : colors.cardAlt, borderWidth: good ? 1 : 0, borderColor: colors.success }}>
-      <Text style={{ color: good ? colors.success : colors.muted, fontSize: 11, textAlign: 'center' }}>{label}</Text>
+      <Text style={{ color: good ? colors.success : colors.muted, fontSize: 12, textAlign: 'center' }}>{label}</Text>
       <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14, textAlign: 'center', marginTop: 2 }}>{value}</Text>
     </View>
   );
@@ -260,7 +260,7 @@ function Tile({ icon, label, hint, onPress }: { icon: string; label: string; hin
         style={({ pressed }) => ({ backgroundColor: pressed ? colors.soft : colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: 14, minHeight: 96 })}>
         <Text style={{ fontSize: 24 }}>{icon}</Text>
         <Text style={{ color: colors.text, fontWeight: '800', marginTop: 6 }}>{label}</Text>
-        <Text style={{ color: colors.muted, fontSize: 11, marginTop: 2 }} numberOfLines={2}>{hint}</Text>
+        <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }} numberOfLines={2}>{hint}</Text>
       </Pressable>
     </View>
   );

@@ -21,7 +21,7 @@ export function ProofImages({ paths, urls, size = 110 }: { paths: string[]; urls
         const url = urls[p];
         if (!url) return <Text key={p} style={{ color: colors.muted, fontSize: 12 }}>Loading…</Text>;
         return (
-          <Pressable key={p} onPress={() => Linking.openURL(url)}>
+          <Pressable accessibilityRole="button" key={p} onPress={() => Linking.openURL(url)}>
             {isPdfPath(p)
               ? <View style={{ width: size, height: size * 1.4, borderRadius: 8, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.text }}>📄 PDF {i + 1}</Text></View>
               : <Image source={{ uri: url }} style={{ width: size, height: size * 1.4, borderRadius: 8, backgroundColor: colors.cardAlt }} />}

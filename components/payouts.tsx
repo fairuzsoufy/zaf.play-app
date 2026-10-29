@@ -90,7 +90,7 @@ export function ProofGallery({ paths }: { paths: string[] }) {
       {items && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
           {items.map((it, i) => (
-            <Pressable key={i} onPress={() => Linking.openURL(it.url)}>
+            <Pressable accessibilityRole="button" key={i} onPress={() => Linking.openURL(it.url)}>
               {it.isPdf
                 ? <View style={{ width: 90, height: 120, borderRadius: 8, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.text }}>📄 PDF {i + 1}</Text></View>
                 : <Image source={{ uri: it.url }} style={{ width: 90, height: 120, borderRadius: 8 }} />}

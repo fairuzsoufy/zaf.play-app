@@ -295,7 +295,7 @@ function Count({ n, label }: { n: number; label: string }) {
   return (
     <View style={{ width: '31%', borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 8, alignItems: 'center', opacity: n > 0 ? 1 : 0.5 }}>
       <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{n}</Text>
-      <Text style={{ color: colors.muted, fontSize: 11, textAlign: 'center' }}>{label}</Text>
+      <Text style={{ color: colors.muted, fontSize: 12, textAlign: 'center' }}>{label}</Text>
     </View>
   );
 }

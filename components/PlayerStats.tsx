@@ -91,7 +91,7 @@ export function PlayerStats() {
             <View key={b.key} style={[s.badge, !got && { opacity: 0.4 }]} accessibilityLabel={got ? b.title : `${b.title}: ${b.hint}`}>
               <Text style={{ fontSize: 22 }}>{b.emoji}</Text>
               <Text style={s.badgeTitle} numberOfLines={2}>{b.title}</Text>
-              {!got && <Text style={[s.small, { fontSize: 10, textAlign: 'center' }]} numberOfLines={2}>{b.hint}</Text>}
+              {!got && <Text style={[s.small, { fontSize: 12, textAlign: 'center' }]} numberOfLines={2}>{b.hint}</Text>}
             </View>
           );
         })}
@@ -106,5 +106,5 @@ const useS = themed(() => StyleSheet.create({
   num: { fontFamily: fonts.display, fontSize: 26, fontVariant: ['tabular-nums'] },
   small: { color: colors.muted, fontSize: 12 },
   badge: { width: 84, alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 8 },
-  badgeTitle: { color: colors.text, fontSize: 11, fontWeight: '700', textAlign: 'center', marginTop: 2 },
+  badgeTitle: { color: colors.text, fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 2 },
 }));

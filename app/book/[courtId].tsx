@@ -235,9 +235,9 @@ export default function BookCourt() {
             return (
               <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ color: colors.text, flex: 1 }}>{x.name} <Text style={{ color: colors.muted }}>· {egp(x.price)}</Text></Text>
-                <Pressable disabled={n === 0} onPress={() => setQty({ ...qty, [x.id]: n - 1 })} style={[st.step, n === 0 && { opacity: 0.3 }]}><Text style={st.stepText}>−</Text></Pressable>
+                <Pressable accessibilityRole="button" disabled={n === 0} onPress={() => setQty({ ...qty, [x.id]: n - 1 })} style={[st.step, n === 0 && { opacity: 0.3 }]}><Text style={st.stepText}>−</Text></Pressable>
                 <Text style={{ color: colors.text, width: 28, textAlign: 'center' }}>{n}</Text>
-                <Pressable disabled={n >= x.max_qty} onPress={() => setQty({ ...qty, [x.id]: n + 1 })} style={[st.step, n >= x.max_qty && { opacity: 0.3 }]}><Text style={st.stepText}>+</Text></Pressable>
+                <Pressable accessibilityRole="button" disabled={n >= x.max_qty} onPress={() => setQty({ ...qty, [x.id]: n + 1 })} style={[st.step, n >= x.max_qty && { opacity: 0.3 }]}><Text style={st.stepText}>+</Text></Pressable>
               </View>
             );
           })}
@@ -339,9 +339,9 @@ function Stepper({ label, hint, value, min, max, onChange }: { label: string; hi
         <Text style={{ color: colors.text, fontWeight: '600' }}>{label}</Text>
         {hint && <Text style={{ color: colors.muted, fontSize: 12 }}>{hint}</Text>}
       </View>
-      <Pressable disabled={value <= min} onPress={() => onChange(value - 1)} style={[st.step, value <= min && { opacity: 0.3 }]}><Text style={st.stepText}>−</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={value <= min} onPress={() => onChange(value - 1)} style={[st.step, value <= min && { opacity: 0.3 }]}><Text style={st.stepText}>−</Text></Pressable>
       <Text style={{ color: colors.text, width: 28, textAlign: 'center' }}>{value}</Text>
-      <Pressable disabled={value >= max} onPress={() => onChange(value + 1)} style={[st.step, value >= max && { opacity: 0.3 }]}><Text style={st.stepText}>+</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={value >= max} onPress={() => onChange(value + 1)} style={[st.step, value >= max && { opacity: 0.3 }]}><Text style={st.stepText}>+</Text></Pressable>
     </View>
   );
 }
@@ -349,7 +349,7 @@ function Stepper({ label, hint, value, min, max, onChange }: { label: string; hi
 function Chip({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
   useTheme();
   return (
-    <Pressable onPress={onPress} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, borderWidth: 1,
+    <Pressable accessibilityRole="button" onPress={onPress} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, borderWidth: 1,
       borderColor: on ? colors.accent : colors.border, backgroundColor: on ? colors.soft : 'transparent' }}>
       <Text style={{ color: on ? colors.text : colors.muted, fontWeight: '600' }}>{label}</Text>
     </Pressable>

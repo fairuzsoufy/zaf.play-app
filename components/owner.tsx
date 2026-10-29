@@ -27,7 +27,7 @@ export function Badge({ text, tone = 'neutral' }: { text: string; tone?: 'neutra
   const c = { neutral: colors.muted, ok: colors.success, warn: colors.warning, bad: colors.danger, info: colors.primaryAlt }[tone];
   return (
     <View style={{ borderWidth: 1, borderColor: c, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' }}>
-      <Text style={{ color: c, fontSize: 11, fontWeight: '700' }}>{text}</Text>
+      <Text style={{ color: c, fontSize: 12, fontWeight: '700' }}>{text}</Text>
     </View>
   );
 }
@@ -99,7 +99,7 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={onClose} accessibilityLabel={t('Close')} />
+        <Pressable accessibilityRole="button" style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={onClose} accessibilityLabel={t('Close')} />
         <View style={{ maxHeight: '88%', backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, paddingBottom: 6 }}>
             <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', flex: 1 }}>{title}</Text>
