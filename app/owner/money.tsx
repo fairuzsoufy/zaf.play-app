@@ -4,32 +4,12 @@ import { Text } from '@/components/AppText';
 import { supabase } from '@/lib/supabase';
 import { hm12 } from '@/lib/format';
 import { useT } from '@/lib/ownerLang';
-import { colors, radius } from '@/lib/theme';
+import { colors } from '@/lib/theme';
+import { defaultGroup, egp0, RANGES, Tile } from '@/components/revenue';
 import { Box, Chip, Chips, fmtEGP, H2, LinkButton, Loading, Muted, Pager, PAGE_SIZE, useOwner } from '@/components/owner';
 
 type View_ = 'overview' | 'demand' | 'transfers';
-type Group = 'day' | 'week' | 'month';
 
-const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return d; };
-const egp0 = (n: number | string) => `${Number(n).toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
-
-// the website's quick date ranges (DateRangePicker)
-const RANGES: { label: string; get: () => [string, string] }[] = [
-  { label: 'Today', get: () => [ymd(new Date()), ymd(new Date())] },
-  { label: 'Yesterday', get: () => [ymd(daysAgo(1)), ymd(daysAgo(1))] },
-  { label: 'Last 7 days', get: () => [ymd(daysAgo(6)), ymd(new Date())] },
-  { label: 'Last 30 days', get: () => [ymd(daysAgo(29)), ymd(new Date())] },
-  { label: 'This month', get: () => { const t = new Date(); return [ymd(new Date(t.getFullYear(), t.getMonth(), 1)), ymd(new Date(t.getFullYear(), t.getMonth() + 1, 0))]; } },
-  { label: 'Last month', get: () => { const t = new Date(); return [ymd(new Date(t.getFullYear(), t.getMonth() - 1, 1)), ymd(new Date(t.getFullYear(), t.getMonth(), 0))]; } },
-  { label: 'Last 3 months', get: () => [ymd(daysAgo(89)), ymd(new Date())] },
-  { label: 'This year', get: () => { const t = new Date(); return [ymd(new Date(t.getFullYear(), 0, 1)), ymd(new Date(t.getFullYear(), 11, 31))]; } },
-];
-
-function defaultGroup(from: string, to: string): Group {
-  const days = (new Date(to).getTime() - new Date(from).getTime()) / 86400000;
-  return days > 180 ? 'month' : days > 45 ? 'week' : 'day';
-}
 const hourText = (h: number) => (h === 24 ? 'Midnight' : hm12(`${String(h % 24).padStart(2, '0')}:00`));
 
 // Owner → Money, like the website: bookings and money (Overview), busy hours (Demand) and what Zaf Play sent
@@ -77,18 +57,6 @@ export default function OwnerMoney() {
       {view === 'demand' && bookings && <Demand from={from} to={to} fromHour={fromHour} toHour={toHour} />}
       {view === 'transfers' && finances && <Earnings showTransfers={!!access.see_transfers} />}
     </ScrollView>
-  );
-}
-
-function Tile({ label, value, sub, strong }: { label: string; value: string; sub?: string; strong?: boolean }) {
-  return (
-    <View style={{ width: '50%', padding: 4 }}>
-      <View style={{ borderWidth: 1, borderColor: strong ? colors.success : colors.border, borderRadius: radius.lg, padding: 12, backgroundColor: colors.card }}>
-        <Text style={{ color: strong ? colors.success : colors.muted, fontSize: 12 }}>{label}</Text>
-        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 2 }}>{value}</Text>
-        {!!sub && <Muted style={{ fontSize: 11 }}>{sub}</Muted>}
-      </View>
-    </View>
   );
 }
 
