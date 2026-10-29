@@ -13,6 +13,7 @@ import { DeleteAccount } from '@/components/DeleteAccount';
 import { AccountStatus, BlockedNotice } from '@/components/BlockedNotice';
 import { FriendsCard } from '@/components/Friends';
 import { ChangeEmail } from '@/components/ChangeEmail';
+import { LoginSecurity } from '@/components/LoginSecurity';
 import { PlayerStats } from '@/components/PlayerStats';
 import { LegalLinks } from '@/components/LegalLinks';
 import { toast } from '@/components/Toast';
@@ -196,6 +197,7 @@ export default function Profile() {
       </View>
 
       {me.email && <ChangeEmail current={me.email} />}
+      <LoginSecurity />
 
       {me.role === 'player' && <FriendsCard />}
 
@@ -216,7 +218,7 @@ export default function Profile() {
         </Card>
       )}
 
-      <View style={{ marginTop: 16 }}><Button title="Log out" onPress={() => supabase.auth.signOut()} /></View>
+      <View style={{ marginTop: 16 }}><Button title="Log out" onPress={() => supabase.auth.signOut({ scope: 'local' })} /></View>
       {me.role === 'player' && <DeleteAccount />}
       <LegalLinks style={{ marginTop: 18 }} />
     </ScrollView>

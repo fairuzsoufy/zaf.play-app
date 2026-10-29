@@ -16,6 +16,7 @@ import { TrustChip } from '@/components/Friends';
 import { ProofForm } from '@/components/ProofForm';
 import { askToNotify } from '@/components/BookingAlerts';
 import { toast } from '@/components/Toast';
+import { GameHistory } from '@/components/GameHistory';
 
 // One open game: who's in, spots left, join / pay / leave, and the host's invite and cancel tools (the website's /games/[id]).
 const INVITE_STATE: Record<string, string> = {
@@ -415,6 +416,7 @@ export default function OpenGame() {
         <Text style={s.small}>• If the game isn't full by {dateTimeText(g.fill_by)}, it's cancelled and everyone gets their money back in full.</Text>
         <Text style={s.small}>• Before it's full you can leave and get your money back minus InstaPay's small transfer fee. Once it's full, spots can't be cancelled online.</Text>
       </View>
+      {!!session && <GameHistory gameId={String(id)} />}
     </ScrollView>
     </KeyboardAvoidingView>
   );
