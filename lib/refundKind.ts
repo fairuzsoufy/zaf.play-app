@@ -104,3 +104,18 @@ export function cancelReasonText(b: BookingLike): string {
   return `${by} cancelled it: ${reason}`
 }
 
+
+const who = (by?: string | null) => (by === 'owner' ? 'the court owner' : by === 'player' ? 'the player' : by === 'admin' ? 'Zaf Play' : 'the system')
+
+// One plain sentence with the booking's status, worded the same for admin and owner.
+export function bookingStatusText(b: BookingLike & { payment_status?: string; end_time?: string; cancel_request_status?: string | null }) {
+  if (b.status === 'cancelled') return isMoved(b) ? 'Changed (see the new version)' : `Cancelled by ${who(b.cancelled_by)}`
+  if (b.cancel_request_status === 'pending') return 'Cancellation requested — waiting for Zaf Play'
+  if (b.status === 'pending' && b.payment_status === 'unpaid') return 'Awaiting payment'
+  if (b.status === 'pending' && b.payment_status === 'pending_review') return 'Payment under review'
+  if (b.status === 'no_show') return 'No-show'
+  const played = b.status === 'completed' || (b.status === 'confirmed' && !!b.end_time && new Date(b.end_time).getTime() <= Date.now())
+  if (played) return b.rescheduled_from ? 'Played (time was changed)' : 'Played'
+  if (b.status === 'confirmed') return b.rescheduled_from ? 'Confirmed (time was changed)' : 'Confirmed'
+  return b.status || ''
+}
