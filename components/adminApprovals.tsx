@@ -222,7 +222,7 @@ type CoOwner = { staff_id: string; full_name: string; email: string; ready: bool
 type Preview = { branches: number; courts: number; upcoming_bookings: number; pending_payouts: number; team: number; co_owners: CoOwner[] };
 
 // the admin hands an owner's whole business to one of their co-owners (the owner left)
-function TransferOwnership({ owner, preferredStaffId, onClose, onDone }: {
+export function TransferOwnership({ owner, preferredStaffId, onClose, onDone }: {
   owner: { id: string; full_name: string | null; email: string | null }; preferredStaffId?: string | null; onClose: () => void; onDone: (msg: string) => void;
 }) {
   const [p, setP] = useState<Preview | null>(null);
