@@ -17,7 +17,7 @@ import {
 } from '@/lib/courtTimes';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
-import { GradientFill, GradientText, Note, PressableScale } from '@/components/ui';
+import { GradientFill, GradientText, Note, PressableScale, EmptyState, Skeleton } from '@/components/ui';
 import type { Sport } from '@/lib/types';
 
 // The Book screen, like zafplay.com/book: search, sport, area, day, indoor / outdoor, near me, list or map,
@@ -340,7 +340,7 @@ export default function Book() {
   const clubName = club ? courts.find((c) => c.branchId === club)?.branchName : '';
   const selectedCourts = selected ? list.filter((c) => c.branchId === selected) : [];
 
-  if (loading) return <View style={[s.center, { paddingTop: insets.top }]}><ActivityIndicator color={colors.primary} /></View>;
+  if (loading) return <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 60 }}><Skeleton rows={4} /></View>;
 
   const header = (
     <View>
@@ -511,7 +511,7 @@ export default function Book() {
       initialNumToRender={8}
       renderItem={({ item }) => <CourtCardRow c={item} sport={sportOf(item.sport)} date={date} onOpen={() => openCourt(item)} onTime={(d, st, du) => book(item, d, st, du)} />}
       ListEmptyComponent={searchOpen ? null : (
-        <Text style={s.empty}>{loc ? `No courts within ${NEAR_ME_KM} km. Turn off Near me or pick an area.` : 'No courts match. Try another sport or area.'}</Text>
+        <EmptyState icon="ball" title="No courts found" text={loc ? `No courts within ${NEAR_ME_KM} km. Turn off Near me or pick an area.` : 'No courts match. Try another sport or area.'} />
       )}
     />
   );

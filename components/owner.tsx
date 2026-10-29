@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from '@/components/AppText';
+import { Skeleton } from '@/components/ui';
 import { useT } from '@/lib/ownerLang';
 import type { Access } from '@/lib/access';
 import { colors, radius } from '@/lib/theme';
@@ -19,7 +20,7 @@ export function useOwner() {
 export const frozenOf = (a: Access) => a.status === 'frozen';
 
 export function Loading() {
-  return <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />;
+  return <Skeleton />;
 }
 
 export function Badge({ text, tone = 'neutral' }: { text: string; tone?: 'neutral' | 'ok' | 'warn' | 'bad' | 'info' }) {

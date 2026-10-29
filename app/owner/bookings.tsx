@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, ScrollView, View } from 'react-native';
+import { Linking, ScrollView, View, RefreshControl } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useRouter, type Href } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -48,6 +48,7 @@ export default function OwnerBookings() {
       .then(({ data }) => setCourts(((data as any[]) || []).filter((c) => !scope || scope.includes(c.facility?.id))));
   }, []);
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => {
     const nowIso = new Date().toISOString();
     const from = (page - 1) * PAGE_SIZE;
@@ -124,7 +125,8 @@ export default function OwnerBookings() {
   const tone = (b: any) => (b.status === 'cancelled' ? 'bad' : b.status === 'pending' ? 'warn' : b.status === 'no_show' ? 'neutral' : b.status === 'confirmed' && !over(b) ? 'ok' : 'info');
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} keyboardShouldPersistTaps="handled"
+      refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}>
       <Chips>
         {(['upcoming', 'past', 'all'] as Tab[]).map((x) => <Chip key={x} label={t(TAB_LABELS[x])} on={tab === x} onPress={() => pick(() => setTab(x))} />)}
       </Chips>

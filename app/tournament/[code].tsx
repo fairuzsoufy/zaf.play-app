@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, View, RefreshControl } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,7 +9,7 @@ import { colors, radius, themed } from '@/lib/theme';
 import { dateTimeText, egp, roundName, teamSizeText, timeLabel, untilText } from '@/lib/format';
 import { instapayFee, REVIEW_MINUTES } from '@/lib/payment';
 import { useRequestId } from '@/lib/requestId';
-import { Button, Note } from '@/components/ui';
+import { Button, Note, Skeleton } from '@/components/ui';
 import { ProofForm } from '@/components/ProofForm';
 import { PlayerSearch, type FoundPlayer } from '@/components/PlayerSearch';
 import { askToNotify } from '@/components/BookingAlerts';
@@ -45,6 +45,7 @@ export default function Tournament() {
   const [scores, setScores] = useState<Record<string, { a: string; b: string }>>({});
   const scroll = useRef<ScrollView>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => {
     const { data } = await supabase.rpc('tournament_page', { p_code: code });
     setT(data);
@@ -87,7 +88,7 @@ export default function Tournament() {
     setMates([]);
   }
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
+  if (loading) return <Skeleton />;
   if (!t) return <Text style={{ color: colors.muted, margin: 40, textAlign: 'center' }}>Tournament not found.</Text>;
 
   const opens = new Date(t.reg_opens_at).getTime();
@@ -134,7 +135,8 @@ export default function Tournament() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior="padding" keyboardVerticalOffset={insets.top + (Platform.OS === 'ios' ? 44 : 56)}>
-    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }}
+      refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: 'Tournament' }} />
       <Text style={{ color: colors.brandPink, fontWeight: '700' }}>🏆 {t.sport} tournament</Text>
       <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginTop: 2 }}>{t.title}</Text>

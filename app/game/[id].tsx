@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, View, RefreshControl } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -11,7 +11,7 @@ import { countdown, dateTimeText, egp, levelText, whenText } from '@/lib/format'
 import { instapayFee, REVIEW_MINUTES } from '@/lib/payment';
 import { useRequestId } from '@/lib/requestId';
 import { gameShortUrl } from '@/lib/shortId';
-import { Button, GradientFill, Note } from '@/components/ui';
+import { Button, GradientFill, Note, Skeleton } from '@/components/ui';
 import { TrustChip } from '@/components/Friends';
 import { ProofForm } from '@/components/ProofForm';
 import { askToNotify } from '@/components/BookingAlerts';
@@ -50,6 +50,7 @@ export default function OpenGame() {
   const prevStatus = useRef<string | null>(null);
   const scroll = useRef<ScrollView>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('open_game_detail', { p_game_id: id });
     setLoadFailed(!!error);
@@ -177,7 +178,7 @@ export default function OpenGame() {
     return `Join my ${g.sport} game on Zaf Play 🏅\n\nPlace: ${g.court} · ${g.branch}, ${g.city}\nTime: ${whenText(g.start_time, g.end_time)}\nPrice: ${egp(g.price_per_spot)} per player (${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left)\n\nTap the link to pay and join: ${gameShortUrl(id)}`;
   }
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
+  if (loading) return <Skeleton />;
   if (!g && loadFailed) {
     return (
       <View style={{ padding: 40, alignItems: 'center' }}>
@@ -209,7 +210,8 @@ export default function OpenGame() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior="padding" keyboardVerticalOffset={insets.top + (Platform.OS === 'ios' ? 44 : 56)}>
-    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }}
+      refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: g.visibility === 'private' ? 'Private game 🔒' : 'Open game' }} />
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{g.sport} {g.visibility === 'private' ? 'private game 🔒' : 'open game'}</Text>
       <Text style={{ color: colors.muted, marginTop: 2 }}>{g.court} · {g.branch}, {g.city}</Text>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { pick } from '@/lib/haptics';
 import { PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { colors, radius, themed, useTheme } from '@/lib/theme';
@@ -264,7 +265,7 @@ export function SlotPicker({
           const on = d === date;
           const t = tab(d, i);
           return (
-            <Pressable key={d} onPress={() => pickDay(d)} style={[s.dayTab, on && s.dayTabOn]} accessibilityRole="button" accessibilityState={{ selected: on }}>
+            <Pressable key={d} onPress={() => { pick(); pickDay(d); }} style={[s.dayTab, on && s.dayTabOn]} accessibilityRole="button" accessibilityState={{ selected: on }}>
               {on && <GradientFill />}
               <Text style={[s.dayTop, on && { color: '#fff' }]}>{t.top}</Text>
               <Text style={[s.dayBottom, on && { color: 'rgba(255,255,255,0.85)' }]}>{hoursFor(rules, d) ? t.bottom : 'Closed'}</Text>
@@ -339,7 +340,7 @@ export function SlotPicker({
                 return (
                   <Pressable
                     key={m}
-                    onPress={() => tapAt(m)}
+                    onPress={() => { pick(); tapAt(m); }}
                     accessibilityLabel={`${clock(m)} to ${clock(m + STEP)}`}
                     style={({ pressed }) => [
                       s.cell, r % 2 === 1 && s.cellHour, m >= DAY && s.cellNight, past && s.cellPast, pressed && !past && s.cellPressed,

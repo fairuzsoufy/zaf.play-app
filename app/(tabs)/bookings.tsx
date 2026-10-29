@@ -10,7 +10,7 @@ import { countdown, dateLabel, egp, timeLabel } from '@/lib/format';
 import {
   cancelSplitPreview, cleanInstapay, FREE_CHANGE_HOURS, FREE_CHANGE_MINUTES, freeChangeLeftMs, INSTAPAY_FEE_TEXT, INSTAPAY_HELP, isInstapay, isLate, REVIEW_MINUTES,
 } from '@/lib/payment';
-import { Button, Field, GradientFill, Note } from '@/components/ui';
+import { Button, Field, GradientFill, Note, EmptyState, Skeleton } from '@/components/ui';
 import { RefundTracker, refundInfo } from '@/components/RefundTracker';
 import { RefundChoice } from '@/components/RefundChoice';
 import { PolicyNotice } from '@/components/PolicyNotice';
@@ -106,7 +106,7 @@ export default function Bookings() {
     load();
   }
 
-  if (authLoading || (uid && loading)) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
+  if (authLoading || (uid && loading)) return <Skeleton />;
   if (!uid) {
     return (
       <View style={{ padding: 24 }}>
@@ -138,7 +138,9 @@ export default function Bookings() {
           ))}
         </View>
       }
-      ListEmptyComponent={<Text style={{ color: colors.muted, textAlign: 'center', marginTop: 40 }}>{tab === 'upcoming' ? 'No upcoming bookings.' : 'Nothing here yet.'}</Text>}
+      ListEmptyComponent={tab === 'upcoming'
+        ? <EmptyState icon="calendar" title="No upcoming bookings" text="Find a court near you and book your next game in a minute." action="Find a court" onAction={() => router.push('/')} />
+        : <EmptyState icon="clock" title={tab === 'past' ? 'No played games yet' : 'No cancelled bookings'} text={tab === 'past' ? 'Games you play show up here.' : 'Good news, nothing was cancelled.'} />}
       renderItem={({ item: b }) => {
         const bd = badge(holdExpired(b) ? { ...b, status: 'cancelled' } : b, now);
         const paidUpcoming = ['pending', 'confirmed'].includes(b.status) && b.payment_status === 'paid' && new Date(b.start_time).getTime() > now;

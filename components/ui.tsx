@@ -7,6 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 import { useT, withoutArabic } from '@/lib/ownerLang';
+import { Icon, type IconName } from '@/components/Icon';
+import { tap } from '@/lib/haptics';
 
 // The website's brand gradient (blue → purple → pink), used for buttons and anything chosen.
 export const GRADIENT = [colors.brandBlue, colors.brandPink] as const;
@@ -57,7 +59,7 @@ export function Button({
   const primary = variant === 'primary';
   return (
     <PressableScale
-      onPress={onPress}
+      onPress={() => { tap(); onPress(); }}
       disabled={off}
       accessibilityRole="button"
       style={[s.btn, small && s.btnSmall, primary ? s.btnPrimary : s.btnGhost, off && { opacity: 0.5 }]}
@@ -100,6 +102,45 @@ export function Note({ kind, children }: { kind: 'error' | 'ok'; children: React
   return (
     <View style={[s.note, { borderColor: c, backgroundColor: kind === 'error' ? 'rgba(255,92,108,0.08)' : 'rgba(46,211,160,0.08)' }]}>
       <Text style={{ color: c, lineHeight: 20 }}>{children}</Text>
+    </View>
+  );
+}
+
+// Grey placeholder cards that pulse while a screen loads, so it does not jump when data arrives.
+export function Skeleton({ rows = 3, style }: { rows?: number; style?: StyleProp<ViewStyle> }) {
+  useTheme();
+  const v = useRef(new Animated.Value(0.5)).current;
+  React.useEffect(() => {
+    const a = Animated.loop(Animated.sequence([
+      Animated.timing(v, { toValue: 1, duration: 700, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 0.5, duration: 700, useNativeDriver: true }),
+    ]));
+    a.start();
+    return () => a.stop();
+  }, [v]);
+  const bar = (w: number | `${number}%`, h: number) => <View style={{ width: w, height: h, borderRadius: 6, backgroundColor: colors.cardAlt, marginBottom: 10 }} />;
+  return (
+    <Animated.View style={[{ padding: 16, opacity: v }, style]} accessibilityLabel="Loading" accessibilityRole="progressbar">
+      {Array.from({ length: rows }, (_, i) => (
+        <View key={i} style={{ backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 14 }}>
+          {bar('60%', 18)}{bar('90%', 12)}{bar('40%', 12)}
+        </View>
+      ))}
+    </Animated.View>
+  );
+}
+
+// A friendly empty list: icon, title, one helpful line and an optional button.
+export function EmptyState({ icon, title, text, action, onAction }: { icon: IconName; title: string; text?: string; action?: string; onAction?: () => void }) {
+  useTheme();
+  return (
+    <View style={{ alignItems: 'center', paddingVertical: 36, paddingHorizontal: 24 }}>
+      <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+        <Icon name={icon} color={colors.brandPink} size={28} />
+      </View>
+      <Text style={{ color: colors.text, fontFamily: fonts.displaySemi, fontSize: 18, textAlign: 'center' }}>{title}</Text>
+      {!!text && <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 6, lineHeight: 20 }}>{text}</Text>}
+      {!!action && onAction && <View style={{ marginTop: 16, alignSelf: 'stretch' }}><Button title={action} onPress={onAction} small /></View>}
     </View>
   );
 }

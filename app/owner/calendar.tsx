@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View, RefreshControl } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -83,6 +83,7 @@ export default function OwnerCalendar() {
   }, [courts]);
   const shown = courts.filter((c) => (!branch || c.facility?.id === branch) && (!court || c.id === court));
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => {
     if (courts.length === 0) {
       setRows([]);
@@ -288,7 +289,8 @@ export default function OwnerCalendar() {
       {shown.length === 0 ? (
         <Muted style={{ padding: 16 }}>{loading ? t('Loading…') : t('No courts yet.')}</Muted>
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}>
           <View style={{ flexDirection: 'row' }}>
             <View style={{ width: 62, paddingTop: 36 }}>
               {slots.map((m) => (
