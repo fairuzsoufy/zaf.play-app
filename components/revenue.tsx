@@ -6,7 +6,7 @@ import { Muted } from './owner';
 // shared by Owner → Money and the admin's Revenue
 export type Group = 'day' | 'week' | 'month';
 
-export const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return d; };
 export const egp0 = (n: number | string) => `${Number(n).toLocaleString('en-EG', { maximumFractionDigits: 0 })} EGP`;
 
