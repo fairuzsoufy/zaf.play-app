@@ -26,7 +26,7 @@ const SECTIONS = [
 ] as const;
 
 // the screens built so far; the rest are still on zafplay.com/admin
-const READY = new Set<string>(['payments', 'refunds', 'approvals', 'games', 'users', 'blocked', 'bookings', 'plans', 'agreements', 'catalog', 'revenue', 'expenses', 'leads', 'notes', 'settings']);
+const READY = new Set<string>(['payments', 'refunds', 'approvals', 'games', 'users', 'blocked', 'bookings', 'plans', 'agreements', 'catalog', 'revenue', 'expenses', 'leads', 'notes', 'settings', 'settlements']);
 
 type Counts = Record<string, number>;
 
