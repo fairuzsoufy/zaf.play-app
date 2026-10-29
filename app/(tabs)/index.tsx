@@ -19,6 +19,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
 import { GradientFill, GradientText, Note, PressableScale, EmptyState, Skeleton } from '@/components/ui';
 import type { Sport } from '@/lib/types';
+import { readArea, readFavourites, saveArea, toggleFavourite } from '@/lib/bookPrefs';
 
 // The Book screen, like zafplay.com/book: search, sport, area, day, indoor / outdoor, near me, list or map,
 // and every court with its free times for the chosen day (cheapest first, or nearest with Near me).
@@ -142,8 +143,9 @@ function NextFree({ c }: { c: BookCourt }) {
   return <Text style={{ color: colors.success, fontWeight: '700', fontSize: 13 }}>{next.date === cairoDate() ? '' : `${dayWord(next.date)} `}{startLabel(next.start)} free</Text>;
 }
 
-function CourtCardRow({ c, sport, date, onOpen, onTime }: {
+function CourtCardRow({ c, sport, date, onOpen, onTime, fav, onFav }: {
   c: BookCourt; sport?: Sport; date: string; onOpen: () => void; onTime: (date: string, start?: number, dur?: number) => void;
+  fav: boolean; onFav: () => void;
 }) {
   const s = useS();
   return (
@@ -164,6 +166,11 @@ function CourtCardRow({ c, sport, date, onOpen, onTime }: {
             {c.rating && c.rating.n > 0 && <Text style={{ color: colors.warning, fontSize: 12 }}>★ {c.rating.avg.toFixed(1)} ({c.rating.n})</Text>}
           </View>
         </View>
+        {/* the heart saves the court on this phone: favourites come first and under the Favourites chip */}
+        <Pressable onPress={onFav} hitSlop={10} accessibilityRole="button" accessibilityState={{ selected: fav }}
+          accessibilityLabel={fav ? `Remove ${c.name} from favourites` : `Add ${c.name} to favourites`}>
+          <Text style={{ fontSize: 20, color: fav ? colors.brandPinkBright : colors.muted }}>{fav ? '♥' : '♡'}</Text>
+        </Pressable>
       </View>
       <CardTimes c={c} date={date} onTime={onTime} />
     </PressableScale>
@@ -194,6 +201,9 @@ export default function Book() {
   const [q, setQ] = useState('');
   const [focus, setFocus] = useState(false);
   const [recent, setRecent] = useState<string[]>(readRecent);
+  const [favs, setFavs] = useState<string[]>(readFavourites); // courts with the heart on (this phone only)
+  const [favOnly, setFavOnly] = useState(false);
+  const areaRestored = useRef(false);
   const searchRef = useRef<TextInput>(null);
 
   const load = useCallback(async () => {
@@ -226,6 +236,13 @@ export default function Book() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  // the area picked last time comes back, when it still has courts
+  useEffect(() => {
+    if (areaRestored.current || !courts.length) return;
+    areaRestored.current = true;
+    const a = readArea();
+    if (a && courts.some((c) => c.area === a)) setArea(a);
+  }, [courts]);
   // a booking, hold or block anywhere: read the free times again
   useEffect(() => {
     let t: ReturnType<typeof setTimeout> | undefined;
@@ -258,7 +275,12 @@ export default function Book() {
     setArea((a) => (a && courts.some((c) => (!slug || c.sport === slug) && c.area === a) ? a : ''));
     setPlace((p) => (p && courts.some((c) => (!slug || c.sport === slug) && placeOk(c, p)) ? p : ''));
   }
-  function pickArea(a: string) { setArea(a); setClub(''); setSelected(null); }
+  function pickArea(a: string) { setArea(a); setClub(''); setSelected(null); saveArea(a); }
+  function flipFav(id: string) {
+    const next = toggleFavourite(id);
+    setFavs(next);
+    if (!next.length) setFavOnly(false);
+  }
   function pickPlace(p: typeof place) {
     setPlace(p);
     setClub('');
@@ -286,10 +308,13 @@ export default function Book() {
   const list = useMemo(() => {
     const rows = courts
       .filter((c) => (!sport || c.sport === sport) && (!area || c.area === area) && placeOk(c, place) && (!club || c.branchId === club))
+      .filter((c) => !favOnly || favs.includes(c.id))
       .map((c) => ({ ...c, km: loc && c.lat !== null && c.lng !== null ? distanceKm(loc, { lat: c.lat, lng: c.lng }) : null }))
       .filter((c) => !loc || (c.km !== null && c.km <= NEAR_ME_KM));
-    return loc ? rows.sort((a, b) => (a.km ?? 0) - (b.km ?? 0) || a.price - b.price) : rows.sort((a, b) => a.price - b.price);
-  }, [courts, sport, area, place, club, loc]); // eslint-disable-line react-hooks/exhaustive-deps
+    // favourites first, then nearest (Near me) or cheapest
+    const fav = (c: BookCourt) => (favs.includes(c.id) ? 0 : 1);
+    return loc ? rows.sort((a, b) => fav(a) - fav(b) || (a.km ?? 0) - (b.km ?? 0) || a.price - b.price) : rows.sort((a, b) => fav(a) - fav(b) || a.price - b.price);
+  }, [courts, sport, area, place, club, loc, favs, favOnly]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pins = useMemo(() => {
     const by = new Map<string, { id: string; lat: number; lng: number; price: number; count: number; name: string }>();
@@ -328,7 +353,6 @@ export default function Book() {
     saveRecent(next);
   }
   function closeSearch() { setFocus(false); setQuery(''); setQ(''); searchRef.current?.blur(); Keyboard.dismiss(); }
-  const openCourt = (c: BookCourt) => router.push({ pathname: '/court/[id]', params: { id: c.id } });
   const book = (c: BookCourt, d?: string, start?: number, dur?: number) => router.push({
     pathname: '/book/[courtId]',
     params: { courtId: c.id, sport: c.sport, ...(d ? { date: d } : {}), ...(d && start !== undefined && dur ? { start: String(start), dur: String(dur) } : {}) },
@@ -393,7 +417,7 @@ export default function Book() {
                 </Pressable>
               ))}
               {results.courtHits.map((c) => (
-                <Pressable accessibilityRole="button" key={c.key} onPress={() => { remember(query || c.name); closeSearch(); openCourt(c); }} style={s.resultRow}>
+                <Pressable accessibilityRole="button" key={c.key} onPress={() => { remember(query || c.name); closeSearch(); book(c); }} style={s.resultRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{c.branchName} · {c.name}</Text>
                     <Text style={{ color: colors.muted, fontSize: 12 }} numberOfLines={1}>{sportOf(c.sport)?.name || c.sport} · {c.area} · {c.price} EGP/h</Text>
@@ -414,10 +438,11 @@ export default function Book() {
                 icon={<View style={{ marginRight: 6 }}><SportIcon sport={x} size={18} /></View>} />;
             })}
           </ScrollView>
-          {areas.length > 1 && (
+          {(areas.length > 1 || favs.length > 0) && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.row}>
-              <Chip label="All areas" on={!area} onPress={() => pickArea('')} />
-              {areas.map((a) => <Chip key={a} label={a} on={area === a} onPress={() => pickArea(a)} />)}
+              {favs.length > 0 && <Chip label="♥ Favourites" on={favOnly} onPress={() => setFavOnly((f) => !f)} />}
+              {areas.length > 1 && <Chip label="All areas" on={!area} onPress={() => pickArea('')} />}
+              {areas.length > 1 && areas.map((a) => <Chip key={a} label={a} on={area === a} onPress={() => pickArea(area === a ? '' : a)} />)}
             </ScrollView>
           )}
           {view === 'list' && (
@@ -491,7 +516,7 @@ export default function Book() {
         {selected && (
           <ScrollView style={s.mapSheet} contentContainerStyle={{ padding: 12, paddingBottom: 12 + insets.bottom }}>
             {selectedCourts.map((c) => (
-              <CourtCardRow key={c.key} c={c} sport={sportOf(c.sport)} date={date} onOpen={() => openCourt(c)} onTime={(d, st, du) => book(c, d, st, du)} />
+              <CourtCardRow key={c.key} c={c} sport={sportOf(c.sport)} date={date} onOpen={() => book(c, date)} onTime={(d, st, du) => book(c, d, st, du)} fav={favs.includes(c.id)} onFav={() => flipFav(c.id)} />
             ))}
           </ScrollView>
         )}
@@ -509,7 +534,7 @@ export default function Book() {
       refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={refresh} />}
       ListHeaderComponent={header}
       initialNumToRender={8}
-      renderItem={({ item }) => <CourtCardRow c={item} sport={sportOf(item.sport)} date={date} onOpen={() => openCourt(item)} onTime={(d, st, du) => book(item, d, st, du)} />}
+      renderItem={({ item }) => <CourtCardRow c={item} sport={sportOf(item.sport)} date={date} onOpen={() => book(item, date)} onTime={(d, st, du) => book(item, d, st, du)} fav={favs.includes(item.id)} onFav={() => flipFav(item.id)} />}
       ListEmptyComponent={searchOpen ? null : (
         <EmptyState icon="ball" title="No courts found" text={loc ? `No courts within ${NEAR_ME_KM} km. Turn off Near me or pick an area.` : 'No courts match. Try another sport or area.'} />
       )}

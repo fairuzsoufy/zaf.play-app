@@ -4,11 +4,13 @@ import { Text } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import * as Clipboard from 'expo-clipboard';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase, uploadPhoto } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, radius, useTheme } from '@/lib/theme';
-import { countdown, egp } from '@/lib/format';
+import { cairoDayMinutes, countdown, egp } from '@/lib/format';
+import { savedRefundInstapay } from '@/lib/bookPrefs';
 import { cleanInstapay, HOLD_MINUTES, INSTAPAY_HELP, isInstapay, MAX_PROOFS, MAX_PROOF_MB, REVIEW_MINUTES, ZAF_INSTAPAY_LINK } from '@/lib/payment';
 import { Button, Field, Note } from '@/components/ui';
 import { toast } from '@/components/Toast';
@@ -40,6 +42,8 @@ export default function Pay() {
   const [now, setNow] = useState(Date.now());
   const [files, setFiles] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [refundTo, setRefundTo] = useState('');
+  const [editRefund, setEditRefund] = useState(false); // a remembered refund number shows as one line until "Change"
+  const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const scroll = useRef<ScrollView>(null);
@@ -68,6 +72,13 @@ export default function Pay() {
   }, [id]);
 
   useEffect(() => { if (session) load(); else if (!authLoading) setLoading(false); }, [session, authLoading, load]);
+  // the refund InstaPay used last time (or the account mobile) is filled in, so it is typed once, not on every booking
+  useEffect(() => {
+    if (!session) return;
+    let off = false;
+    savedRefundInstapay(session.user.id).then((v) => { if (!off && v) setRefundTo((cur) => cur || v); }).catch(() => {});
+    return () => { off = true; };
+  }, [session]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   // while the screenshot is being checked, look again every 15 seconds
   useEffect(() => {
@@ -84,11 +95,16 @@ export default function Pay() {
     return () => { supabase.removeChannel(ch); };
   }, [id, session, load]);
 
-  async function choose() {
-    const r = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: MAX_PROOFS, quality: 0.8,
-    });
-    if (!r.canceled) setFiles(r.assets.slice(0, MAX_PROOFS));
+  // one photo per pick: tapping it in the gallery is enough (a multi-pick needs an extra Add tap on iPhone);
+  // a second screenshot is added with "Add another"
+  async function choose(add = false) {
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (!r.canceled) setFiles((f) => [...(add ? f : []), ...r.assets].slice(0, MAX_PROOFS));
+  }
+  async function copyAmount(v: number) {
+    await Clipboard.setStringAsync(String(v));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   }
 
   async function submit() {
@@ -136,7 +152,13 @@ export default function Pay() {
   const latePayable = expired && expiredByTimer && !lateRefund && now - new Date(b.hold_expires_at).getTime() < LATE_PAY_MINUTES * 60000;
   const groupUnpaid = group.filter((g) => g.payment_status === 'unpaid' && g.status !== 'cancelled');
   const amountDue = b.group_id && b.payment_status === 'unpaid' ? groupUnpaid.reduce((a, g) => a + Number(g.amount_due), 0) || Number(b.amount_due) : Number(b.amount_due);
-  const bookAgain = () => router.replace({ pathname: '/court/[id]', params: { id: b.court?.id } });
+  // book again opens the booking screen on the same court, sport and time, already picked
+  const again = (() => {
+    const { date, minutes } = cairoDayMinutes(b.start_time);
+    const dur = Math.round((new Date(b.end_time).getTime() - new Date(b.start_time).getTime()) / 60000);
+    return { courtId: b.court?.id, sport: b.sport?.slug, date, start: String(minutes), dur: String(dur) };
+  })();
+  const bookAgain = () => router.replace({ pathname: '/book/[courtId]', params: again });
   const proofPicker = (
     <>
       {files.length > 0 && (
@@ -144,10 +166,22 @@ export default function Pay() {
           {files.map((f) => <Image key={f.uri} source={{ uri: f.uri }} style={{ width: 90, height: 120, borderRadius: radius.sm }} contentFit="cover" />)}
         </View>
       )}
-      <Button title={files.length ? 'Choose other screenshots' : `Choose screenshot (up to ${MAX_PROOFS})`} variant="ghost" onPress={choose} />
+      {files.length === 0 ? (
+        <Button title="Choose screenshot" variant="ghost" onPress={() => choose()} />
+      ) : (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {files.length < MAX_PROOFS && <View style={{ flex: 1 }}><Button title="Add another" variant="ghost" small onPress={() => choose(true)} /></View>}
+          <View style={{ flex: 1 }}><Button title="Remove" variant="ghost" small onPress={() => setFiles([])} /></View>
+        </View>
+      )}
       <View style={{ height: 14 }} />
       {b.refund_to ? (
         <Text style={{ color: colors.muted, marginBottom: 12 }}>Refunds go to {b.refund_to}.</Text>
+      ) : isInstapay(refundTo) && !editRefund ? (
+        <Text style={{ color: colors.muted, marginBottom: 12 }}>
+          Refunds go to <Text style={{ color: colors.text, fontWeight: '700' }}>{refundTo}</Text> ·{' '}
+          <Text accessibilityRole="button" onPress={() => setEditRefund(true)} style={{ color: colors.accent, fontWeight: '700' }}>Change</Text>
+        </Text>
       ) : (
         <>
           <Field label="Your InstaPay for refunds" value={refundTo} onChangeText={(v) => setRefundTo(cleanInstapay(v))}
@@ -217,7 +251,7 @@ export default function Pay() {
           <Text style={{ fontSize: 40, textAlign: 'center' }}>⏱️</Text>
           <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center' }}>Your {HOLD_MINUTES} minutes ran out</Text>
           <Text style={{ color: colors.muted, textAlign: 'center', marginBottom: 14 }}>The time may still be free.</Text>
-          <Button title="Hold it again" onPress={() => router.replace({ pathname: '/book/[courtId]', params: { courtId: b.court?.id, sport: b.sport?.slug } })} />
+          <Button title="Hold it again" onPress={bookAgain} />
           <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border, marginTop: 14 }}>
             <Text style={{ color: colors.text, fontWeight: '700' }}>Already sent the money?</Text>
             <Text style={{ color: colors.muted, marginBottom: 10 }}>Add the screenshot. If the time was taken, you get it all back.</Text>
@@ -247,7 +281,10 @@ export default function Pay() {
               </>
             )}
             <Text style={{ color: colors.muted, marginTop: 10 }}>Amount to send</Text>
-            <Text style={{ color: colors.text, fontSize: 30, fontWeight: '800' }}>{egp(amountDue)}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Text style={{ color: colors.text, fontSize: 30, fontWeight: '800' }}>{egp(amountDue)}</Text>
+              <Text accessibilityRole="button" onPress={() => copyAmount(amountDue)} style={{ color: colors.accent, fontWeight: '700', paddingVertical: 8 }}>{copied ? 'Copied ✓' : 'Copy'}</Text>
+            </View>
             {groupUnpaid.length > 1 && <Text style={{ color: colors.muted }}>One transfer for {groupUnpaid.length} times booked together.</Text>}
 
             <Text style={{ color: colors.muted, marginTop: 12 }}>1. Send exactly {egp(amountDue)} to Zaf Play by InstaPay.</Text>
@@ -256,7 +293,7 @@ export default function Pay() {
             <Text style={{ color: colors.muted, marginBottom: 10 }}>3. Add it here and press Send.</Text>
 
             {proofPicker}
-            <Button title="Send payment screenshot" onPress={submit} loading={sending} />
+            {files.length > 0 && <Button title="Send payment screenshot" onPress={submit} loading={sending} />}
           </View>
           <PolicyNotice feePercent={Number(b.court?.late_fee_percent ?? 50)} />
         </View>

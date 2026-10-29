@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Switch, View } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -56,6 +56,8 @@ export default function BookCourt() {
   const [levels, setLevels] = useState<string[]>([]); // empty = any level; up to 2
   const [gameNote, setGameNote] = useState('');
   const req = useRequestId(); // the page holds still while a booking bar is dragged
+  // pressed the button as a guest: once logged in, carry on to Pay by itself (like the website's log-in sheet)
+  const goAfterLogin = useRef(false);
 
   const loadBusy = useCallback(async () => {
     const { data } = await supabase.rpc('court_busy_slots', { p_court_id: courtId });
@@ -93,6 +95,13 @@ export default function BookCourt() {
     })();
   }, [courtId, sportSlug, session, loadBusy]);
 
+  // back from log in with a time picked: the booking is made straight away, no second tap
+  useEffect(() => {
+    if (!session || !goAfterLogin.current || loading || !sport || pick.start === null) return;
+    goAfterLogin.current = false;
+    if (openMode) hostGame(); else book();
+  }, [session, loading, sport]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
   if (!court || !sport) {
     return <Text style={{ color: colors.muted, textAlign: 'center', margin: 40 }}>
@@ -112,7 +121,7 @@ export default function BookCourt() {
   const required = extras.filter((x) => x.is_required);
 
   async function ensureReady(): Promise<boolean> {
-    if (!session) { router.push('/login'); return false; }
+    if (!session) { goAfterLogin.current = true; router.push('/login'); return false; }
     const { data: me } = await supabase.from('users').select('role,phone').eq('id', session.user.id).single();
     if ((me as any)?.role === 'player' && !(me as any)?.phone) {
       Alert.alert('One more step', 'Please add your mobile number to your profile first, so the court can reach you.', [
@@ -208,6 +217,8 @@ export default function BookCourt() {
       <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 16 }}>
         {sport.name} · {court.is_indoor ? 'Indoor' : 'Outdoor'} · {egp(sport.price)} / hour
         {required.map((x) => ` · ${x.name} ${egp(x.price)}`).join('')}
+        {' · '}
+        <Text accessibilityRole="link" onPress={() => router.push({ pathname: '/court/[id]', params: { id: courtId } })} style={{ color: colors.accent, fontWeight: '700' }}>Info</Text>
       </Text>
 
       <SlotPicker

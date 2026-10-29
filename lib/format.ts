@@ -32,6 +32,13 @@ function cairoOffsetMin(ms: number): number {
   return Math.round((asUtc - Math.floor(ms / 60000) * 60000) / 60000);
 }
 
+// a real instant -> its Cairo day and minutes after that day's midnight (the opposite of cairoToDate)
+export function cairoDayMinutes(iso: string): { date: string; minutes: number } {
+  const d = new Date(iso);
+  const hm = d.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  return { date: d.toLocaleDateString('en-CA', { timeZone: TZ }), minutes: Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)) };
+}
+
 // "2026-10-08" + 18*60+30 minutes after Cairo midnight -> real instant
 export function cairoToDate(date: string, minutes: number): Date {
   const [y, m, d] = date.split('-').map(Number);
