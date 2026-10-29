@@ -1,14 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, Pressable, StyleSheet, Text, TextInput, View,
-  type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
+  ActivityIndicator, Animated, Pressable, StyleSheet, View, type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
+import { Text, TextInput } from '@/components/AppText';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
+import { useT, withoutArabic } from '@/lib/ownerLang';
 
 // The website's brand gradient (blue → purple → pink), used for buttons and anything chosen.
-export const GRADIENT = [colors.brandBlue, colors.brandPurple, colors.brandPink] as const;
+export const GRADIENT = [colors.brandBlue, colors.brandPink] as const;
 
 // Fills its parent with the gradient; the parent needs overflow: 'hidden' and rounded corners.
 export function GradientFill({ style }: { style?: object }) {
@@ -24,12 +25,6 @@ export function GradientText({ children, style }: { children: React.ReactNode; s
       </LinearGradient>
     </MaskedView>
   );
-}
-
-// A big screen title in the website's display font.
-export function Title({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
-  useTheme();
-  return <Text style={[{ color: colors.text, fontFamily: fonts.display, fontSize: 28, lineHeight: 34 }, style]}>{children}</Text>;
 }
 
 // Pressable that springs down a little when touched, so taps feel alive.
@@ -78,11 +73,23 @@ export function Button({
 export function Field(props: TextInputProps & { label: string }) {
   const s = useS();
   const { scheme } = useTheme();
-  const { label, style, ...rest } = props;
+  const { owner, t } = useT();
+  const [arabicNote, setArabicNote] = useState(false);
+  const { label, style, onChangeText, ...rest } = props;
+  // on the owner screens Arabic is for reading only: Arabic letters never reach the form or the database
+  function change(text: string) {
+    const kept = owner ? withoutArabic(text) : null;
+    if (kept !== null) {
+      setArabicNote(true);
+      setTimeout(() => setArabicNote(false), 4000);
+    }
+    onChangeText?.(kept ?? text);
+  }
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput aria-label={label} placeholderTextColor={colors.muted} keyboardAppearance={scheme} style={[s.input, style]} {...rest} />
+      <TextInput aria-label={label} placeholderTextColor={colors.muted} keyboardAppearance={scheme} style={[s.input, style]} {...rest} onChangeText={change} />
+      {arabicNote && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: 12, marginTop: 4 }}>{t('Please type in English (A–Z). Arabic letters can’t be used in fields.')}</Text>}
     </View>
   );
 }
@@ -103,8 +110,8 @@ const useS = themed(() => StyleSheet.create({
   },
   btnSmall: { paddingVertical: 10, paddingHorizontal: 16 },
   btnPrimary: {
-    backgroundColor: colors.brandPurple,
-    shadowColor: colors.brandPurple, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6,
+    backgroundColor: colors.accent,
+    shadowColor: colors.accent, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
   btnGhost: { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border },
   btnText: { color: '#fff', fontFamily: fonts.displayBold, fontSize: 17, letterSpacing: 0.3 },
@@ -117,7 +124,7 @@ const useS = themed(() => StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 14 },
   glowWrap: {
     borderRadius: radius.xl, padding: 1.5, marginBottom: 14,
-    shadowColor: colors.brandPurple, shadowOpacity: 0.35, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
+    shadowColor: colors.accent, shadowOpacity: 0.35, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8,
   },
   glowInner: { borderWidth: 0, borderRadius: radius.xl - 1.5 },
 }));

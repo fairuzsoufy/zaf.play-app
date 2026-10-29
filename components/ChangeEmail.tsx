@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { colors, fonts, radius, useTheme } from '@/lib/theme';
 import { Button, Field } from './ui';

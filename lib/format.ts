@@ -66,3 +66,39 @@ export function countdown(ms: number): string {
   const t = Math.floor(ms / 1000);
   return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
 }
+
+// "Sat 31 Oct · 6:30 PM – 8:00 PM", like the website's whenText
+export function whenText(start: string, end?: string | null): string {
+  return `${dateLabel(start)} · ${timeLabel(start)}${end ? ` – ${timeLabel(end)}` : ''}`;
+}
+
+export const dateTimeText = (iso: string) => `${dateLabel(iso)}, ${timeLabel(iso)}`;
+
+const LEVEL_TEXT: Record<string, string> = { any: 'Any level', beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+
+// 'any' or one / two levels saved as 'beginner,intermediate'
+export function levelText(level: string | null | undefined): string {
+  if (!level || level === 'any') return LEVEL_TEXT.any;
+  return level.split(',').map((l) => LEVEL_TEXT[l] || l).join(' + ');
+}
+
+// "in 12 min", "in 3 h", "in 2 days"
+export function untilText(iso: string, now = Date.now()): string {
+  const ms = new Date(iso).getTime() - now;
+  if (ms <= 0) return 'now';
+  const min = Math.round(ms / 60000);
+  if (min < 60) return `in ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 48) return `in ${h} h`;
+  return `in ${Math.round(h / 24)} days`;
+}
+
+export const teamSizeText = (n: number) => (n === 1 ? 'Singles (1 player)' : `${n}v${n} (${n} players per team)`);
+
+export function roundName(round: number, rounds: number): string {
+  const fromEnd = rounds - round;
+  if (fromEnd === 0) return 'Final';
+  if (fromEnd === 1) return 'Semi-finals';
+  if (fromEnd === 2) return 'Quarter-finals';
+  return `Round of ${2 ** (fromEnd + 1)}`;
+}

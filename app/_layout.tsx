@@ -1,9 +1,14 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import { Saira_800ExtraBold_Italic } from '@expo-google-fonts/saira/800ExtraBold_Italic';
-import { Saira_700Bold_Italic } from '@expo-google-fonts/saira/700Bold_Italic';
-import { Saira_600SemiBold_Italic } from '@expo-google-fonts/saira/600SemiBold_Italic';
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
+import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
+import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque/600SemiBold';
+import { Figtree_400Regular } from '@expo-google-fonts/figtree/400Regular';
+import { Figtree_500Medium } from '@expo-google-fonts/figtree/500Medium';
+import { Figtree_600SemiBold } from '@expo-google-fonts/figtree/600SemiBold';
+import { Figtree_700Bold } from '@expo-google-fonts/figtree/700Bold';
+import { Figtree_800ExtraBold } from '@expo-google-fonts/figtree/800ExtraBold';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '@/lib/auth';
 import { Splash } from '@/components/Splash';
@@ -12,8 +17,12 @@ import { BookingAlerts } from '@/components/BookingAlerts';
 import { colors, fonts, ThemeProvider, useTheme } from '@/lib/theme';
 
 export default function RootLayout() {
-  // the website's display font; the splash covers the first moment while it loads
-  useFonts({ [fonts.display]: Saira_800ExtraBold_Italic, [fonts.displayBold]: Saira_700Bold_Italic, [fonts.displaySemi]: Saira_600SemiBold_Italic });
+  // the website's fonts; the splash covers the first moment while they load
+  useFonts({
+    [fonts.display]: BricolageGrotesque_800ExtraBold, [fonts.displayBold]: BricolageGrotesque_700Bold, [fonts.displaySemi]: BricolageGrotesque_600SemiBold,
+    [fonts.body]: Figtree_400Regular, [fonts.bodyMedium]: Figtree_500Medium, [fonts.bodySemi]: Figtree_600SemiBold,
+    [fonts.bodyBold]: Figtree_700Bold, [fonts.bodyHeavy]: Figtree_800ExtraBold,
+  });
   return (
     <ThemeProvider>
       <AuthProvider>
@@ -44,8 +53,12 @@ function App() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+          <Stack.Screen name="owner" options={{ headerShown: false }} />
           <Stack.Screen name="court/[id]" options={{ title: '' }} />
           <Stack.Screen name="book/[courtId]" options={{ title: 'Book a time' }} />
+          <Stack.Screen name="game/[id]" options={{ title: 'Open game' }} />
+          <Stack.Screen name="tournament/[code]" options={{ title: 'Tournament' }} />
+          <Stack.Screen name="appeal" options={{ title: 'Appeal a restriction' }} />
           <Stack.Screen name="pay/[id]" options={{ title: 'Complete your booking' }} />
           <Stack.Screen name="change/[id]" options={{ title: 'Modify booking' }} />
           <Stack.Screen name="login" options={{ title: 'Log in', presentation: 'modal' }} />

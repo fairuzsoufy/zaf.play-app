@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { colors, fonts, radius, themed } from '@/lib/theme';
 import { FREE_CHANGE_HOURS, FREE_CHANGE_MINUTES, HOLD_MINUTES, INSTAPAY_FEE_TEXT, REVIEW_MINUTES } from '@/lib/payment';
 
@@ -40,7 +41,7 @@ export function PolicyNotice({ feePercent, showPayment = true }: { feePercent: n
 const useS = themed(() => StyleSheet.create({
   card: {
     backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, marginVertical: 14,
-    borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.brandPurple,
+    borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.accent,
   },
   title: { color: colors.text, fontFamily: fonts.displayBold, fontSize: 17 },
   chip: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' },

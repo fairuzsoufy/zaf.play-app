@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { Link, useRouter } from 'expo-router';
 import { Button, Field, Note } from '@/components/ui';
 import { signIn } from '@/lib/auth';
 import { GoogleButton } from '@/components/GoogleButton';
+import { CodeEntry } from '@/components/CodeEntry';
+import { supabase } from '@/lib/supabase';
 import { colors, useTheme } from '@/lib/theme';
 
 export default function Login() {
@@ -13,15 +16,47 @@ export default function Login() {
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<string | null>(null);
 
   async function submit() {
     setBusy(true);
     setErr(null);
-    const e = await signIn(id, pw);
+    const r = await signIn(id, pw);
+    if (r.confirmEmail) {
+      // someone who closed the sign-up screen by mistake just logs in and gets a fresh code
+      await resend(r.confirmEmail);
+      setBusy(false);
+      return setConfirm(r.confirmEmail);
+    }
     setBusy(false);
-    if (e) return setErr(e);
+    if (r.error) return setErr(r.error);
+    done();
+  }
+
+  // owners and their team go to the dashboard, like the website; players go back to where they were
+  async function done() {
+    const { data } = await supabase.rpc('my_access');
+    const role = (data as { role?: string } | null)?.role;
+    if (role === 'owner' || role === 'staff') return router.replace('/owner');
     if (router.canGoBack()) router.back();
     else router.replace('/');
+  }
+
+  // a code sent less than a minute ago is refused; that code still works, so the screen just asks for it
+  async function resend(email: string): Promise<string | null> {
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    if (!error || /rate|seconds|too many/i.test(error.message)) return null;
+    return 'Could not send a new code right now. Please try again in a minute.';
+  }
+
+  if (confirm) {
+    return (
+      <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+        <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', marginBottom: 8 }}>Confirm your email</Text>
+        <Text style={{ color: colors.muted, marginBottom: 16 }}>We've emailed a code to {confirm}. Type it below to finish logging in.</Text>
+        <CodeEntry type="signup" email={confirm} onVerified={done} onResend={() => resend(confirm)} />
+      </ScrollView>
+    );
   }
 
   return (

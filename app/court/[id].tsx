@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Dimensions, FlatList, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, FlatList, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
@@ -9,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed } from '@/lib/theme';
 import { egp } from '@/lib/format';
 import { Button, Card } from '@/components/ui';
+import { BlockedNotice } from '@/components/BlockedNotice';
 import type { CourtRow, ReviewStats } from '@/lib/types';
 
 const W = Dimensions.get('window').width;
@@ -29,7 +31,7 @@ export default function CourtPage() {
         supabase
           .from('courts')
           .select(
-            'id,name,is_indoor,surface_type,maps_url,facility:facilities(name,city,address),' +
+            'id,name,is_indoor,surface_type,maps_url,facility_id,facility:facilities(name,city,address),' +
               'court_sports(price_per_hour,sport:sports(id,name,slug,emoji)),court_photos(path,sort_order,status)',
           )
           .eq('id', id)
@@ -79,6 +81,7 @@ export default function CourtPage() {
         </View>
         <Text style={s.sub}>{court.facility?.name}{court.facility?.city ? ` · ${court.facility.city}` : ''}</Text>
         {court.facility?.address ? <Text style={s.sub}>{court.facility.address}</Text> : null}
+        <View style={{ marginTop: 10 }}><BlockedNotice facilityId={(court as any).facility_id} /></View>
 
         {stats && (
           <Text style={[s.sub, { marginTop: 8 }]}>

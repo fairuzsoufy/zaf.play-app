@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Text, View, type ColorValue } from 'react-native';
+import { View, type ColorValue } from 'react-native';
+import { Text } from '@/components/AppText';
 import { colors, fonts, useTheme } from '@/lib/theme';
 import { Icon, type IconName } from '@/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +43,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Play', headerShown: false, tabBarIcon: icon('ball'), tabBarLabel: label('Play') }} />
+      <Tabs.Screen name="games" options={{ title: 'Games', tabBarIcon: icon('users'), tabBarLabel: label('Games') }} />
       <Tabs.Screen name="bookings" options={{ title: 'My bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('My bookings') }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
     </Tabs>

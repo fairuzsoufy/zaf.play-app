@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -11,13 +12,14 @@ import {
 } from '@/lib/payment';
 import { Button, Field, GradientFill, Note } from '@/components/ui';
 import { RefundTracker, refundInfo } from '@/components/RefundTracker';
+import { RefundChoice } from '@/components/RefundChoice';
 import { PolicyNotice } from '@/components/PolicyNotice';
 
 type Tab = 'upcoming' | 'past' | 'cancelled';
 
 const SELECT = `id,start_time,end_time,total_price,status,payment_status,hold_expires_at,amount_due,discount_amount,
   booking_extras(name,qty),open_games(id),credit_used,credit_issued,cancel_request_as_credit,rescheduled_from,credit_amount,
-  retained_amount,refund_amount,refund_fee,refund_status,refund_to,refunded_at,refund_proof_path,cancel_request_status,cancel_request_decline_reason,cancel_requested_at,cancel_request_refund_to,
+  retained_amount,refund_amount,refund_fee,refund_status,refund_as_credit,refund_to,refunded_at,refund_proof_path,cancel_request_status,cancel_request_decline_reason,cancel_requested_at,cancel_request_refund_to,
   cancelled_at,cancelled_by,cancellation_reason,created_at,confirmed_at,payments(created_at,status),
   sport:sports(name,slug),court:courts(id,name,is_indoor,maps_url,late_fee_percent,facility:facilities(name,city))`;
 
@@ -180,6 +182,7 @@ export default function Bookings() {
               <RefundTracker b={b} now={now} proofUrl={b.refund_proof_path ? receipts[b.refund_proof_path] : undefined}
                 onWithdraw={requestOpen(b) ? () => withdraw(b) : undefined} />
             )}
+            {!requestOpen(b) && <RefundChoice b={b} onChanged={load} />}
             {pendingChangeFor.has(b.id) && <Text style={{ color: colors.warning, marginTop: 10 }}>A change to a new time is waiting for payment. This booking stays until it's approved.</Text>}
             {requestOpen(b) && !tracked && <Pressable onPress={() => withdraw(b)}><Text style={s.link}>Withdraw request</Text></Pressable>}
             {b.cancel_request_status === 'declined' && ['pending', 'confirmed'].includes(b.status) && (
@@ -346,7 +349,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
         <View style={{ marginTop: 12 }}>
           <Text style={{ color: colors.text, marginBottom: 6 }}>How would you like your money back?</Text>
           {[[false, 'To my InstaPay', 'Zaf Play sends it within 1 hour (the InstaPay fee comes out of it).'], [true, 'Keep it as Zaf Play credit', 'No transfer fee. It is taken off your next booking automatically.']].map(([v, t, d]: any) => (
-            <Pressable key={String(v)} onPress={() => setAsCredit(v)} style={[s.choice, asCredit === v && { borderColor: colors.brandPurple }]}>
+            <Pressable key={String(v)} onPress={() => setAsCredit(v)} style={[s.choice, asCredit === v && { borderColor: colors.accent }]}>
               <Text style={{ color: colors.text, fontWeight: '600' }}>{asCredit === v ? '◉ ' : '○ '}{t}</Text>
               <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{d}</Text>
             </Pressable>
@@ -372,7 +375,7 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
 const useS = themed(() => StyleSheet.create({
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
   tabOn: { borderColor: 'transparent', overflow: 'hidden' },
-  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.brandPurple },
+  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.accent },
   title: { color: colors.text, fontFamily: fonts.display, fontSize: 20 },
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },

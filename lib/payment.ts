@@ -7,7 +7,7 @@ export const MAX_PROOFS = 2;
 export const MAX_PROOF_MB = 5;
 
 // refunds go to the player's InstaPay mobile number: 11 digits, numbers only
-export const isEgyptMobile = (v: string) => /^01[0125]\d{8}$/.test(v);
+const isEgyptMobile = (v: string) => /^01[0125]\d{8}$/.test(v);
 export const isInstapay = (v: string) => isEgyptMobile(v.trim());
 export const cleanInstapay = (value: string) => value.replace(/\D/g, '').slice(0, 11);
 export const INSTAPAY_HELP = 'The 11-digit mobile number on your InstaPay (01xxxxxxxxx).';
@@ -15,7 +15,7 @@ export const INSTAPAY_HELP = 'The 11-digit mobile number on your InstaPay (01xxx
 // InstaPay charges the SENDER 0.1% (min 0.50, max 20 EGP), so we send a little less and the receiver pays it.
 // Same maths as the database (private.instapay_send_amount / private.instapay_fee).
 export const INSTAPAY_FEE_TEXT = '0.1%, min 0.50 EGP, max 20 EGP';
-export function instapaySendAmount(total: number) {
+function instapaySendAmount(total: number) {
   if (!(total > 0.5)) return 0;
   const send = total <= 500.5 ? total - 0.5 : total < 20020 ? Math.floor((total / 1.001) * 100) / 100 : total - 20;
   return Math.round(send * 100) / 100;
@@ -49,4 +49,12 @@ export function freeChangeLeftMs(b: { confirmed_at?: string | null; rescheduled_
   if (!b.confirmed_at || b.rescheduled_from) return 0;
   if (b.start_time && new Date(b.start_time).getTime() <= nowMs) return 0;
   return Math.max(0, new Date(b.confirmed_at).getTime() + FREE_CHANGE_MINUTES * 60000 - nowMs);
+}
+
+// owners' earnings go to an 11-digit mobile number or an InstaPay link (https://…), like the website
+export const isOwnerInstapay = (v: string) => isEgyptMobile(v.trim()) || /^https:\/\/\S+$/i.test(v.trim());
+// while typing: a number keeps digits only (max 11); a link is kept as typed (without spaces)
+export function cleanOwnerInstapay(value: string) {
+  const v = value.replace(/\s/g, '');
+  return /^\d/.test(v) ? v.replace(/\D/g, '').slice(0, 11) : v;
 }

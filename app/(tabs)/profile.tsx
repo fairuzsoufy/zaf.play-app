@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Share, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Share, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -9,6 +10,7 @@ import { Button, Card, Field, GradientFill, GradientText, GRADIENT, Note, Pressa
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/Icon';
 import { DeleteAccount } from '@/components/DeleteAccount';
+import { AccountStatus, BlockedNotice } from '@/components/BlockedNotice';
 import { FriendsCard } from '@/components/Friends';
 import { ChangeEmail } from '@/components/ChangeEmail';
 import { PlayerStats } from '@/components/PlayerStats';
@@ -113,9 +115,10 @@ export default function Profile() {
 
   return (
     <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      {me.role !== 'player' && (
-        <Note kind="ok">You are logged in as {me.role}. Owner and staff tools are on zafplay.com.</Note>
+      {(me.role === 'owner' || me.role === 'staff') && (
+        <View style={{ marginBottom: 14 }}><Button title="Open the owner dashboard" onPress={() => router.push('/owner')} /></View>
       )}
+      {me.role === 'admin' && <Note kind="ok">You are logged in as admin. Admin tools are on zafplay.com.</Note>}
 
       {/* who you are: gradient banner, initials, name */}
       <View style={[card, { padding: 0, overflow: 'hidden' }]}>
@@ -128,6 +131,7 @@ export default function Profile() {
           </LinearGradient>
           <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginTop: 8 }}>{me.full_name || 'Your name'}</Text>
           {me.username ? <Text style={{ color: colors.primary, fontWeight: '700', marginTop: 2 }}>@{me.username}</Text> : null}
+          {me.role === 'player' && <View style={{ marginTop: 6 }}><AccountStatus /></View>}
           {credit !== null && credit > 0 && (
             <View style={{ marginTop: 10, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.soft }}>
               <Text style={{ color: colors.success, fontWeight: '800' }}>💳 {egp(credit)} credit</Text>
@@ -136,6 +140,7 @@ export default function Profile() {
         </View>
       </View>
 
+      {me.role === 'player' && <BlockedNotice />}
       {me.role === 'player' && <PlayerStats />}
 
       {credit !== null && ledger.length > 0 && (
