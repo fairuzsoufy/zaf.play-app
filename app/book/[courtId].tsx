@@ -201,7 +201,8 @@ export default function BookCourt() {
   }
 
   return (
-    <ScrollView scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} style={{ backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScrollView scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: court.name }} />
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{court.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 16 }}>
@@ -315,9 +316,19 @@ export default function BookCourt() {
       <BlockedNotice facilityId={court.facility_id} />
 
       {err && <Note kind="error">{err}</Note>}
+    </ScrollView>
+    {/* always-visible pay bar: the chosen time, the total and the button, so nobody scrolls to find it */}
+    <View style={{ borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10 + insets.bottom }}>
+      {pick.start !== null && (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={{ color: colors.muted }}>{durationText(pick.duration)}</Text>
+          <Text style={{ color: colors.text, fontWeight: '800' }}>{egp(openMode ? seatsAmount : total - discount)}</Text>
+        </View>
+      )}
       <Button title={!session ? 'Log in to continue →' : openMode ? `Host game · pay my spot${pick.start !== null ? ` ${egp(seatsAmount)}` : ''} →` : 'Continue to payment →'}
         onPress={openMode ? hostGame : book} loading={saving} disabled={pick.start === null && !!session} />
-    </ScrollView>
+    </View>
+    </View>
   );
 }
 

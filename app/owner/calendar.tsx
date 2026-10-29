@@ -46,7 +46,7 @@ const hmText = (m: number) => {
 // commission) or to block it; tap a walk-in to change or cancel it.
 export default function OwnerCalendar() {
   const { access } = useOwner();
-  const { t, tm, locale } = useT();
+  const { t, tm, locale, lang } = useT();
   const canManage = !!access.manage_bookings && !frozenOf(access);
   const scope = branchScope(access);
   const [date, setDate] = useState(cairoDate());
@@ -251,12 +251,12 @@ export default function OwnerCalendar() {
     <View style={{ flex: 1 }}>
       <View style={{ padding: 16, paddingBottom: 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <DayButton label="‹" onPress={() => setDate(addDays(date, -1))} />
+          <DayButton label={lang === 'ar' ? '›' : '‹'} onPress={() => setDate(addDays(date, -1))} />
           <Pressable accessibilityRole="button" onPress={() => setDate(today)} style={{ flex: 1, alignItems: 'center', padding: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card }}>
             <Text style={{ color: colors.text, fontWeight: '800' }}>📅 {dayLabel}</Text>
             {date !== today && <Text style={{ color: colors.primaryAlt, fontSize: 12 }}>{t('Today')}</Text>}
           </Pressable>
-          <DayButton label="›" onPress={() => setDate(addDays(date, 1))} />
+          <DayButton label={lang === 'ar' ? '‹' : '›'} onPress={() => setDate(addDays(date, 1))} />
         </View>
         {branches.length > 1 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -402,7 +402,7 @@ export default function OwnerCalendar() {
                   onChangeText={(v) => setDraft({ ...draft, price: v.replace(/[^\d.]/g, '').slice(0, 7), priceTouched: true })} />
                 <Pressable onPress={() => setDraft({ ...draft, paid: !draft.paid })} accessibilityRole="checkbox" accessibilityState={{ checked: draft.paid }}
                   style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                  <Text style={{ color: draft.paid ? colors.success : colors.muted, fontSize: 20, marginRight: 8 }}>{draft.paid ? '☑' : '☐'}</Text>
+                  <Text style={{ color: draft.paid ? colors.success : colors.muted, fontSize: 20, marginEnd: 8 }}>{draft.paid ? '☑' : '☐'}</Text>
                   <Text style={{ color: colors.text }}>{t('Already paid at the venue')}</Text>
                 </Pressable>
                 <Field label={t('Note (optional)')} value={draft.note} onChangeText={(v) => setDraft({ ...draft, note: v.slice(0, 200) })} />

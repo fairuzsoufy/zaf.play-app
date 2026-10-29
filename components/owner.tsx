@@ -36,7 +36,7 @@ export function Badge({ text, tone = 'neutral' }: { text: string; tone?: 'neutra
 export function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }}
-      style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 1, marginRight: 8, marginBottom: 8,
+      style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 1, marginEnd: 8, marginBottom: 8,
         borderColor: on ? colors.accent : colors.border, backgroundColor: on ? colors.soft : colors.card }}>
       <Text style={{ color: on ? colors.text : colors.muted, fontWeight: '600', fontSize: 13 }}>{label}</Text>
     </Pressable>
@@ -64,7 +64,7 @@ export function Muted({ children, style }: { children: ReactNode; style?: object
 // a small text button ("Cancel", "Edit")
 export function LinkButton({ title, onPress, danger, disabled }: { title: string; onPress: () => void; danger?: boolean; disabled?: boolean }) {
   return (
-    <Pressable onPress={onPress} disabled={disabled} hitSlop={8} accessibilityRole="button" style={{ opacity: disabled ? 0.5 : 1, marginRight: 16, paddingVertical: 4 }}>
+    <Pressable onPress={onPress} disabled={disabled} hitSlop={8} accessibilityRole="button" style={{ opacity: disabled ? 0.5 : 1, marginEnd: 16, paddingVertical: 4 }}>
       <Text style={{ color: danger ? colors.danger : colors.primaryAlt, fontWeight: '700', fontSize: 14 }}>{title}</Text>
     </Pressable>
   );
@@ -76,6 +76,7 @@ export const PAGE_SIZE = 10;
 
 // "‹ 1 / 4 ›" under a long list
 export function Pager({ page, total, onChange, size = PAGE_SIZE }: { page: number; total: number; onChange: (p: number) => void; size?: number }) {
+  const { lang } = useT();
   const pages = Math.ceil(total / size);
   if (pages <= 1) return null;
   const btn = (label: string, to: number, off: boolean) => (
@@ -86,9 +87,9 @@ export function Pager({ page, total, onChange, size = PAGE_SIZE }: { page: numbe
   );
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, marginVertical: 12 }}>
-      {btn('‹', page - 1, page <= 1)}
+      {btn(lang === 'ar' ? '›' : '‹', page - 1, page <= 1)}
       <Text style={{ color: colors.muted }}>{page} / {pages}</Text>
-      {btn('›', page + 1, page >= pages)}
+      {btn(lang === 'ar' ? '‹' : '›', page + 1, page >= pages)}
     </View>
   );
 }

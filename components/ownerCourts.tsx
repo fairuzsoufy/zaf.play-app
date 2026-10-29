@@ -21,7 +21,7 @@ import { Button, Field, Note } from './ui';
 export function Check({ on, onPress, title, help }: { on: boolean; onPress: () => void; title: string; help?: string }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 }}>
-      <Text style={{ color: on ? colors.success : colors.muted, fontSize: 20, marginRight: 10 }}>{on ? '☑' : '☐'}</Text>
+      <Text style={{ color: on ? colors.success : colors.muted, fontSize: 20, marginEnd: 10 }}>{on ? '☑' : '☐'}</Text>
       <View style={{ flex: 1 }}>
         <Text style={{ color: colors.text, fontWeight: '600' }}>{title}</Text>
         {!!help && <Muted style={{ fontSize: 12 }}>{help}</Muted>}

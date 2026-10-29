@@ -186,7 +186,7 @@ export default function BlockSlots() {
       <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 6 }}>{t('Pick a date')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
         {dates.map((d, i) => (
-          <Pressable accessibilityRole="button" key={d} onPress={() => pickDay(d)} style={{ width: 62, paddingVertical: 8, marginRight: 8, borderRadius: radius.md, alignItems: 'center',
+          <Pressable accessibilityRole="button" key={d} onPress={() => pickDay(d)} style={{ width: 62, paddingVertical: 8, marginEnd: 8, borderRadius: radius.md, alignItems: 'center',
             borderWidth: 1, borderColor: d === date ? colors.primary : colors.border, backgroundColor: d === date ? colors.primary : colors.card }}>
             <Text style={{ color: d === date ? '#fff' : colors.muted, fontSize: 12 }}>{dayLabel(d, i)}</Text>
             <Text style={{ color: d === date ? '#fff' : colors.text, fontWeight: '800', fontSize: 18 }}>{Number(d.slice(8))}</Text>
