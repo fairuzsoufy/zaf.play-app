@@ -40,7 +40,7 @@ export default function OwnerDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [branches, setBranches] = useState<{ id: string; name: string; is_approved: boolean }[]>([]);
   const [month, setMonth] = useState({ bookings: 0, gross: 0, commission: 0, net: 0 });
-  const [today, setToday] = useState<{ total: number; next: TodayBooking | null } | null>(null);
+  const [today, setToday] = useState<{ total: number; next: TodayBooking | null; later: TodayBooking[] } | null>(null);
   const [help, setHelp] = useState(false);
 
   const load = useCallback(async () => {
@@ -65,7 +65,8 @@ export default function OwnerDashboard() {
           .lt('start_time', cairoToDate(day, 24 * 60).toISOString())
           .order('start_time');
         const list = (data || []) as unknown as TodayBooking[];
-        setToday({ total: list.length, next: list.find((b) => new Date(b.start_time).getTime() > Date.now()) || null });
+        const ahead = list.filter((b) => new Date(b.start_time).getTime() > Date.now());
+        setToday({ total: list.length, next: ahead[0] || null, later: ahead.slice(1, 4) });
       })());
     }
     if (a.view_finances) {
@@ -196,6 +197,16 @@ export default function OwnerDashboard() {
                 ? `${t('Next:')} ${new Date(today.next.start_time).toLocaleTimeString(locale, { timeZone: 'Africa/Cairo', hour: 'numeric', minute: '2-digit', hour12: true }).toUpperCase()} · ${today.next.court?.name || ''}${today.next.player?.full_name ? ` · ${today.next.player.full_name}` : ''}`
                 : today.total > 0 ? t("All of today's games are done.") : t('No games booked today yet.')}
             </Muted>
+            {today.later.map((b) => (
+              <Muted key={b.id} style={{ marginTop: 4 }}>
+                {new Date(b.start_time).toLocaleTimeString(locale, { timeZone: 'Africa/Cairo', hour: 'numeric', minute: '2-digit', hour12: true }).toUpperCase()} · {b.court?.name || ''}{b.player?.full_name ? ` · ${b.player.full_name}` : ''}
+              </Muted>
+            ))}
+            {access.manage_bookings && (
+              <Pressable onPress={() => open('calendar')} accessibilityRole="button" style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, borderRadius: radius.md, backgroundColor: colors.soft }}>
+                <Text style={{ color: colors.text, fontWeight: '700' }}>📅 {t("Open today's calendar")}</Text>
+              </Pressable>
+            )}
           </Box>
         </Pressable>
       )}
@@ -247,7 +258,7 @@ export default function OwnerDashboard() {
 function Stat({ label, value, good }: { label: string; value: string; good?: boolean }) {
   return (
     <View style={{ flex: 1, borderRadius: radius.md, padding: 8, backgroundColor: good ? 'rgba(46,211,160,0.1)' : colors.cardAlt, borderWidth: good ? 1 : 0, borderColor: colors.success }}>
-      <Text style={{ color: good ? colors.success : colors.muted, fontSize: 11, textAlign: 'center' }}>{label}</Text>
+      <Text style={{ color: good ? colors.success : colors.muted, fontSize: 12, textAlign: 'center' }}>{label}</Text>
       <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14, textAlign: 'center', marginTop: 2 }}>{value}</Text>
     </View>
   );
@@ -260,7 +271,7 @@ function Tile({ icon, label, hint, onPress }: { icon: string; label: string; hin
         style={({ pressed }) => ({ backgroundColor: pressed ? colors.soft : colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: 14, minHeight: 96 })}>
         <Text style={{ fontSize: 24 }}>{icon}</Text>
         <Text style={{ color: colors.text, fontWeight: '800', marginTop: 6 }}>{label}</Text>
-        <Text style={{ color: colors.muted, fontSize: 11, marginTop: 2 }} numberOfLines={2}>{hint}</Text>
+        <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }} numberOfLines={2}>{hint}</Text>
       </Pressable>
     </View>
   );

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, View, RefreshControl } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,7 +9,7 @@ import { colors, radius, themed } from '@/lib/theme';
 import { dateTimeText, egp, roundName, teamSizeText, timeLabel, untilText } from '@/lib/format';
 import { instapayFee, REVIEW_MINUTES } from '@/lib/payment';
 import { useRequestId } from '@/lib/requestId';
-import { Button, Note } from '@/components/ui';
+import { Button, Note, Skeleton } from '@/components/ui';
 import { ProofForm } from '@/components/ProofForm';
 import { PlayerSearch, type FoundPlayer } from '@/components/PlayerSearch';
 import { askToNotify } from '@/components/BookingAlerts';
@@ -45,6 +45,7 @@ export default function Tournament() {
   const [scores, setScores] = useState<Record<string, { a: string; b: string }>>({});
   const scroll = useRef<ScrollView>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => {
     const { data } = await supabase.rpc('tournament_page', { p_code: code });
     setT(data);
@@ -87,7 +88,7 @@ export default function Tournament() {
     setMates([]);
   }
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
+  if (loading) return <Skeleton />;
   if (!t) return <Text style={{ color: colors.muted, margin: 40, textAlign: 'center' }}>Tournament not found.</Text>;
 
   const opens = new Date(t.reg_opens_at).getTime();
@@ -134,7 +135,8 @@ export default function Tournament() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior="padding" keyboardVerticalOffset={insets.top + (Platform.OS === 'ios' ? 44 : 56)}>
-    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }}
+      refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: 'Tournament' }} />
       <Text style={{ color: colors.brandPink, fontWeight: '700' }}>🏆 {t.sport} tournament</Text>
       <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginTop: 2 }}>{t.title}</Text>
@@ -193,7 +195,7 @@ export default function Tournament() {
                   {m.status === 'accepted' ? 'In' : m.status === 'declined' ? 'Declined' : 'Invited'}
                 </Text>
                 {my.is_captain && !m.is_captain && m.status !== 'accepted' && ['forming', 'ready'].includes(my.status) && (
-                  <Pressable onPress={() => setSwapFor(swapFor === m.user_id ? null : m.user_id)}><Text style={s.link}>Replace</Text></Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => setSwapFor(swapFor === m.user_id ? null : m.user_id)}><Text style={s.link}>Replace</Text></Pressable>
                 )}
               </View>
             ))}
@@ -229,17 +231,17 @@ export default function Tournament() {
             {!!my.reject_reason && my.status === 'ready' && <Text style={{ color: colors.danger }}>Last payment wasn't accepted: {my.reject_reason}</Text>}
             {my.status === 'review' && <Text style={{ color: colors.muted }}>We check payments within {REVIEW_MINUTES} minutes. This page updates by itself.</Text>}
             {my.is_captain && ['forming', 'ready'].includes(my.status) && (
-              <Pressable onPress={() => ask('Withdraw your team?', 'Your team is removed from the tournament.', () => run(() => supabase.rpc('withdraw_team', { p_team_id: my.id }), 'Your team was withdrawn.'))}>
+              <Pressable accessibilityRole="button" onPress={() => ask('Withdraw your team?', 'Your team is removed from the tournament.', () => run(() => supabase.rpc('withdraw_team', { p_team_id: my.id }), 'Your team was withdrawn.'))}>
                 <Text style={s.link}>Withdraw team</Text>
               </Pressable>
             )}
             {my.is_captain && my.status === 'confirmed' && regOpen && (
-              <Pressable onPress={() => ask('Withdraw your team?', "Your place is released and the entry fee is sent back to your InstaPay (minus InstaPay's small fee).", () => run(() => supabase.rpc('withdraw_team', { p_team_id: my.id }), 'Your team was withdrawn.'))}>
+              <Pressable accessibilityRole="button" onPress={() => ask('Withdraw your team?', "Your place is released and the entry fee is sent back to your InstaPay (minus InstaPay's small fee).", () => run(() => supabase.rpc('withdraw_team', { p_team_id: my.id }), 'Your team was withdrawn.'))}>
                 <Text style={s.link}>Withdraw team (refund {egp(Number(my.amount) - instapayFee(Number(my.amount)))})</Text>
               </Pressable>
             )}
             {!my.is_captain && my.my_status === 'accepted' && ['forming', 'ready'].includes(my.status) && (
-              <Pressable onPress={() => ask('Leave this team?', 'Your captain can invite someone else.', () => run(() => supabase.rpc('leave_team', { p_team_id: my.id }), 'You left the team.'))}>
+              <Pressable accessibilityRole="button" onPress={() => ask('Leave this team?', 'Your captain can invite someone else.', () => run(() => supabase.rpc('leave_team', { p_team_id: my.id }), 'You left the team.'))}>
                 <Text style={s.link}>Leave team</Text>
               </Pressable>
             )}
@@ -254,7 +256,7 @@ export default function Tournament() {
                 {mates.map((m) => (
                   <View key={m.id} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ color: colors.text }}>{m.full_name} {m.username ? <Text style={{ color: colors.muted }}>@{m.username}</Text> : null}</Text>
-                    <Pressable onPress={() => setMates(mates.filter((x) => x.id !== m.id))}><Text style={s.link}>Remove</Text></Pressable>
+                    <Pressable accessibilityRole="button" onPress={() => setMates(mates.filter((x) => x.id !== m.id))}><Text style={s.link}>Remove</Text></Pressable>
                   </View>
                 ))}
                 {!!session && mates.length < t.team_size - 1 && <PlayerSearch exclude={mates.map((m) => m.id)} onPick={(p) => setMates([...mates, p])} />}
@@ -285,7 +287,7 @@ export default function Tournament() {
             <Button small title={t.status === 'scheduled' ? 'Make the schedule again (new draw)' : 'Make the schedule'} disabled={busy}
               onPress={() => run(() => supabase.rpc('make_tournament_schedule', { p_id: t.id }), '✅ Schedule made. Enter the scores below as the games finish.')} />
           )}
-          <Pressable onPress={() => ask('Cancel the tournament?', 'The court is released and every paid team gets its entry fee back in full.', () => run(() => supabase.rpc('cancel_tournament', { p_id: t.id, p_reason: null }), 'Tournament cancelled.'))}>
+          <Pressable accessibilityRole="button" onPress={() => ask('Cancel the tournament?', 'The court is released and every paid team gets its entry fee back in full.', () => run(() => supabase.rpc('cancel_tournament', { p_id: t.id, p_reason: null }), 'Tournament cancelled.'))}>
             <Text style={[s.link, { color: colors.danger }]}>Cancel tournament</Text>
           </Pressable>
           {t.status === 'approved' && <Text style={{ color: colors.muted, fontSize: 12 }}>Registration also closes by itself at the closing time. Teams that haven't paid by then are removed.</Text>}
@@ -337,7 +339,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   const s = useS();
   return (
     <View style={[s.card, { width: '48%', padding: 10 }]}>
-      <Text style={{ color: colors.muted, fontSize: 11 }}>{label}</Text>
+      <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
       <Text style={{ color: colors.text, fontWeight: '700', marginTop: 2 }}>{value}</Text>
     </View>
   );

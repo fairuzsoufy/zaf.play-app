@@ -16,7 +16,7 @@ export function GenderField({ value, onChange }: { value: Gender; onChange: (g: 
       <Text style={{ color: colors.muted, marginBottom: 6, fontSize: 13 }}>Gender</Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {(['male', 'female'] as const).map((g) => (
-          <Pressable key={g} onPress={() => onChange(g)} style={{
+          <Pressable accessibilityRole="button" key={g} onPress={() => onChange(g)} style={{
             flex: 1, paddingVertical: 12, borderRadius: radius.md, alignItems: 'center', borderWidth: 1,
             borderColor: value === g ? 'transparent' : colors.border, backgroundColor: colors.card, overflow: 'hidden',
           }}>

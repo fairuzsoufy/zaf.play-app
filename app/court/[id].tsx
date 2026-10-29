@@ -9,7 +9,7 @@ import { photoUrl, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed } from '@/lib/theme';
 import { egp } from '@/lib/format';
-import { Button, Card } from '@/components/ui';
+import { Button, Card, Skeleton } from '@/components/ui';
 import { BlockedNotice } from '@/components/BlockedNotice';
 import type { CourtRow, ReviewStats } from '@/lib/types';
 
@@ -44,7 +44,7 @@ export default function CourtPage() {
     })();
   }, [id]);
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
+  if (loading) return <Skeleton />;
   if (!court) return <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 60 }}>This court is not available.</Text>;
 
   const photos = court.court_photos
@@ -91,7 +91,7 @@ export default function CourtPage() {
         )}
 
         {court.maps_url ? (
-          <Pressable onPress={() => Linking.openURL(court.maps_url!)} style={{ marginTop: 12 }}>
+          <Pressable accessibilityRole="button" onPress={() => Linking.openURL(court.maps_url!)} style={{ marginTop: 12 }}>
             <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>📍 Open in Maps</Text>
           </Pressable>
         ) : null}

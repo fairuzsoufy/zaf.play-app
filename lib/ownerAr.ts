@@ -59,6 +59,7 @@ export const AR: Record<string, string> = {
   'booking': 'حجز',
   'bookings': 'حجوزات',
   'Next:': 'التالي:',
+  "Open today's calendar": 'افتح تقويم اليوم',
   "All of today's games are done.": 'انتهت كل مباريات اليوم.',
   'No games booked today yet.': 'لا توجد حجوزات اليوم حتى الآن.',
   '{month} so far (played)': '{month} حتى الآن (المباريات التي لُعبت)',

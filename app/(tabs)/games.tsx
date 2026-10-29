@@ -124,14 +124,14 @@ export default function Games() {
       <Text style={{ color: colors.muted, fontSize: 12, marginTop: 6, marginBottom: 14 }}>Pick a court, then turn on “Invite players to share the cost”.</Text>
 
       {gameInvites.length > 0 && tab !== 'mine' && (
-        <Pressable onPress={() => setTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
+        <Pressable accessibilityRole="button" onPress={() => setTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
           <Text style={{ color: colors.text, fontWeight: '700' }}>🎾 You have {gameInvites.length} game invitation{gameInvites.length > 1 ? 's' : ''}</Text>
           <Text style={{ color: colors.muted, marginTop: 2 }}>A friend invited you to play. Tap to see.</Text>
         </Pressable>
       )}
 
       {invites.length > 0 && tab !== 'mine' && (
-        <Pressable onPress={() => setTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
+        <Pressable accessibilityRole="button" onPress={() => setTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
           <Text style={{ color: colors.text, fontWeight: '700' }}>You have {invites.length} team invitation{invites.length > 1 ? 's' : ''}</Text>
           <Text style={{ color: colors.muted, marginTop: 2 }}>Tap to answer.</Text>
         </Pressable>
@@ -139,7 +139,7 @@ export default function Games() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, flexGrow: 0 }}>
         {tabs.map((t) => (
-          <Pressable key={t.key} onPress={() => setTab(t.key)} style={[s.tab, tab === t.key && s.tabOn]}>
+          <Pressable accessibilityRole="button" key={t.key} onPress={() => setTab(t.key)} style={[s.tab, tab === t.key && s.tabOn]}>
             {tab === t.key && <GradientFill />}
             <Text style={{ color: tab === t.key ? '#fff' : colors.muted, fontWeight: '600' }}>{t.label}{t.n ? ` (${t.n})` : ''}</Text>
           </Pressable>
@@ -173,7 +173,7 @@ export default function Games() {
           {games.map((g) => {
             const left = g.spots - g.taken;
             return (
-              <Pressable key={g.id} onPress={() => open(g.id)} style={s.card}>
+              <Pressable accessibilityRole="button" key={g.id} onPress={() => open(g.id)} style={s.card}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: colors.text, fontWeight: '700' }}>{g.sport} · {g.court}</Text>
@@ -226,7 +226,7 @@ export default function Games() {
             const isOpen = t.status === 'approved' && now >= opens && now < closes;
             const state = t.status !== 'approved' ? 'Registration closed' : now < opens ? `Opens ${untilText(t.reg_opens_at)}` : now < closes ? `Closes ${untilText(t.reg_closes_at)}` : 'Registration closed';
             return (
-              <Pressable key={t.id} onPress={() => openT(t.code)} style={s.card}>
+              <Pressable accessibilityRole="button" key={t.id} onPress={() => openT(t.code)} style={s.card}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                   <Text style={{ color: colors.text, fontWeight: '700', flex: 1 }}>🏆 {t.title}</Text>
                   <Text style={[s.pill, { color: isOpen ? colors.success : colors.muted }]}>{state}</Text>
@@ -251,7 +251,7 @@ export default function Games() {
               {invites.map((i: any) => (
                 <View key={i.team_id} style={s.card}>
                   <Text style={{ color: colors.text }}><Text style={{ fontWeight: '700' }}>{i.captain}</Text> invited you to team <Text style={{ fontWeight: '700' }}>{i.team}</Text></Text>
-                  <Pressable onPress={() => openT(i.code)}><Text style={{ color: colors.muted, marginTop: 2, textDecorationLine: 'underline' }}>{i.tournament} · {dateTimeText(i.starts_at)}</Text></Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => openT(i.code)}><Text style={{ color: colors.muted, marginTop: 2, textDecorationLine: 'underline' }}>{i.tournament} · {dateTimeText(i.starts_at)}</Text></Pressable>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                     <View style={{ flex: 1 }}><Button small title="Accept" loading={busy === i.team_id} onPress={() => answer(i.team_id, true)} /></View>
                     <View style={{ flex: 1 }}><Button small variant="ghost" title="Decline" disabled={busy === i.team_id} onPress={() => answer(i.team_id, false)} /></View>
@@ -278,7 +278,7 @@ export default function Games() {
           <Text style={s.h2}>My open games</Text>
           {myGames.length === 0 && <Text style={{ color: colors.muted }}>None yet.</Text>}
           {myGames.map((g) => (
-            <Pressable key={g.game_id} onPress={() => open(g.game_id)} style={s.card}>
+            <Pressable accessibilityRole="button" key={g.game_id} onPress={() => open(g.game_id)} style={s.card}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontWeight: '700' }}>{g.sport} · {g.court}</Text>
@@ -298,7 +298,7 @@ export default function Games() {
           <Text style={s.h2}>My tournament teams</Text>
           {((mine.teams as any[]) || []).length === 0 && <Text style={{ color: colors.muted }}>None yet.</Text>}
           {((mine.teams as any[]) || []).map((t) => (
-            <Pressable key={t.team_id} onPress={() => openT(t.code)} style={s.card}>
+            <Pressable accessibilityRole="button" key={t.team_id} onPress={() => openT(t.code)} style={s.card}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontWeight: '700' }}>{t.team}{t.is_captain ? ' (captain)' : ''}</Text>
@@ -320,7 +320,7 @@ export default function Games() {
 function Chip({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
   const s = useS();
   return (
-    <Pressable onPress={onPress} style={[s.tab, on && s.tabOn]}>
+    <Pressable accessibilityRole="button" onPress={onPress} style={[s.tab, on && s.tabOn]}>
       {on && <GradientFill />}
       <Text style={{ color: on ? '#fff' : colors.muted, fontWeight: '600' }}>{label}</Text>
     </Pressable>

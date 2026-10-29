@@ -1,5 +1,6 @@
 import 'expo-sqlite/localStorage/install';
-import { createContext, createElement, useContext, useState, type ReactNode } from 'react';
+import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Appearance } from 'react-native';
 
 // Night Match, the website's colours (app/globals.css there): a navy ground in dark mode, a pale blue ground in
 // light mode, blue for what you can press, pink for what needs attention, and one blue → pink gradient moment.
@@ -66,26 +67,43 @@ export const radius = { sm: 8, md: 12, lg: 18, xl: 24 };
 export type Scheme = 'dark' | 'light';
 const THEME_KEY = 'zaf-theme'; // same key as the website
 
-function saved(): Scheme {
-  try { return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark'; } catch { return 'dark'; }
-}
+export type Choice = Scheme | 'system';
 
-let current: Scheme = saved();
+// What the player picked; nothing saved means follow the phone's own light / dark setting.
+function saved(): Choice {
+  try { const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : 'system'; } catch { return 'system'; }
+}
+const phone = (): Scheme => (Appearance.getColorScheme() === 'light' ? 'light' : 'dark');
+const resolve = (c: Choice): Scheme => (c === 'system' ? phone() : c);
+
+let choice: Choice = saved();
+let current: Scheme = resolve(choice);
 
 // The colours in use right now. Read them while rendering (not in module-level constants), so they follow the theme.
 export const colors: Palette = { ...(current === 'dark' ? dark : light) };
 
-const ThemeContext = createContext<{ scheme: Scheme; setScheme: (s: Scheme) => void }>({ scheme: current, setScheme: () => {} });
+const ThemeContext = createContext<{ scheme: Scheme; choice: Choice; setScheme: (s: Choice) => void }>({ scheme: current, choice, setScheme: () => {} });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [scheme, set] = useState<Scheme>(current);
-  const setScheme = (s: Scheme) => {
+  const [picked, setPicked] = useState<Choice>(choice);
+  const apply = (s: Scheme) => {
     current = s;
     Object.assign(colors, s === 'dark' ? dark : light);
-    try { localStorage.setItem(THEME_KEY, s); } catch {}
     set(s);
   };
-  return createElement(ThemeContext.Provider, { value: { scheme, setScheme } }, children);
+  const setScheme = (c: Choice) => {
+    choice = c;
+    try { if (c === 'system') localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, c); } catch {}
+    setPicked(c);
+    apply(resolve(c));
+  };
+  // while following the phone, switch when the phone switches
+  useEffect(() => {
+    const sub = Appearance.addChangeListener(() => { if (choice === 'system') apply(phone()); });
+    return () => sub.remove();
+  }, []);
+  return createElement(ThemeContext.Provider, { value: { scheme, choice: picked, setScheme } }, children);
 }
 
 // Call in every screen/component that draws colours, so it re-draws when the theme changes.

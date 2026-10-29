@@ -21,7 +21,7 @@ import { Button, Field, Note } from './ui';
 export function Check({ on, onPress, title, help }: { on: boolean; onPress: () => void; title: string; help?: string }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 }}>
-      <Text style={{ color: on ? colors.success : colors.muted, fontSize: 20, marginRight: 10 }}>{on ? '☑' : '☐'}</Text>
+      <Text style={{ color: on ? colors.success : colors.muted, fontSize: 20, marginEnd: 10 }}>{on ? '☑' : '☐'}</Text>
       <View style={{ flex: 1 }}>
         <Text style={{ color: colors.text, fontWeight: '600' }}>{title}</Text>
         {!!help && <Muted style={{ fontSize: 12 }}>{help}</Muted>}
@@ -262,9 +262,9 @@ export function CourtForm({ initial, sports, submitLabel, onSubmit, onCancel, as
               <View key={`${p.uri}-${i}`} style={{ width: 96 }}>
                 <Image source={{ uri: p.uri }} style={{ width: 96, height: 72, borderRadius: 8 }} />
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  {i === 0 ? <Text style={{ color: colors.text, fontSize: 11 }}>★ {t('Cover')}</Text>
-                    : <Text style={{ color: colors.primaryAlt, fontSize: 11 }} onPress={() => setPhotos((x) => [x[i], ...x.filter((_, j) => j !== i)])}>{t('Make cover')}</Text>}
-                  <Text style={{ color: colors.danger, fontSize: 11 }} onPress={() => setPhotos((x) => x.filter((_, j) => j !== i))}>✕</Text>
+                  {i === 0 ? <Text style={{ color: colors.text, fontSize: 12 }}>★ {t('Cover')}</Text>
+                    : <Text style={{ color: colors.primaryAlt, fontSize: 12 }} onPress={() => setPhotos((x) => [x[i], ...x.filter((_, j) => j !== i)])}>{t('Make cover')}</Text>}
+                  <Text style={{ color: colors.danger, fontSize: 12 }} onPress={() => setPhotos((x) => x.filter((_, j) => j !== i))}>✕</Text>
                 </View>
               </View>
             ))}
@@ -489,13 +489,13 @@ export function PhotosManager({ courtId }: { courtId: string }) {
           {photos.map((p) => (
             <View key={p.id} style={{ width: 100 }}>
               <Image source={{ uri: photoUrl(p.path) || undefined }} style={{ width: 100, height: 75, borderRadius: 8, opacity: p.status === 'rejected' ? 0.4 : 1 }} />
-              <Text style={{ fontSize: 10, fontWeight: '700', color: p.status === 'approved' ? colors.success : p.status === 'pending' ? colors.warning : colors.danger }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: p.status === 'approved' ? colors.success : p.status === 'pending' ? colors.warning : colors.danger }}>
                 {p.status === 'approved' ? (p.id === coverId ? `${t('Cover')} · ${t('Live')}` : t('Live')) : p.status === 'pending' ? t('Waiting') : t('Declined')}
               </Text>
-              {p.status === 'rejected' && !!p.reject_reason && <Text style={{ fontSize: 10, color: colors.danger }}>{p.reject_reason}</Text>}
+              {p.status === 'rejected' && !!p.reject_reason && <Text style={{ fontSize: 12, color: colors.danger }}>{p.reject_reason}</Text>}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                {p.status !== 'rejected' && p.id !== coverId && <Text style={{ color: colors.primaryAlt, fontSize: 11 }} onPress={() => busyId !== p.id && makeCover(p)}>{t('Cover')}</Text>}
-                <Text style={{ color: colors.danger, fontSize: 11 }} onPress={() => busyId !== p.id && remove(p)}>{t('Delete')}</Text>
+                {p.status !== 'rejected' && p.id !== coverId && <Text style={{ color: colors.primaryAlt, fontSize: 12 }} onPress={() => busyId !== p.id && makeCover(p)}>{t('Cover')}</Text>}
+                <Text style={{ color: colors.danger, fontSize: 12 }} onPress={() => busyId !== p.id && remove(p)}>{t('Delete')}</Text>
               </View>
             </View>
           ))}

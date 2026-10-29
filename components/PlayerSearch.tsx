@@ -35,7 +35,7 @@ export function PlayerSearch({ onPick, exclude = [] }: { onPick: (p: FoundPlayer
           {searching && <Text style={{ color: colors.muted, padding: 10 }}>Searching...</Text>}
           {!searching && results.length === 0 && <Text style={{ color: colors.muted, padding: 10 }}>No player found. Emails and phone numbers must match exactly.</Text>}
           {results.map((p) => (
-            <Pressable key={p.id} onPress={() => { onPick(p); setQ(''); }} style={{ padding: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
+            <Pressable accessibilityRole="button" key={p.id} onPress={() => { onPick(p); setQ(''); }} style={{ padding: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
               <Text style={{ color: colors.text }}>{p.full_name} {p.username ? <Text style={{ color: colors.muted }}>@{p.username}</Text> : null}</Text>
             </Pressable>
           ))}

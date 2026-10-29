@@ -201,7 +201,8 @@ export default function BookCourt() {
   }
 
   return (
-    <ScrollView scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} style={{ backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScrollView scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: court.name }} />
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{court.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 16 }}>
@@ -235,9 +236,9 @@ export default function BookCourt() {
             return (
               <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ color: colors.text, flex: 1 }}>{x.name} <Text style={{ color: colors.muted }}>· {egp(x.price)}</Text></Text>
-                <Pressable disabled={n === 0} onPress={() => setQty({ ...qty, [x.id]: n - 1 })} style={[st.step, n === 0 && { opacity: 0.3 }]}><Text style={st.stepText}>−</Text></Pressable>
+                <Pressable accessibilityRole="button" disabled={n === 0} onPress={() => setQty({ ...qty, [x.id]: n - 1 })} style={[st.step, n === 0 && { opacity: 0.3 }]}><Text style={st.stepText}>−</Text></Pressable>
                 <Text style={{ color: colors.text, width: 28, textAlign: 'center' }}>{n}</Text>
-                <Pressable disabled={n >= x.max_qty} onPress={() => setQty({ ...qty, [x.id]: n + 1 })} style={[st.step, n >= x.max_qty && { opacity: 0.3 }]}><Text style={st.stepText}>+</Text></Pressable>
+                <Pressable accessibilityRole="button" disabled={n >= x.max_qty} onPress={() => setQty({ ...qty, [x.id]: n + 1 })} style={[st.step, n >= x.max_qty && { opacity: 0.3 }]}><Text style={st.stepText}>+</Text></Pressable>
               </View>
             );
           })}
@@ -315,9 +316,19 @@ export default function BookCourt() {
       <BlockedNotice facilityId={court.facility_id} />
 
       {err && <Note kind="error">{err}</Note>}
+    </ScrollView>
+    {/* always-visible pay bar: the chosen time, the total and the button, so nobody scrolls to find it */}
+    <View style={{ borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10 + insets.bottom }}>
+      {pick.start !== null && (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={{ color: colors.muted }}>{durationText(pick.duration)}</Text>
+          <Text style={{ color: colors.text, fontWeight: '800' }}>{egp(openMode ? seatsAmount : total - discount)}</Text>
+        </View>
+      )}
       <Button title={!session ? 'Log in to continue →' : openMode ? `Host game · pay my spot${pick.start !== null ? ` ${egp(seatsAmount)}` : ''} →` : 'Continue to payment →'}
         onPress={openMode ? hostGame : book} loading={saving} disabled={pick.start === null && !!session} />
-    </ScrollView>
+    </View>
+    </View>
   );
 }
 
@@ -339,9 +350,9 @@ function Stepper({ label, hint, value, min, max, onChange }: { label: string; hi
         <Text style={{ color: colors.text, fontWeight: '600' }}>{label}</Text>
         {hint && <Text style={{ color: colors.muted, fontSize: 12 }}>{hint}</Text>}
       </View>
-      <Pressable disabled={value <= min} onPress={() => onChange(value - 1)} style={[st.step, value <= min && { opacity: 0.3 }]}><Text style={st.stepText}>−</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={value <= min} onPress={() => onChange(value - 1)} style={[st.step, value <= min && { opacity: 0.3 }]}><Text style={st.stepText}>−</Text></Pressable>
       <Text style={{ color: colors.text, width: 28, textAlign: 'center' }}>{value}</Text>
-      <Pressable disabled={value >= max} onPress={() => onChange(value + 1)} style={[st.step, value >= max && { opacity: 0.3 }]}><Text style={st.stepText}>+</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={value >= max} onPress={() => onChange(value + 1)} style={[st.step, value >= max && { opacity: 0.3 }]}><Text style={st.stepText}>+</Text></Pressable>
     </View>
   );
 }
@@ -349,7 +360,7 @@ function Stepper({ label, hint, value, min, max, onChange }: { label: string; hi
 function Chip({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
   useTheme();
   return (
-    <Pressable onPress={onPress} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, borderWidth: 1,
+    <Pressable accessibilityRole="button" onPress={onPress} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, borderWidth: 1,
       borderColor: on ? colors.accent : colors.border, backgroundColor: on ? colors.soft : 'transparent' }}>
       <Text style={{ color: on ? colors.text : colors.muted, fontWeight: '600' }}>{label}</Text>
     </Pressable>

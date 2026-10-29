@@ -24,7 +24,7 @@ export function GameHistory({ gameId }: { gameId: string }) {
       {rows.map((e, i) => (
         <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, borderBottomWidth: 1, borderColor: colors.border, paddingVertical: 8 }}>
           <Text style={{ color: colors.text, fontSize: 13, flex: 1 }}>{text(e)}</Text>
-          <Text style={{ color: colors.muted, fontSize: 11 }}>{dateTimeText(e.created_at)}</Text>
+          <Text style={{ color: colors.muted, fontSize: 12 }}>{dateTimeText(e.created_at)}</Text>
         </View>
       ))}
     </View>

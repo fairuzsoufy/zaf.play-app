@@ -186,11 +186,11 @@ export default function BlockSlots() {
       <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 6 }}>{t('Pick a date')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
         {dates.map((d, i) => (
-          <Pressable key={d} onPress={() => pickDay(d)} style={{ width: 62, paddingVertical: 8, marginRight: 8, borderRadius: radius.md, alignItems: 'center',
+          <Pressable accessibilityRole="button" key={d} onPress={() => pickDay(d)} style={{ width: 62, paddingVertical: 8, marginEnd: 8, borderRadius: radius.md, alignItems: 'center',
             borderWidth: 1, borderColor: d === date ? colors.primary : colors.border, backgroundColor: d === date ? colors.primary : colors.card }}>
-            <Text style={{ color: d === date ? '#fff' : colors.muted, fontSize: 11 }}>{dayLabel(d, i)}</Text>
+            <Text style={{ color: d === date ? '#fff' : colors.muted, fontSize: 12 }}>{dayLabel(d, i)}</Text>
             <Text style={{ color: d === date ? '#fff' : colors.text, fontWeight: '800', fontSize: 18 }}>{Number(d.slice(8))}</Text>
-            {!hoursFor(d) && <Text style={{ color: d === date ? '#fff' : colors.muted, fontSize: 10 }}>{t('Closed')}</Text>}
+            {!hoursFor(d) && <Text style={{ color: d === date ? '#fff' : colors.muted, fontSize: 12 }}>{t('Closed')}</Text>}
           </Pressable>
         ))}
       </ScrollView>
@@ -201,20 +201,20 @@ export default function BlockSlots() {
         : parts.length === 0 ? <Box tone="warn"><Text style={{ color: colors.noteText }}>{t('No times left on this day.')}</Text></Box>
         : parts.map((part) => (
           <View key={part.label} style={{ marginBottom: 10 }}>
-            <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 6 }}>{t(part.label).toUpperCase()}</Text>
+            <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 6 }}>{t(part.label).toUpperCase()}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {part.times.map((m) => {
                 const b = busyAt(m);
                 const mine = picked.includes(m);
                 const blocked = b?.booking_source === 'owner_block';
                 return (
-                  <Pressable key={m} disabled={!!b && !blocked} onPress={() => (blocked ? unblock([b!.id], hm(minsOf(b!.start_time))) : toggle(m))}
+                  <Pressable accessibilityRole="button" key={m} disabled={!!b && !blocked} onPress={() => (blocked ? unblock([b!.id], hm(minsOf(b!.start_time))) : toggle(m))}
                     style={{ width: '31%', paddingVertical: 8, borderRadius: radius.md, alignItems: 'center', borderWidth: 1,
                       borderColor: mine ? colors.primary : colors.border, backgroundColor: mine ? colors.primary : blocked ? colors.cardAlt : colors.card, opacity: b && !blocked ? 0.5 : 1 }}>
                     <Text style={{ color: mine ? '#fff' : colors.text, fontWeight: '700', textDecorationLine: b && !blocked ? 'line-through' : 'none' }}>{hm(m)}</Text>
-                    {blocked ? <Text style={{ color: colors.muted, fontSize: 10 }}>🔒 {t('Blocked')}</Text>
-                      : b ? <Text style={{ color: colors.muted, fontSize: 10 }}>{t('Booked')}</Text>
-                      : m >= DAY ? <Text style={{ color: mine ? '#fff' : colors.muted, fontSize: 10 }}>🌙 {t('After midnight')}</Text> : null}
+                    {blocked ? <Text style={{ color: colors.muted, fontSize: 12 }}>🔒 {t('Blocked')}</Text>
+                      : b ? <Text style={{ color: colors.muted, fontSize: 12 }}>{t('Booked')}</Text>
+                      : m >= DAY ? <Text style={{ color: mine ? '#fff' : colors.muted, fontSize: 12 }}>🌙 {t('After midnight')}</Text> : null}
                   </Pressable>
                 );
               })}
@@ -237,7 +237,7 @@ export default function BlockSlots() {
       )}
 
       <Box style={{ marginTop: 20 }}>
-        <Pressable onPress={() => setShowFreeze(!showFreeze)} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Pressable accessibilityRole="button" onPress={() => setShowFreeze(!showFreeze)} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontWeight: '800' }}>❄️ {t('Freeze this court for a time range')}</Text>
             <Muted style={{ fontSize: 12 }}>{t('For maintenance, a holiday or a private event: close it for hours or days at once.')}</Muted>

@@ -164,7 +164,7 @@ export default function OwnerSignup() {
         <Field label="Password (at least 6 characters)" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete="new-password" />
 
         <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 14, marginBottom: 16 }}>
-          <Pressable onPress={() => setHasCo(!hasCo)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Pressable accessibilityRole="button" onPress={() => setHasCo(!hasCo)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 15 }}>I have a co-owner</Text>
             <Switch value={hasCo} onValueChange={setHasCo} trackColor={{ true: colors.accent, false: colors.borderStrong }} thumbColor="#fff" />
           </Pressable>
@@ -181,7 +181,7 @@ export default function OwnerSignup() {
 
         <LegalLinks lead="By creating an account you agree to our" style={{ marginBottom: 12 }} />
         <Button title="Sign up as a court owner" onPress={submit} loading={busy} />
-        <Pressable onPress={() => router.replace('/login')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 18 }}>Already have an account? Log in</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => router.replace('/login')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 18 }}>Already have an account? Log in</Text></Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );

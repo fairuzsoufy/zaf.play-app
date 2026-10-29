@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View, RefreshControl } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -46,7 +46,7 @@ const hmText = (m: number) => {
 // commission) or to block it; tap a walk-in to change or cancel it.
 export default function OwnerCalendar() {
   const { access } = useOwner();
-  const { t, tm, locale } = useT();
+  const { t, tm, locale, lang } = useT();
   const canManage = !!access.manage_bookings && !frozenOf(access);
   const scope = branchScope(access);
   const [date, setDate] = useState(cairoDate());
@@ -83,6 +83,7 @@ export default function OwnerCalendar() {
   }, [courts]);
   const shown = courts.filter((c) => (!branch || c.facility?.id === branch) && (!court || c.id === court));
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => {
     if (courts.length === 0) {
       setRows([]);
@@ -250,12 +251,12 @@ export default function OwnerCalendar() {
     <View style={{ flex: 1 }}>
       <View style={{ padding: 16, paddingBottom: 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <DayButton label="‹" onPress={() => setDate(addDays(date, -1))} />
-          <Pressable onPress={() => setDate(today)} style={{ flex: 1, alignItems: 'center', padding: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card }}>
+          <DayButton label={lang === 'ar' ? '›' : '‹'} onPress={() => setDate(addDays(date, -1))} />
+          <Pressable accessibilityRole="button" onPress={() => setDate(today)} style={{ flex: 1, alignItems: 'center', padding: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card }}>
             <Text style={{ color: colors.text, fontWeight: '800' }}>📅 {dayLabel}</Text>
-            {date !== today && <Text style={{ color: colors.primaryAlt, fontSize: 11 }}>{t('Today')}</Text>}
+            {date !== today && <Text style={{ color: colors.primaryAlt, fontSize: 12 }}>{t('Today')}</Text>}
           </Pressable>
-          <DayButton label="›" onPress={() => setDate(addDays(date, 1))} />
+          <DayButton label={lang === 'ar' ? '‹' : '›'} onPress={() => setDate(addDays(date, 1))} />
         </View>
         {branches.length > 1 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -278,7 +279,7 @@ export default function OwnerCalendar() {
           {([['zaf', 'Zaf Play'], ['walk', t('Walk-in')], ['hold', t('Paying now')], ['block', t('Blocked')]] as const).map(([k, label]) => (
             <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: KIND_COLOR[k] }} />
-              <Text style={{ color: colors.muted, fontSize: 11 }}>{label}</Text>
+              <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
             </View>
           ))}
         </View>
@@ -288,11 +289,12 @@ export default function OwnerCalendar() {
       {shown.length === 0 ? (
         <Muted style={{ padding: 16 }}>{loading ? t('Loading…') : t('No courts yet.')}</Muted>
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing} tintColor={colors.primary} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}>
           <View style={{ flexDirection: 'row' }}>
             <View style={{ width: 62, paddingTop: 36 }}>
               {slots.map((m) => (
-                <Text key={m} style={{ height: ROW, color: colors.muted, fontSize: 10, textAlign: 'right', paddingRight: 6 }}>{m % 60 === 0 ? hm(m) : ''}</Text>
+                <Text key={m} style={{ height: ROW, color: colors.muted, fontSize: 12, textAlign: 'right', paddingRight: 6 }}>{m % 60 === 0 ? hm(m) : ''}</Text>
               ))}
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -300,14 +302,14 @@ export default function OwnerCalendar() {
                 <View key={c.id} style={{ width: shown.length === 1 ? 280 : COL, borderLeftWidth: 1, borderColor: colors.border }}>
                   <View style={{ height: 36, justifyContent: 'center', paddingHorizontal: 4 }}>
                     <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '800', textAlign: 'center', fontSize: 13 }}>{c.name}</Text>
-                    {branches.length > 1 && !branch && <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 10, textAlign: 'center' }}>{c.facility?.name}</Text>}
+                    {branches.length > 1 && !branch && <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, textAlign: 'center' }}>{c.facility?.name}</Text>}
                   </View>
                   <View style={{ height: slots.length * ROW }}>
                     {slots.map((m, i) => {
                       const taken = busyAt(c.id, m);
                       const past = m + SLOT <= nowMin;
                       return (
-                        <Pressable key={m} disabled={!!taken || past || !canManage} onPress={() => openNew(c.id, m)}
+                        <Pressable accessibilityRole="button" key={m} disabled={!!taken || past || !canManage} onPress={() => openNew(c.id, m)}
                           accessibilityLabel={`${c.name} ${hm(m)} ${t('free')}`}
                           style={({ pressed }) => ({ position: 'absolute', left: 0, right: 0, top: i * ROW, height: ROW,
                             borderTopWidth: m % 60 === 0 ? 1 : 0.5, borderColor: colors.border, borderStyle: m % 60 === 0 ? 'solid' : 'dashed',
@@ -324,8 +326,8 @@ export default function OwnerCalendar() {
                         <Pressable key={r.id} onPress={() => openRow(r)} accessibilityRole="button"
                           style={{ position: 'absolute', left: 3, right: 3, top: ((s - dayStart) / SLOT) * ROW + 1, height: ((e - s) / SLOT) * ROW - 2,
                             backgroundColor: KIND_COLOR[kind], borderRadius: 8, paddingHorizontal: 5, paddingVertical: 2, overflow: 'hidden' }}>
-                          <Text numberOfLines={1} style={{ color: '#fff', fontWeight: '800', fontSize: 11 }}>{who}</Text>
-                          {e - s > SLOT && <Text numberOfLines={1} style={{ color: '#fff', fontSize: 10, opacity: 0.9 }}>{hm(minOf(r.start_time))}–{hm(minOf(r.end_time))}</Text>}
+                          <Text numberOfLines={1} style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>{who}</Text>
+                          {e - s > SLOT && <Text numberOfLines={1} style={{ color: '#fff', fontSize: 12, opacity: 0.9 }}>{hm(minOf(r.start_time))}–{hm(minOf(r.end_time))}</Text>}
                         </Pressable>
                       );
                     })}
@@ -400,7 +402,7 @@ export default function OwnerCalendar() {
                   onChangeText={(v) => setDraft({ ...draft, price: v.replace(/[^\d.]/g, '').slice(0, 7), priceTouched: true })} />
                 <Pressable onPress={() => setDraft({ ...draft, paid: !draft.paid })} accessibilityRole="checkbox" accessibilityState={{ checked: draft.paid }}
                   style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                  <Text style={{ color: draft.paid ? colors.success : colors.muted, fontSize: 20, marginRight: 8 }}>{draft.paid ? '☑' : '☐'}</Text>
+                  <Text style={{ color: draft.paid ? colors.success : colors.muted, fontSize: 20, marginEnd: 8 }}>{draft.paid ? '☑' : '☐'}</Text>
                   <Text style={{ color: colors.text }}>{t('Already paid at the venue')}</Text>
                 </Pressable>
                 <Field label={t('Note (optional)')} value={draft.note} onChangeText={(v) => setDraft({ ...draft, note: v.slice(0, 200) })} />

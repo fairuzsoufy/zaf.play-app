@@ -109,7 +109,7 @@ export default function Signup() {
           We sent a code to {sentTo}. Type it here to confirm your account.
         </Text>
         <CodeEntry type="signup" email={sentTo} onResend={resend} onVerified={() => router.replace('/')} />
-        <Pressable onPress={() => setSentTo('')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 16 }}>Wrong email? Go back</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => setSentTo('')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 16 }}>Wrong email? Go back</Text></Pressable>
       </ScrollView>
     );
   }
@@ -140,8 +140,8 @@ export default function Signup() {
         <Field label="Password (at least 6 characters)" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete="new-password" />
         <LegalLinks lead="By creating an account you agree to our" style={{ marginBottom: 12 }} />
         <Button title="Create my account" onPress={submit} loading={busy} />
-        <Pressable onPress={() => router.replace('/login')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 18 }}>Already have an account? Log in</Text></Pressable>
-        <Pressable onPress={() => router.replace('/signup-owner')} hitSlop={8}>
+        <Pressable accessibilityRole="button" onPress={() => router.replace('/login')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 18 }}>Already have an account? Log in</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => router.replace('/signup-owner')} hitSlop={8}>
           <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 14 }}>
             Own courts? <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>Sign up as a court owner</Text>
           </Text>

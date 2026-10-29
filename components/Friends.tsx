@@ -105,7 +105,7 @@ export function FriendsCard() {
           {searching && <Text style={s.resultText}>Searching...</Text>}
           {!searching && results.length === 0 && <Text style={s.resultText}>No player found. Emails and phone numbers must match exactly.</Text>}
           {results.map((p, i) => (
-            <Pressable key={p.id} disabled={!p.username || busy} onPress={() => p.username && add(p.username)}
+            <Pressable accessibilityRole="button" key={p.id} disabled={!p.username || busy} onPress={() => p.username && add(p.username)}
               style={({ pressed }) => [s.result, i > 0 && s.divider, pressed && { backgroundColor: colors.soft }]}>
               <Text style={{ color: colors.text, flex: 1 }}>
                 {p.full_name} {p.username ? <Text style={{ color: colors.muted }}>@{p.username}</Text> : null}
@@ -129,7 +129,7 @@ export function FriendsCard() {
                   <Text style={{ color: colors.text, fontWeight: '600' }}>{f.name} <Text style={{ color: colors.muted, fontWeight: '400' }}>@{f.username}</Text></Text>
                   <TrustChip trust={f.trust} />
                 </View>
-                <Pressable hitSlop={10} onPress={() => remove(f.id)}>
+                <Pressable accessibilityRole="button" hitSlop={10} onPress={() => remove(f.id)}>
                   <Text style={{ color: colors.muted, fontSize: 12, textDecorationLine: 'underline' }}>Remove</Text>
                 </Pressable>
               </View>
@@ -137,13 +137,13 @@ export function FriendsCard() {
           </View>
           {pages > 1 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 8 }}>
-              <Pressable onPress={() => setPage(current - 1)} disabled={current === 0} style={[s.pager, current === 0 && { opacity: 0.3 }]} accessibilityLabel="Previous friends">
+              <Pressable accessibilityRole="button" onPress={() => setPage(current - 1)} disabled={current === 0} style={[s.pager, current === 0 && { opacity: 0.3 }]} accessibilityLabel="Previous friends">
                 <Text style={{ color: colors.text, fontSize: 18 }}>‹</Text>
               </Pressable>
               <Text style={[s.muted, { fontVariant: ['tabular-nums'] }]}>
                 {current * PER_PAGE + 1}–{Math.min((current + 1) * PER_PAGE, friends.length)} of {friends.length}
               </Text>
-              <Pressable onPress={() => setPage(current + 1)} disabled={current >= pages - 1} style={[s.pager, current >= pages - 1 && { opacity: 0.3 }]} accessibilityLabel="Next friends">
+              <Pressable accessibilityRole="button" onPress={() => setPage(current + 1)} disabled={current >= pages - 1} style={[s.pager, current >= pages - 1 && { opacity: 0.3 }]} accessibilityLabel="Next friends">
                 <Text style={{ color: colors.text, fontSize: 18 }}>›</Text>
               </Pressable>
             </View>

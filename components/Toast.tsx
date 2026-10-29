@@ -4,6 +4,7 @@ import { Text } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, useTheme } from '@/lib/theme';
 import { Icon } from './Icon';
+import { done } from '@/lib/haptics';
 
 type Toast = { id: number; text: string; kind: 'ok' | 'error' };
 let listener: ((t: Toast) => void) | null = null;
@@ -11,6 +12,7 @@ let nextId = 1;
 
 // Show a short banner at the top of the screen that goes away by itself, e.g. toast('Saved').
 export function toast(text: string, kind: 'ok' | 'error' = 'ok') {
+  done(kind === 'ok');
   listener?.({ id: nextId++, text, kind });
 }
 

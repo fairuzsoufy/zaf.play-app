@@ -90,7 +90,7 @@ export default function OwnerAgreement() {
             <Muted style={{ marginBottom: 10 }}>{t('Date: filled in automatically when you sign.')}</Muted>
             <Pressable onPress={() => setAgree(!agree)} accessibilityRole="checkbox" accessibilityState={{ checked: agree }}
               style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 }}>
-              <Text style={{ color: agree ? colors.success : colors.muted, fontSize: 20, marginRight: 8 }}>{agree ? '☑' : '☐'}</Text>
+              <Text style={{ color: agree ? colors.success : colors.muted, fontSize: 20, marginEnd: 8 }}>{agree ? '☑' : '☐'}</Text>
               <Text style={{ color: colors.text, flex: 1 }}>{t('I have read this agreement and I agree to it, including starting my courts on the Trial plan.')}</Text>
             </Pressable>
             {!!error && <Note kind="error">{error}</Note>}

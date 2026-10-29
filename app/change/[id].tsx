@@ -180,10 +180,10 @@ export default function ChangeBooking() {
             return (
               <View key={e.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ color: colors.text, flex: 1 }}>{e.name} <Text style={{ color: colors.muted }}>· {egp(unitPrice(e))}</Text></Text>
-                <Pressable disabled={n === 0} onPress={() => setQty({ ...qty, [e.id]: n - 1 })} style={[st.step, n === 0 && { opacity: 0.3 }]}
+                <Pressable accessibilityRole="button" disabled={n === 0} onPress={() => setQty({ ...qty, [e.id]: n - 1 })} style={[st.step, n === 0 && { opacity: 0.3 }]}
                   accessibilityLabel={`Fewer ${e.name}`}><Text style={st.stepText}>−</Text></Pressable>
                 <Text style={{ color: colors.text, width: 28, textAlign: 'center' }}>{n}</Text>
-                <Pressable disabled={n >= e.max_qty} onPress={() => setQty({ ...qty, [e.id]: n + 1 })} style={[st.step, n >= e.max_qty && { opacity: 0.3 }]}
+                <Pressable accessibilityRole="button" disabled={n >= e.max_qty} onPress={() => setQty({ ...qty, [e.id]: n + 1 })} style={[st.step, n >= e.max_qty && { opacity: 0.3 }]}
                   accessibilityLabel={`More ${e.name}`}><Text style={st.stepText}>+</Text></Pressable>
               </View>
             );
@@ -223,7 +223,7 @@ export default function ChangeBooking() {
                   <Text style={{ color: colors.text, fontWeight: '700' }}>How do you want the difference back?</Text>
                   {([['credit', `Zaf Play credit: ${egp(-due)}`, 'Right away, no fee. It comes off your next booking.'],
                     ['instapay', `InstaPay: ${egp(-due - instapayFee(-due))}`, `${egp(-due)} minus InstaPay's transfer fee (${INSTAPAY_FEE_TEXT}), sent by the end of the day.`]] as const).map(([v, t1, t2]) => (
-                    <Pressable key={v} onPress={() => { setRefundTo(v); setErr(null); }}
+                    <Pressable accessibilityRole="button" key={v} onPress={() => { setRefundTo(v); setErr(null); }}
                       style={{ borderWidth: 1, borderRadius: radius.md, padding: 10, borderColor: refundTo === v ? colors.accent : colors.border, backgroundColor: refundTo === v ? colors.soft : 'transparent' }}>
                       <Text style={{ color: colors.text, fontWeight: '700' }}>{refundTo === v ? '✓ ' : ''}{t1}</Text>
                       <Text style={{ color: colors.muted, fontSize: 12 }}>{t2}</Text>
