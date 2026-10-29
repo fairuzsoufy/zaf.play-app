@@ -33,11 +33,12 @@ export default function Login() {
     done();
   }
 
-  // owners and their team go to the dashboard, like the website; players go back to where they were
+  // owners and their team go to the dashboard and admins to the admin screens, like the website; players go back to where they were
   async function done() {
     const { data } = await supabase.rpc('my_access');
     const role = (data as { role?: string } | null)?.role;
     if (role === 'owner' || role === 'staff') return router.replace('/owner');
+    if (role === 'admin') return router.replace('/admin');
     if (router.canGoBack()) router.back();
     else router.replace('/');
   }
