@@ -219,7 +219,7 @@ export default function Profile() {
         </Card>
       )}
 
-      <View style={{ marginTop: 16 }}><Button title="Log out" onPress={() => supabase.auth.signOut({ scope: 'local' })} /></View>
+      <View style={{ marginTop: 16 }}><Button title="Log out" onPress={() => { router.replace('/'); supabase.auth.signOut({ scope: 'local' }); }} /></View>
       {me.role === 'player' && <DeleteAccount />}
       <LegalLinks style={{ marginTop: 18 }} />
     </ScrollView>

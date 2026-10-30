@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Text } from '@/components/AppText';
 import { supabase } from '@/lib/supabase';
 import { passwordProblem } from '@/lib/validate';
@@ -10,6 +11,7 @@ import { Button, Field, Note } from './ui';
 // every other phone and browser, so a login someone else may have stays closed.
 export function LoginSecurity() {
   useTheme();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -46,7 +48,8 @@ export function LoginSecurity() {
   function logOutEverywhere() {
     Alert.alert('Log out of all devices?', 'You will be logged out on every phone, computer and the Zaf Play app, including this one. You can log in again straight away.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Yes, log out everywhere', style: 'destructive', onPress: () => supabase.auth.signOut({ scope: 'global' }) },
+      // like the website: logging out lands on the Book screen
+      { text: 'Yes, log out everywhere', style: 'destructive', onPress: () => { router.replace('/'); supabase.auth.signOut({ scope: 'global' }); } },
     ]);
   }
 
