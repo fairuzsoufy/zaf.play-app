@@ -208,8 +208,8 @@ export default function Pay() {
 
       {b.payment_status === 'paid' && b.status !== 'cancelled' && (
         <View>
-          <Note kind="ok">✅ Payment approved, you are booked! The court's phone number shows in My bookings 30 minutes before your game.</Note>
-          <Button title="Go to My bookings →" onPress={() => router.replace('/bookings')} />
+          <Note kind="ok">✅ Payment approved, you are booked! The court's phone number shows in Bookings 30 minutes before your game.</Note>
+          <Button title="Go to Bookings →" onPress={() => router.replace('/bookings')} />
         </View>
       )}
 
@@ -221,7 +221,7 @@ export default function Pay() {
           <Text style={{ color: colors.muted, marginBottom: 14 }}>
             {reviewLeft !== null && reviewLeft > 0 ? `Approval expected within ${countdown(reviewLeft)}` : 'Taking a little longer than usual, we are on it.'} This page updates by itself.
           </Text>
-          <Button title="Go to My bookings →" onPress={() => router.replace('/bookings')} />
+          <Button title="Go to Bookings →" onPress={() => router.replace('/bookings')} />
           <View style={{ height: 10 }} />
           <Button title="🔄 Refresh status" variant="ghost" onPress={load} />
         </View>

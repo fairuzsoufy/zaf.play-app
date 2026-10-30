@@ -64,8 +64,8 @@ export function BookingAlerts() {
         const { data: c } = await supabase.from('courts').select('name').eq('id', b.court_id).maybeSingle();
         const when = `${dateLabel(b.start_time)} · ${timeLabel(b.start_time)}`;
         if (approved) notify('✅ Booking confirmed', `${c?.name ?? 'Your court'}, ${when}. See you on court!`);
-        else if (refunded) notify('💸 Refund sent', `${egp(Number(b.refund_amount || 0))} for ${c?.name ?? 'your booking'}. The receipt is in My bookings.`);
-        else notify('Payment not approved', `${c?.name ?? 'Your booking'}, ${when}. Open My bookings for details.`);
+        else if (refunded) notify('💸 Refund sent', `${egp(Number(b.refund_amount || 0))} for ${c?.name ?? 'your booking'}. The receipt is in Bookings.`);
+        else notify('Payment not approved', `${c?.name ?? 'Your booking'}, ${when}. Open Bookings for details.`);
       })
       .subscribe();
     return () => { live = false; supabase.removeChannel(ch); };

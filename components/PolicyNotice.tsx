@@ -17,7 +17,7 @@ export function PolicyNotice({ feePercent, showPayment = true }: { feePercent: n
   }
   rows.push(
     { icon: '🛡️', title: `Free changes up to ${FREE_CHANGE_HOURS} hours before`, text: `Change the day or time, or cancel and get all your money back, as long as it's more than ${FREE_CHANGE_HOURS} hours before you play.` },
-    { icon: '⏱', title: `Free change in the first ${FREE_CHANGE_MINUTES} minutes`, text: `For ${FREE_CHANGE_MINUTES} minutes after your booking is confirmed you can change its day or time for free, even if you play in less than ${FREE_CHANGE_HOURS} hours. My bookings shows a timer. (Cancelling follows the rules below.)` },
+    { icon: '⏱', title: `Free change in the first ${FREE_CHANGE_MINUTES} minutes`, text: `For ${FREE_CHANGE_MINUTES} minutes after your booking is confirmed you can change its day or time for free, even if you play in less than ${FREE_CHANGE_HOURS} hours. Bookings shows a timer. (Cancelling follows the rules below.)` },
     { icon: '🕒', title: `Less than ${FREE_CHANGE_HOURS} hours before`, text: `The court was kept for you, so ${feePercent}% of what you paid is kept as a late fee. If you cancel you get ${keep}% back. If you move to another time, the ${keep}% counts toward the new booking.` },
     { icon: '↩️', title: 'How refunds arrive', text: `We send refunds by InstaPay. InstaPay charges a small transfer fee (${INSTAPAY_FEE_TEXT}), which comes out of the refund.` },
     { icon: 'ℹ️', title: 'If the court cancels', text: 'If the court or Zaf Play has to cancel your game, you get 100% back.' },
