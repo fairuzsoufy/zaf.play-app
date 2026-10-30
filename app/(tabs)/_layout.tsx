@@ -16,8 +16,9 @@ const icon = (name: IconName) => ({ color, focused }: { color: ColorValue; focus
 );
 
 // The label drawn by us: the slanted font is wider than Android measures it, so the default label gets cut to "Pro..."
+// and short words lose their last letter on Samsung ("Pla"): a trailing space and a minimum width keep it whole
 const label = (text: string) => ({ color }: { color: ColorValue }) => (
-  <Text allowFontScaling={false} style={{ color, fontFamily: fonts.displaySemi, fontSize: 12, marginTop: 2, paddingHorizontal: 4 }}>{text}</Text>
+  <Text allowFontScaling={false} numberOfLines={1} style={{ color, fontFamily: fonts.displaySemi, fontSize: 12, marginTop: 2, paddingHorizontal: 6, minWidth: 64, textAlign: 'center' }}>{text}{' '}</Text>
 );
 
 export default function TabsLayout() {
@@ -40,7 +41,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Play', headerShown: false, tabBarIcon: icon('ball'), tabBarLabel: label('Play') }} />
       <Tabs.Screen name="games" options={{ title: 'Games', tabBarIcon: icon('users'), tabBarLabel: label('Games') }} />
-      <Tabs.Screen name="bookings" options={{ title: 'My bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('My bookings') }} />
+      <Tabs.Screen name="bookings" options={{ title: 'Bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('Bookings') }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
     </Tabs>
   );

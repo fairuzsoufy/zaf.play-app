@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Keyboard, Pressable, RefreshControl, ScrollView, StyleSheet, View,
+  ActivityIndicator, FlatList, Keyboard, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View,
 } from 'react-native';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Text, TextInput } from '@/components/AppText';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -17,6 +18,7 @@ import {
 } from '@/lib/courtTimes';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
+import { Icon } from '@/components/Icon';
 import { GradientFill, GradientText, Note, PressableScale, EmptyState, Skeleton } from '@/components/ui';
 import type { Sport } from '@/lib/types';
 import { readArea, readFavourites, saveArea, toggleFavourite } from '@/lib/bookPrefs';
@@ -26,6 +28,7 @@ import { readArea, readFavourites, saveArea, toggleFavourite } from '@/lib/bookP
 
 const NEAR_ME_KM = 15; // same as the website
 const DAYS = 14;
+const CAL_DAYS = 60; // how far the calendar button reaches
 const RECENT_KEY = 'zaf-recent-searches';
 
 // one row per court and sport (a court with two sports shows twice, each with its own price)
@@ -360,6 +363,16 @@ export default function Book() {
 
   const refresh = () => { setRefreshing(true); load(); };
   const dates = Array.from({ length: DAYS }, (_, i) => cairoDate(i));
+  const [calOpen, setCalOpen] = useState(false);
+  const asDate = (d: string) => new Date(`${d}T12:00:00`);
+  const fromPicked = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  function openCalendar() {
+    if (Platform.OS !== 'android') return setCalOpen(true);
+    DateTimePickerAndroid.open({
+      value: asDate(date), mode: 'date', minimumDate: asDate(cairoDate()), maximumDate: asDate(cairoDate(CAL_DAYS)),
+      onChange: (e, d) => { if (e.type === 'set' && d) setDate(fromPicked(d)); },
+    });
+  }
   const searchOpen = focus || q.length > 0;
   const clubName = club ? courts.find((c) => c.branchId === club)?.branchName : '';
   const selectedCourts = selected ? list.filter((c) => c.branchId === selected) : [];
@@ -432,11 +445,11 @@ export default function Book() {
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.row} keyboardShouldPersistTaps="handled">
             <Chip label="All sports" on={!sport} onPress={() => pickSport('')} />
-            {sports.map((x) => {
-              const n = countBySport.get(x.slug)?.size ?? 0;
-              return <Chip key={x.slug} label={n ? x.name : `${x.name} · soon`} on={sport === x.slug} dim={!n} onPress={() => n && pickSport(x.slug)}
-                icon={<View style={{ marginRight: 6 }}><SportIcon sport={x} size={18} /></View>} />;
-            })}
+            {/* only sports with courts to book */}
+            {sports.filter((x) => countBySport.get(x.slug)?.size).map((x) => (
+              <Chip key={x.slug} label={x.name} on={sport === x.slug} onPress={() => pickSport(x.slug)}
+                icon={<View style={{ marginRight: 6 }}><SportIcon sport={x} size={18} /></View>} />
+            ))}
           </ScrollView>
           {(areas.length > 1 || favs.length > 0) && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.row}>
@@ -447,7 +460,7 @@ export default function Book() {
           )}
           {view === 'list' && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.row}>
-              {dates.map((d, i) => {
+              {[...dates, ...(dates.includes(date) ? [] : [date])].map((d, i) => {
                 const on = date === d;
                 const dt = new Date(`${d}T12:00:00Z`);
                 return (
@@ -458,6 +471,22 @@ export default function Book() {
                   </Pressable>
                 );
               })}
+              {/* more days: the phone's calendar */}
+              <Pressable accessibilityRole="button" accessibilityLabel="Pick another day" onPress={openCalendar} style={[s.day, { justifyContent: 'center' }]}>
+                <Icon name="calendar" color={colors.text} size={22} />
+                <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>MORE</Text>
+              </Pressable>
+              {Platform.OS === 'ios' && (
+                <Modal visible={calOpen} transparent animationType="fade" onRequestClose={() => setCalOpen(false)}>
+                  <Pressable style={{ flex: 1, backgroundColor: '#0008', justifyContent: 'center', padding: 20 }} onPress={() => setCalOpen(false)}>
+                    <Pressable style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: 12 }}>
+                      <DateTimePicker value={asDate(date)} mode="date" display="inline" themeVariant={scheme}
+                        minimumDate={asDate(cairoDate())} maximumDate={asDate(cairoDate(CAL_DAYS))}
+                        onChange={(_e, d) => { if (d) { setDate(fromPicked(d)); setCalOpen(false); } }} />
+                    </Pressable>
+                  </Pressable>
+                </Modal>
+              )}
             </ScrollView>
           )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>

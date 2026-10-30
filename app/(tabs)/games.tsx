@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -34,9 +34,9 @@ export default function Games() {
   const s = useS();
   const router = useRouter();
   const { session } = useAuth();
-  const [tab, setTab] = useState<Tab>('open');
-  const [sports, setSports] = useState<{ slug: string; name: string }[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
+  const { height } = useWindowDimensions();
+  // null = the start screen: two big tiles, Open games and Tournaments
+  const [tab, setTab] = useState<Tab | null>(null);
   const [sport, setSport] = useState('');
   const [city, setCity] = useState('');
   const [games, setGames] = useState<any[]>([]);
@@ -47,9 +47,9 @@ export default function Games() {
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState('');
 
+  // everything is loaded once and filtered here, so the sport and area chips only offer what has games
   const load = useCallback(async () => {
-    const args = { p_sport: sport || null, p_city: city || null };
-    const [g, t] = await Promise.all([supabase.rpc('list_open_games', args), supabase.rpc('list_tournaments', args)]);
+    const [g, t] = await Promise.all([supabase.rpc('list_open_games', {}), supabase.rpc('list_tournaments', {})]);
     // a failed load keeps what is on screen and says so, instead of showing "No open games"
     setLoadFailed(!!(g.error || t.error));
     if (!g.error) setGames((g.data as any[]) || []);
@@ -60,18 +60,7 @@ export default function Games() {
     } else setMine(null);
     setLoading(false);
     setRefreshing(false);
-  }, [sport, city, session]);
-
-  useEffect(() => {
-    (async () => {
-      const [{ data: sp }, { data: ci }] = await Promise.all([
-        supabase.from('sports').select('slug, name').eq('is_active', true).order('name'),
-        supabase.from('areas').select('name').eq('is_active', true).order('name'),
-      ]);
-      setSports((sp as any[]) || []);
-      setCities(((ci as any[]) || []).map((c) => c.name));
-    })();
-  }, []);
+  }, [session]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
   // spots fill and empty while the list is open
@@ -115,6 +104,42 @@ export default function Games() {
     { key: 'tournaments', label: 'Tournaments', n: tournaments.length },
     ...(session ? [{ key: 'mine' as Tab, label: 'My games', n: invites.length + gameInvites.length || undefined }] : []),
   ];
+  const pickTab = (t: Tab | null) => { setTab(t); setSport(''); setCity(''); };
+  // the sports and areas that have something on this tab; areas show once a sport is picked
+  const pool: any[] = tab === 'tournaments' ? tournaments : tab === 'open' ? games : [];
+  const sports = [...new Map(pool.map((x) => [x.sport_slug, x.sport])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const cities = [...new Set(pool.filter((x) => x.sport_slug === sport).map((x) => x.city as string))].sort();
+  const shown = (x: any) => (!sport || x.sport_slug === sport) && (!city || x.city === city);
+  const shownGames = games.filter(shown);
+  const shownTournaments = tournaments.filter(shown);
+
+  if (tab === null) {
+    const tile = Math.max(220, height - 330);
+    return (
+      <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}>
+        {invites.length + gameInvites.length > 0 && (
+          <Pressable accessibilityRole="button" onPress={() => pickTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>🎾 You have {invites.length + gameInvites.length} invitation{invites.length + gameInvites.length > 1 ? 's' : ''}</Text>
+            <Text style={{ color: colors.muted, marginTop: 2 }}>Tap to answer.</Text>
+          </Pressable>
+        )}
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          {([['open', '🎾', 'Open games', games.length, 'Join players and share the cost'], ['tournaments', '🏆', 'Tournaments', tournaments.length, 'Enter a team and compete']] as const).map(([k, e, t, n, d]) => (
+            <Pressable accessibilityRole="button" key={k} onPress={() => pickTab(k)} style={[s.tile, { height: tile }]}>
+              <GradientFill />
+              <Text style={{ fontSize: 56 }}>{e}</Text>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 20, marginTop: 12, textAlign: 'center' }}>{t}</Text>
+              <Text style={{ color: '#fff', opacity: 0.9, marginTop: 6, textAlign: 'center', fontSize: 13 }}>{d}</Text>
+              <Text style={{ color: '#fff', fontWeight: '700', marginTop: 12 }}>{loading ? ' ' : n ? `${n} now` : 'None right now'}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <View style={{ marginTop: 14 }}><Button title="+ Host a game" onPress={() => router.push('/')} /></View>
+        {session && <View style={{ marginTop: 8 }}><Button variant="ghost" title="My games" onPress={() => pickTab('mine')} /></View>}
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
@@ -124,22 +149,25 @@ export default function Games() {
       <Text style={{ color: colors.muted, fontSize: 12, marginTop: 6, marginBottom: 14 }}>Pick a court, then turn on “Invite players to share the cost”.</Text>
 
       {gameInvites.length > 0 && tab !== 'mine' && (
-        <Pressable accessibilityRole="button" onPress={() => setTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
+        <Pressable accessibilityRole="button" onPress={() => pickTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
           <Text style={{ color: colors.text, fontWeight: '700' }}>🎾 You have {gameInvites.length} game invitation{gameInvites.length > 1 ? 's' : ''}</Text>
           <Text style={{ color: colors.muted, marginTop: 2 }}>A friend invited you to play. Tap to see.</Text>
         </Pressable>
       )}
 
       {invites.length > 0 && tab !== 'mine' && (
-        <Pressable accessibilityRole="button" onPress={() => setTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
+        <Pressable accessibilityRole="button" onPress={() => pickTab('mine')} style={[s.card, { borderColor: colors.brandPink }]}>
           <Text style={{ color: colors.text, fontWeight: '700' }}>You have {invites.length} team invitation{invites.length > 1 ? 's' : ''}</Text>
           <Text style={{ color: colors.muted, marginTop: 2 }}>Tap to answer.</Text>
         </Pressable>
       )}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, flexGrow: 0 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => pickTab(null)} style={s.tab}>
+          <Text style={{ color: colors.text, fontWeight: '700' }}>‹ Back</Text>
+        </Pressable>
         {tabs.map((t) => (
-          <Pressable accessibilityRole="button" key={t.key} onPress={() => setTab(t.key)} style={[s.tab, tab === t.key && s.tabOn]}>
+          <Pressable accessibilityRole="button" key={t.key} onPress={() => pickTab(t.key)} style={[s.tab, tab === t.key && s.tabOn]}>
             {tab === t.key && <GradientFill />}
             <Text style={{ color: tab === t.key ? '#fff' : colors.muted, fontWeight: '600' }}>{t.label}{t.n ? ` (${t.n})` : ''}</Text>
           </Pressable>
@@ -148,14 +176,18 @@ export default function Games() {
 
       {tab !== 'mine' && (
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-            <Chip on={!sport} label="All sports" onPress={() => setSport('')} />
-            {sports.map((x) => <Chip key={x.slug} on={sport === x.slug} label={x.name} onPress={() => setSport(x.slug)} />)}
-          </ScrollView>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-            <Chip on={!city} label="All areas" onPress={() => setCity('')} />
-            {cities.map((c) => <Chip key={c} on={city === c} label={c} onPress={() => setCity(c)} />)}
-          </ScrollView>
+          {sports.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+              <Chip on={!sport} label="All sports" onPress={() => { setSport(''); setCity(''); }} />
+              {sports.map(([slug, name]) => <Chip key={slug} on={sport === slug} label={name} onPress={() => { setSport(sport === slug ? '' : slug); setCity(''); }} />)}
+            </ScrollView>
+          )}
+          {!!sport && cities.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+              <Chip on={!city} label="All areas" onPress={() => setCity('')} />
+              {cities.map((c) => <Chip key={c} on={city === c} label={c} onPress={() => setCity(city === c ? '' : c)} />)}
+            </ScrollView>
+          )}
           {loadFailed && <Text style={{ color: colors.warning, marginBottom: 10 }}>We couldn't load the latest games. Pull down to try again.</Text>}
         </>
       )}
@@ -163,14 +195,14 @@ export default function Games() {
       {tab === 'open' && (
         <>
 
-          {!loading && games.length === 0 && !loadFailed && (
+          {!loading && shownGames.length === 0 && !loadFailed && (
             <View style={[s.card, { alignItems: 'center' }]}>
               <Text style={{ fontSize: 28 }}>🙌</Text>
               <Text style={{ color: colors.text, fontWeight: '800', fontSize: 17, marginTop: 4 }}>No open games right now</Text>
               <Text style={{ color: colors.muted, marginTop: 4 }}>Start one and let others join you.</Text>
             </View>
           )}
-          {games.map((g) => {
+          {shownGames.map((g) => {
             const left = g.spots - g.taken;
             return (
               <Pressable accessibilityRole="button" key={g.id} onPress={() => open(g.id)} style={s.card}>
@@ -213,13 +245,13 @@ export default function Games() {
 
       {tab === 'tournaments' && (
         <>
-          {!loading && tournaments.length === 0 && (
+          {!loading && shownTournaments.length === 0 && (
             <View style={[s.card, { alignItems: 'center' }]}>
               <Text style={{ color: colors.text, fontWeight: '800' }}>No tournaments yet</Text>
               <Text style={{ color: colors.muted, marginTop: 4, textAlign: 'center' }}>Follow us on Instagram to hear first when the next one opens.</Text>
             </View>
           )}
-          {tournaments.map((t) => {
+          {shownTournaments.map((t) => {
             const now = Date.now();
             const opens = new Date(t.reg_opens_at).getTime();
             const closes = new Date(t.reg_closes_at).getTime();
@@ -331,6 +363,7 @@ const useS = themed(() => StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8, overflow: 'hidden' },
   tabOn: { borderColor: 'transparent' },
+  tile: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', padding: 14 },
   pill: { fontWeight: '700', fontSize: 12 },
   bar: { height: 6, borderRadius: 3, backgroundColor: colors.cardAlt, overflow: 'hidden', marginTop: 10 },
   h2: { color: colors.text, fontWeight: '800', fontSize: 17, marginTop: 8, marginBottom: 10 },

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, Share, View } from 'react-native';
 import { Text } from '@/components/AppText';
+import { LoginForm } from '../login';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -95,18 +96,7 @@ export default function Profile() {
   if (authLoading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
   if (!session) {
     return (
-      <View style={{ padding: 24 }}>
-        <Text style={{ color: colors.muted, marginBottom: 16 }}>Log in to see your profile.</Text>
-        <Button title="Log in" onPress={() => router.push('/login')} />
-        <View style={{ height: 10 }} />
-        <Button title="Create an account" variant="ghost" onPress={() => router.push('/signup')} />
-        <View style={{ marginTop: 20 }}><ThemePicker /></View>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/signup-owner')} hitSlop={8}>
-          <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 14 }}>
-            Own courts? <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>Sign up as a court owner</Text>
-          </Text>
-        </Pressable>
-      </View>
+      <LoginForm embedded />
     );
   }
   if (!me) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;

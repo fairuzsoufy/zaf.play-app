@@ -10,6 +10,11 @@ import { supabase } from '@/lib/supabase';
 import { colors, useTheme } from '@/lib/theme';
 
 export default function Login() {
+  return <LoginForm />;
+}
+
+// also shown straight on the Profile tab when logged out (embedded: stay there after logging in)
+export function LoginForm({ embedded = false }: { embedded?: boolean }) {
   useTheme();
   const router = useRouter();
   const [id, setId] = useState('');
@@ -39,6 +44,7 @@ export default function Login() {
     const role = (data as { role?: string } | null)?.role;
     if (role === 'owner' || role === 'staff') return router.replace('/owner');
     if (role === 'admin') return router.replace('/admin');
+    if (embedded) return;
     if (router.canGoBack()) router.back();
     else router.replace('/');
   }
@@ -94,8 +100,8 @@ export default function Login() {
         </View>
         <View style={{ alignItems: 'center', marginTop: 24 }}>
           <Text style={{ color: colors.muted, fontSize: 13 }}>New here?</Text>
-          <Link href="/signup" replace style={{ color: colors.primaryAlt, marginTop: 6, fontWeight: '600' }}>Create an account</Link>
-          <Link href="/signup-owner" replace style={{ color: colors.muted, marginTop: 14 }}>
+          <Link href="/signup" replace={!embedded} style={{ color: colors.primaryAlt, marginTop: 6, fontWeight: '600' }}>Create an account</Link>
+          <Link href="/signup-owner" replace={!embedded} style={{ color: colors.muted, marginTop: 14 }}>
             Own courts? <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>Sign up as a court owner</Text>
           </Link>
         </View>
