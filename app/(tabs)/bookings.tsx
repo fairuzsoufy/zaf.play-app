@@ -14,6 +14,7 @@ import { Button, Field, GradientFill, Note, EmptyState, Skeleton } from '@/compo
 import { RefundTracker, refundInfo } from '@/components/RefundTracker';
 import { RefundChoice } from '@/components/RefundChoice';
 import { PolicyNotice } from '@/components/PolicyNotice';
+import { LoggedOutPeek } from '@/components/LoggedOutPeek';
 
 type Tab = 'upcoming' | 'past' | 'cancelled';
 
@@ -109,10 +110,7 @@ export default function Bookings() {
   if (authLoading || (uid && loading)) return <Skeleton />;
   if (!uid) {
     return (
-      <View style={{ padding: 24 }}>
-        <Text style={{ color: colors.muted, marginBottom: 16 }}>Log in to see your bookings.</Text>
-        <Button title="Log in" onPress={() => router.navigate('/profile')} />
-      </View>
+      <LoggedOutPeek onLogin={() => router.navigate('/profile')} />
     );
   }
 
