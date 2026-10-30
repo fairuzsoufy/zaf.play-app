@@ -16,6 +16,7 @@ const shapes = {
   edit: <><Path d="M4 20h4L19 9l-4-4L4 16z" /><Path d="M13 7l4 4" /></>,
   flame: <><Path d="M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4.5 2-7 2 1 3 3 3 5 1-2 1-6 1-9z" /></>,
   pin: <><Path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z" /><Circle cx="12" cy="9" r="2.5" /></>,
+  lock: <><Rect x="5" y="11" width="14" height="10" rx="2" /><Path d="M8 11V7a4 4 0 0 1 8 0v4" /></>,
   wallet: <><Rect x="3" y="6" width="18" height="14" rx="3" /><Path d="M3 10h18M16 15h2" /></>,
   share: <><Circle cx="18" cy="5" r="3" /><Circle cx="6" cy="12" r="3" /><Circle cx="18" cy="19" r="3" /><Path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4" /></>,
 };
