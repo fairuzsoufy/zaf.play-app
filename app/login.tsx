@@ -16,6 +16,7 @@ export default function Login() {
 // also shown straight on the Profile tab when logged out (embedded: stay there after logging in)
 export function LoginForm({ embedded = false }: { embedded?: boolean }) {
   useTheme();
+  const link = { color: colors.text, fontWeight: '700' as const, textDecorationLine: 'underline' as const };
   const router = useRouter();
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
@@ -69,8 +70,8 @@ export function LoginForm({ embedded = false }: { embedded?: boolean }) {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 4 }}>Welcome back</Text>
-        <Text style={{ color: colors.muted, marginBottom: 22 }}>Log in with your email or username.</Text>
+        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: embedded ? 16 : 4 }}>Welcome back</Text>
+        {!embedded && <Text style={{ color: colors.muted, marginBottom: 22 }}>Log in with your email or username.</Text>}
         <GoogleButton />
         {err && <Note kind="error">{err}</Note>}
         <Field
@@ -95,15 +96,11 @@ export function LoginForm({ embedded = false }: { embedded?: boolean }) {
           onSubmitEditing={submit}
         />
         <Button title="Log in" onPress={submit} loading={busy} />
-        <View style={{ alignItems: 'center', marginTop: 18 }}>
-          <Link href="/forgot-password" style={{ color: colors.primaryAlt }}>Forgot password?</Link>
-        </View>
-        <View style={{ alignItems: 'center', marginTop: 24 }}>
-          <Text style={{ color: colors.muted, fontSize: 13 }}>New here?</Text>
-          <Link href="/signup" replace={!embedded} style={{ color: colors.primaryAlt, marginTop: 6, fontWeight: '600' }}>Create an account</Link>
-          <Link href="/signup-owner" replace={!embedded} style={{ color: colors.muted, marginTop: 14 }}>
-            Own courts? <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>Sign up as a court owner</Text>
-          </Link>
+        {/* the wording in the accent colour, the tappable part in white (text colour) and underlined */}
+        <View style={{ alignItems: 'center', marginTop: 18, gap: 14 }}>
+          <Link href="/forgot-password" style={link}>Forgot password?</Link>
+          <Text style={{ color: colors.primary }}>New here? <Link href="/signup" replace={!embedded} style={link}>Create an account</Link></Text>
+          <Text style={{ color: colors.primary }}>Own courts? <Link href="/signup-owner" replace={!embedded} style={link}>Sign up as a court owner</Link></Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

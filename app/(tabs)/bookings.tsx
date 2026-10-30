@@ -111,7 +111,7 @@ export default function Bookings() {
     return (
       <View style={{ padding: 24 }}>
         <Text style={{ color: colors.muted, marginBottom: 16 }}>Log in to see your bookings.</Text>
-        <Button title="Log in" onPress={() => router.push('/login')} />
+        <Button title="Log in" onPress={() => router.navigate('/profile')} />
       </View>
     );
   }

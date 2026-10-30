@@ -77,7 +77,7 @@ export function GoogleButton({ label = 'Continue with Google', onDone }: { label
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18 }}>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        <Text style={{ color: colors.muted, fontSize: 12 }}>or with your email</Text>
+        <Text style={{ color: colors.muted, fontSize: 12 }}>or</Text>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
       </View>
     </View>
