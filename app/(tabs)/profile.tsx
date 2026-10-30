@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Share, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Linking, ScrollView, Share, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { LoginForm } from '../login';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -7,16 +7,16 @@ import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 import { dateLabel, egp } from '@/lib/format';
-import { Button, Card, Field, GradientFill, GradientText, GRADIENT, Note, PressableScale } from '@/components/ui';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Icon } from '@/components/Icon';
+import { Button, Card, Field, GradientFill, GradientText, Note, PressableScale } from '@/components/ui';
+import { Icon, type IconName } from '@/components/Icon';
+import { Logo } from '@/components/Logo';
 import { DeleteAccount } from '@/components/DeleteAccount';
 import { AccountStatus, BlockedNotice } from '@/components/BlockedNotice';
 import { FriendsCard } from '@/components/Friends';
 import { ChangeEmail } from '@/components/ChangeEmail';
 import { LoginSecurity } from '@/components/LoginSecurity';
 import { ThemePicker } from '@/components/ThemeToggle';
-import { PlayerStats } from '@/components/PlayerStats';
+import { ProgressRing, StreakProfile } from '@/components/PlayerStats';
 import { LegalLinks } from '@/components/LegalLinks';
 import { toast } from '@/components/Toast';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
@@ -45,6 +45,8 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [editing, setEditing] = useState(false);
+  const scroll = useRef<ScrollView>(null);
+  const detailsY = useRef(0);
 
   // opened from booking to add a missing mobile number: start in edit mode
   useEffect(() => {
@@ -95,46 +97,52 @@ export default function Profile() {
 
   if (authLoading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
   if (!session) {
-    return (
-      <LoginForm embedded />
-    );
+    return <LoginForm embedded hero={<LoggedOutHero />} />;
   }
   if (!me) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
 
   const link = ref?.code ? `${SITE_URL}/signup?ref=${ref.code}` : '';
   const shareText = `Join me on Zaf Play to book courts and play together. Use my code ${ref?.code} and get ${ref?.percent}% off your first booking: ${link}`;
 
-  const initials = (me.full_name || me.email || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w: string) => w[0]?.toUpperCase()).join('');
+  const initialsText = <GradientText style={{ fontFamily: fonts.display, fontSize: 38 }}>{(me.full_name || me.email || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w: string) => w[0]?.toUpperCase()).join('')}</GradientText>;
+  const nameBlock = (
+    <>
+      <Text style={{ color: colors.tabOn, fontFamily: fonts.display, fontSize: 24, textAlign: 'center' }}>{me.full_name || 'Your name'}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+        {me.username ? <Text style={{ color: colors.primary, fontWeight: '700' }}>@{me.username}</Text> : null}
+        {me.role === 'player' && <AccountStatus />}
+      </View>
+    </>
+  );
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       {(me.role === 'owner' || me.role === 'staff') && (
         <View style={{ marginBottom: 14 }}><Button title="Open the owner dashboard" onPress={() => router.push('/owner')} /></View>
       )}
       {me.role === 'admin' && <Button title="Open the admin screens" onPress={() => router.push('/admin')} />}
 
-      {/* who you are: gradient banner, initials, name */}
-      <View style={[card, { padding: 0, overflow: 'hidden' }]}>
-        <View style={{ height: 86, overflow: 'hidden' }}><GradientFill /></View>
-        <View style={{ alignItems: 'center', marginTop: -44, paddingHorizontal: 16, paddingBottom: 18 }}>
-          <LinearGradient colors={GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 88, height: 88, borderRadius: 44, padding: 3 }}>
-            <View style={{ flex: 1, borderRadius: 42, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' }}>
-              <GradientText style={{ fontFamily: fonts.display, fontSize: 32 }}>{initials}</GradientText>
-            </View>
-          </LinearGradient>
-          <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginTop: 8 }}>{me.full_name || 'Your name'}</Text>
-          {me.username ? <Text style={{ color: colors.primary, fontWeight: '700', marginTop: 2 }}>@{me.username}</Text> : null}
-          {me.role === 'player' && <View style={{ marginTop: 6 }}><AccountStatus /></View>}
+      {/* who you are: the Streak Ring (progress to the next badge) around your initials */}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginBottom: -24, zIndex: 1 }}>
+        {ref?.code && <IconButton icon="share" label="Invite friends" onPress={() => Share.share({ message: shareText })} />}
+        <IconButton icon="edit" label="Edit my details" onPress={() => { setEditing(true); scroll.current?.scrollTo({ y: detailsY.current - 12, animated: true }); }} />
+      </View>
+      {me.role === 'player' ? (
+        <StreakProfile uid={uid!} credit={credit} initials={initialsText} header={nameBlock} />
+      ) : (
+        <>
+          <ProgressRing progress={1}>{initialsText}</ProgressRing>
+          <View style={{ alignItems: 'center', marginTop: 10 }}>{nameBlock}</View>
           {credit !== null && credit > 0 && (
-            <View style={{ marginTop: 10, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.soft }}>
-              <Text style={{ color: colors.success, fontWeight: '800' }}>💳 {egp(credit)} credit</Text>
+            <View style={{ alignSelf: 'center', marginTop: 10, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.soft }}>
+              <Text style={{ color: colors.success, fontWeight: '800' }}>{egp(credit)} credit</Text>
             </View>
           )}
-        </View>
-      </View>
+        </>
+      )}
+      <View style={{ height: 16 }} />
 
       {me.role === 'player' && <BlockedNotice />}
-      {me.role === 'player' && <PlayerStats />}
 
       {credit !== null && ledger.length > 0 && (
         <View style={card}>
@@ -152,7 +160,7 @@ export default function Profile() {
         </View>
       )}
 
-      <View style={card}>
+      <View style={card} onLayout={(e) => { detailsY.current = e.nativeEvent.layout.y; }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20 }}>My details</Text>
           {!editing && (
@@ -215,6 +223,31 @@ export default function Profile() {
       {me.role === 'player' && <DeleteAccount />}
       <LegalLinks style={{ marginTop: 18 }} />
     </ScrollView>
+  );
+}
+
+// Small square button over the ring (share, edit).
+function IconButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  useTheme();
+  return (
+    <PressableScale onPress={onPress} accessibilityLabel={label} hitSlop={6}
+      style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+      <Icon name={icon} color={colors.muted} size={17} />
+    </PressableScale>
+  );
+}
+
+// Logged out: an empty ring breathing around the logo, above the login form.
+function LoggedOutHero() {
+  useTheme();
+  return (
+    <View style={{ alignItems: 'center', marginBottom: 20, marginTop: 6 }}>
+      <ProgressRing progress={0} breathe>
+        <Logo width={84} />
+      </ProgressRing>
+      <Text style={{ color: colors.tabOn, fontFamily: fonts.display, fontSize: 26, marginTop: 14 }}>Every game counts</Text>
+      <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 4, paddingHorizontal: 16 }}>Log in to fill your ring, keep a streak and earn badges.</Text>
+    </View>
   );
 }
 

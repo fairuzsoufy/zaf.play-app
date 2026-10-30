@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { Link, useRouter } from 'expo-router';
@@ -14,7 +14,7 @@ export default function Login() {
 }
 
 // also shown straight on the Profile tab when logged out (embedded: stay there after logging in)
-export function LoginForm({ embedded = false }: { embedded?: boolean }) {
+export function LoginForm({ embedded = false, hero }: { embedded?: boolean; hero?: ReactNode }) {
   useTheme();
   const link = { color: colors.linkSoft, fontWeight: '600' as const, textDecorationLine: 'underline' as const };
   const router = useRouter();
@@ -70,7 +70,7 @@ export function LoginForm({ embedded = false }: { embedded?: boolean }) {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: embedded ? 16 : 4 }}>Welcome back</Text>
+        {hero ?? <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: embedded ? 16 : 4 }}>Welcome back</Text>}
         {!embedded && <Text style={{ color: colors.muted, marginBottom: 22 }}>Log in with your email or username.</Text>}
         <GoogleButton />
         {err && <Note kind="error">{err}</Note>}
