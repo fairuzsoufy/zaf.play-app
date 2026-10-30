@@ -37,8 +37,7 @@ export function LoggedOutPeek({ onLogin }: { onLogin: () => void }) {
         </LinearGradient>
         <Text style={s.title}>Log in to see your bookings</Text>
         <Text style={s.sub}>Your courts, games and refunds show up here.</Text>
-        <View style={{ alignSelf: 'stretch' }}><Button title="Log in" onPress={onLogin} /></View>
-        <Text style={s.signup} onPress={onLogin} accessibilityRole="link">New here? <Text style={{ color: colors.primary, fontWeight: '700' }}>Sign up</Text></Text>
+        <View style={{ alignSelf: 'stretch' }}><Button title="Log in / Sign up" onPress={onLogin} /></View>
       </View>
     </View>
   );
@@ -56,5 +55,4 @@ const useS = themed(() => StyleSheet.create({
   lock: { width: 52, height: 52, borderRadius: 16, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginBottom: 12, shadowColor: '#FF3E8A', shadowOpacity: 0.6, shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 8 },
   title: { color: colors.text, fontFamily: fonts.display, fontSize: 22, textAlign: 'center' },
   sub: { color: colors.muted, textAlign: 'center', marginTop: 6, marginBottom: 18 },
-  signup: { color: colors.muted, marginTop: 14, fontSize: 15 },
 }));
