@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import Svg, { Path } from 'react-native-svg';
 import * as Linking from 'expo-linking';
@@ -36,7 +36,13 @@ export function GoogleButton({ label = 'Continue with Google', onDone }: { label
       const redirectTo = Linking.createURL('auth/google');
       const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, skipBrowserRedirect: true } });
       if (error || !data?.url) throw new Error('start');
-      const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      // Android: some default browsers (Edge) never hand the player back to the app, so use Chrome when it is there
+      let browserPackage: string | undefined;
+      if (Platform.OS === 'android') {
+        const b = await WebBrowser.getCustomTabsSupportingBrowsersAsync().catch(() => null);
+        if (b?.browserPackages.includes('com.android.chrome')) browserPackage = 'com.android.chrome';
+      }
+      const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo, { browserPackage });
       if (res.type !== 'success') { setBusy(false); return; } // closed the window
       // the tokens come back after the "#" (or an error after "?")
       const back = params(res.url);
