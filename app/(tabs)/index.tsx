@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Keyboard, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View,
+  ActivityIndicator, FlatList, Keyboard, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Text, TextInput } from '@/components/AppText';
@@ -364,6 +364,11 @@ export default function Book() {
   const refresh = () => { setRefreshing(true); load(); };
   const dates = Array.from({ length: DAYS }, (_, i) => cairoDate(i));
   const [calOpen, setCalOpen] = useState(false);
+  // the days that fit the screen width, then the calendar button last, no scrolling; a day picked further out takes the last day's place
+  const { width } = useWindowDimensions();
+  const fit = Math.max(3, Math.floor((width - 32 + 8) / 64) - 1);
+  const shownDays = dates.slice(0, fit);
+  if (!shownDays.includes(date)) shownDays[fit - 1] = date;
   const asDate = (d: string) => new Date(`${d}T12:00:00`);
   const fromPicked = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   function openCalendar() {
@@ -459,20 +464,20 @@ export default function Book() {
             </ScrollView>
           )}
           {view === 'list' && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.row}>
-              {[...dates, ...(dates.includes(date) ? [] : [date])].map((d, i) => {
+            <View style={[s.row, { flexDirection: 'row' }]}>
+              {shownDays.map((d, i) => {
                 const on = date === d;
                 const dt = new Date(`${d}T12:00:00Z`);
                 return (
-                  <Pressable accessibilityRole="button" key={d} onPress={() => setDate(d)} style={[s.day, on && s.chipOn]} accessibilityState={{ selected: on }}>
+                  <Pressable accessibilityRole="button" key={d} onPress={() => setDate(d)} style={[s.day, { flex: 1, width: undefined }, on && s.chipOn]} accessibilityState={{ selected: on }}>
                     {on && <GradientFill />}
-                    <Text style={{ color: on ? '#fff' : colors.muted, fontSize: 12, fontWeight: '700' }}>{i === 0 ? 'TODAY' : dt.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }).toUpperCase()}</Text>
+                    <Text style={{ color: on ? '#fff' : colors.muted, fontSize: 12, fontWeight: '700' }}>{d === dates[0] ? 'TODAY' : dt.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }).toUpperCase()}</Text>
                     <Text style={{ color: on ? '#fff' : colors.text, fontSize: 18, fontWeight: '800' }}>{dt.getUTCDate()}</Text>
                   </Pressable>
                 );
               })}
               {/* more days: the phone's calendar */}
-              <Pressable accessibilityRole="button" accessibilityLabel="Pick another day" onPress={openCalendar} style={[s.day, { justifyContent: 'center' }]}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Pick another day" onPress={openCalendar} style={[s.day, { flex: 1, width: undefined, marginRight: 0, justifyContent: 'center' }]}>
                 <Icon name="calendar" color={colors.text} size={22} />
                 <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>MORE</Text>
               </Pressable>
@@ -487,7 +492,7 @@ export default function Book() {
                   </Pressable>
                 </Modal>
               )}
-            </ScrollView>
+            </View>
           )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             <View style={s.seg}>

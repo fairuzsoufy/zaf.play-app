@@ -30,6 +30,8 @@ const dark = {
   brandBlue: '#2D5BFF',
   brandPink: '#E0206F', // pink deep, behind white text
   brandPinkBright: '#FF3E8A', // pink on dark grounds only
+  tabOn: '#E6E9F5', // the chosen tab icon: light grey, not blue
+  linkSoft: '#C9CEDF', // quiet links on the login screen: light grey
 };
 
 export type Palette = typeof dark;
@@ -60,6 +62,8 @@ const light: Palette = {
   brandBlue: '#2D5BFF',
   brandPink: '#E0206F',
   brandPinkBright: '#E0206F', // bright pink fails on white, so light screens use pink deep
+  tabOn: '#3A4060',
+  linkSoft: '#4A5070',
 };
 
 export const radius = { sm: 8, md: 12, lg: 18, xl: 24 };

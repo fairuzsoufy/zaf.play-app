@@ -16,7 +16,7 @@ export default function Login() {
 // also shown straight on the Profile tab when logged out (embedded: stay there after logging in)
 export function LoginForm({ embedded = false }: { embedded?: boolean }) {
   useTheme();
-  const link = { color: colors.text, fontWeight: '700' as const, textDecorationLine: 'underline' as const };
+  const link = { color: colors.linkSoft, fontWeight: '600' as const, textDecorationLine: 'underline' as const };
   const router = useRouter();
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
