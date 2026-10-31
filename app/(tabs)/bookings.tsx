@@ -193,8 +193,9 @@ export default function Bookings() {
                 <Text style={{ fontSize: 24 }}>{sportEmoji(b.sport?.slug)}</Text>
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={s.title} numberOfLines={1}>{b.sport?.name} · {b.court?.facility?.name ?? b.court?.name}</Text>
-                <Text style={s.sub} numberOfLines={1}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} · {hoursLabel(b.start_time, b.end_time)}</Text>
+                <Text style={s.title} numberOfLines={1}>{b.sport?.name}</Text>
+                <Text style={[s.sub, { fontSize: 12, color: colors.text }]} numberOfLines={1}>{b.court?.facility?.name ?? b.court?.name}</Text>
+                <Text style={[s.sub, { fontSize: 12, marginTop: 1 }]} numberOfLines={1}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} · {hoursLabel(b.start_time, b.end_time)}</Text>
                 <View style={{ alignSelf: 'flex-start', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 }}>
                   <Text style={{ color: bd.color, fontSize: 12, fontWeight: '700', textTransform: 'capitalize' }}>{bd.label}</Text>
                 </View>
@@ -402,7 +403,7 @@ const useS = themed(() => StyleSheet.create({
   tabOn: { borderColor: 'transparent', overflow: 'hidden' },
   card: { backgroundColor: colors.card, borderRadius: 20, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
   sq: { width: 56, height: 56, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  title: { color: colors.text, fontWeight: '700', fontSize: 16 },
+  title: { color: colors.text, fontWeight: '700', fontSize: 15 },
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
   action: { paddingVertical: 4, paddingRight: 4 },
