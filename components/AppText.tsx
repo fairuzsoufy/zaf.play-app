@@ -1,5 +1,6 @@
 import { createContext, forwardRef, useContext } from 'react';
-import { StyleSheet, Text as RNText, TextInput as RNTextInput, type TextInputProps, type TextProps, type TextStyle } from 'react-native';
+import { StyleSheet, Text as RNText, TextInput as RNTextInput, type TextInputInstance, type TextInputProps, type TextProps, type TextStyle } from 'react-native';
+import type { ComponentRef } from 'react';
 import { fonts } from '@/lib/theme';
 
 // Text and TextInput in the website's text font, Figtree. Phones do not draw a bold custom font from fontWeight
@@ -18,16 +19,16 @@ function figtree(style: TextProps['style'], inherited: string | null): { family:
   return { family: { fontFamily: FAMILY[weight] ?? fonts.body, fontWeight: 'normal' }, weight };
 }
 
-export const Text = forwardRef<RNText, TextProps>(function Text({ style, ...rest }, ref) {
+export const Text = forwardRef<ComponentRef<typeof RNText>, TextProps>(function Text({ style, ...rest }, ref) {
   const inherited = useContext(Weight);
   const { family, weight } = figtree(style, inherited);
   const text = <RNText ref={ref} {...rest} style={family ? [style, family] : style} />;
   return weight && weight !== inherited ? <Weight.Provider value={weight}>{text}</Weight.Provider> : text;
 });
 
-export const TextInput = forwardRef<RNTextInput, TextInputProps>(function TextInput({ style, ...rest }, ref) {
+export const TextInput = forwardRef<TextInputInstance, TextInputProps>(function TextInput({ style, ...rest }, ref) {
   const { family } = figtree(style, null);
   return <RNTextInput ref={ref} {...rest} style={family ? [style, family] : style} />;
 });
 // so `useRef<TextInput>` keeps working
-export type TextInput = RNTextInput;
+export type TextInput = TextInputInstance;

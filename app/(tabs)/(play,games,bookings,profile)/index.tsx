@@ -541,7 +541,7 @@ export default function Book() {
       ListHeaderComponent={header}
       initialNumToRender={8}
       renderItem={({ item }) => <CourtCardRow c={item} sport={sportOf(item.sport)} date={date} onOpen={() => book(item, date)} onTime={(d, st, du) => book(item, d, st, du)} fav={favs.includes(item.id)} onFav={() => flipFav(item.id)} />}
-      ListEmptyComponent={searchOpen ? null : (
+      ListEmptyComponent={searchOpen ? undefined : (
         <EmptyState icon="ball" title="No courts found" text={loc ? `No courts within ${NEAR_ME_KM} km. Turn off Near me or pick an area.` : 'No courts match. Try another sport or area.'} />
       )}
     />

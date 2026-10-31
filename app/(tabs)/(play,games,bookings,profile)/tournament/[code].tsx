@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, View, RefreshControl } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -43,7 +44,7 @@ export default function Tournament() {
   const [mates, setMates] = useState<FoundPlayer[]>([]);
   const [swapFor, setSwapFor] = useState<string | null>(null);
   const [scores, setScores] = useState<Record<string, { a: string; b: string }>>({});
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
 
   const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => {

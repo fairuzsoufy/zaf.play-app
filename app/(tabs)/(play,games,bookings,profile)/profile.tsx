@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, View } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { Text } from '@/components/AppText';
 import { LoginForm } from '@/app/login';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -54,7 +55,7 @@ export default function Profile() {
   // Profile is one page: the Me / Friends / Account tabs only change what's below, and Account's sections open in place.
   const [tab, setTab] = useState<Tab>('me');
   const [open, setOpen] = useState<Section>(null);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const friendsY = useRef(0);
   const friendsCardY = useRef(0);
   const player = usePlayerStats(me?.role === 'player' ? uid : undefined);

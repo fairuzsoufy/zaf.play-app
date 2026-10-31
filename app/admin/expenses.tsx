@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { Stack } from 'expo-router';
 import { Text } from '@/components/AppText';
 import { SITE_URL, supabase } from '@/lib/supabase';
@@ -49,7 +50,7 @@ export default function AdminExpenses() {
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.from('project_expenses').select('*').order('paid_on', { ascending: false });

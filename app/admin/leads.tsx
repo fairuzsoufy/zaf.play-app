@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Pressable, ScrollView, View } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { Stack } from 'expo-router';
 import { Text } from '@/components/AppText';
 import { supabase } from '@/lib/supabase';
@@ -79,7 +80,7 @@ export default function AdminLeads() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.from('owner_leads').select('*').order('updated_at', { ascending: false });

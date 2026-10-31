@@ -4,11 +4,14 @@ import {
 } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { LinearGradient } from 'expo-linear-gradient';
-import MaskedView from '@react-native-masked-view/masked-view';
+import RNMaskedView from '@react-native-masked-view/masked-view';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 import { useT, withoutArabic } from '@/lib/ownerLang';
 import { Icon, type IconName } from '@/components/Icon';
 import { tap } from '@/lib/haptics';
+
+// masked-view 0.3.2 (the newest, the one SDK 58 expects) still ships class typings that React 19.3's JSX types reject; it works the same at run time
+const MaskedView = RNMaskedView as unknown as React.ComponentType<{ maskElement: React.ReactElement; children?: React.ReactNode; style?: StyleProp<ViewStyle> }>;
 
 // The website's brand gradient (blue → purple → pink), used for buttons and anything chosen.
 export const GRADIENT = [colors.brandBlue, colors.brandPink] as const;

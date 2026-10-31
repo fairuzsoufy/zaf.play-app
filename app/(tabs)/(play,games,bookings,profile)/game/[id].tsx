@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, View, RefreshControl } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -48,7 +49,7 @@ export default function OpenGame() {
   const [proofUrl, setProofUrl] = useState('');
   const [approvedNote, setApprovedNote] = useState(false);
   const prevStatus = useRef<string | null>(null);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
 
   const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => {
