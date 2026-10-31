@@ -272,11 +272,11 @@ export default function Bookings() {
 
             {phones[b.id] && b.status !== 'cancelled' && !requestOpen(b) && (
               <Pressable accessibilityRole="button" onPress={() => Linking.openURL(`tel:${phones[b.id]}`)} style={{ marginTop: 12 }}>
-                <Text style={{ color: colors.success }}>📞 Need help on court? Call {phones[b.id]}</Text>
+                <Text numberOfLines={1} style={{ color: colors.success, fontSize: 12 }}>📞 Call the court: {phones[b.id]}</Text>
               </Pressable>
             )}
             {!phones[b.id] && paidUpcoming && !requestOpen(b) && (
-              <Text style={{ color: colors.muted, fontSize: 12, marginTop: 10 }}>📞 The court's phone number shows here 30 minutes before your game.</Text>
+              <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 11, marginTop: 8 }}>📞 Court phone shows 30 min before your game</Text>
             )}
           </View>
         );
