@@ -241,12 +241,12 @@ function IconButton({ icon, label, onPress }: { icon: IconName; label: string; o
 function LoggedOutHero() {
   useTheme();
   return (
-    <View style={{ alignItems: 'center', marginBottom: 20, marginTop: 6 }}>
-      <ProgressRing progress={0} breathe>
-        <Logo width={84} />
+    <View style={{ alignItems: 'center', marginBottom: 14 }}>
+      <ProgressRing progress={0} breathe size={104} stroke={8}>
+        <Logo width={60} />
       </ProgressRing>
-      <Text style={{ color: colors.tabOn, fontFamily: fonts.display, fontSize: 26, marginTop: 14 }}>Every game counts</Text>
-      <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 4, paddingHorizontal: 16 }}>Log in to fill your ring, keep a streak and earn badges.</Text>
+      <Text style={{ color: colors.tabOn, fontFamily: fonts.display, fontSize: 22, marginTop: 10 }}>Play. Compete. Connect.</Text>
+      <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 2 }}>Keep a streak and earn badges.</Text>
     </View>
   );
 }

@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Text } from '@/components/AppText';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, type Href } from 'expo-router';
+import { Pressable } from 'react-native';
 import { Button, Field, Note } from '@/components/ui';
 import { signIn } from '@/lib/auth';
 import { GoogleButton } from '@/components/GoogleButton';
@@ -69,7 +70,7 @@ export function LoginForm({ embedded = false, hero }: { embedded?: boolean; hero
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: embedded ? 8 : 20 }} keyboardShouldPersistTaps="handled">
         {hero ?? <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: embedded ? 16 : 4 }}>Welcome back</Text>}
         {!embedded && <Text style={{ color: colors.muted, marginBottom: 22 }}>Log in with your email or username.</Text>}
         <GoogleButton />
@@ -95,14 +96,39 @@ export function LoginForm({ embedded = false, hero }: { embedded?: boolean; hero
           returnKeyType="go"
           onSubmitEditing={submit}
         />
+        {embedded && (
+          <View style={{ alignItems: 'flex-end', marginTop: -4, marginBottom: 10 }}>
+            <Link href="/forgot-password" style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Forgot password?</Link>
+          </View>
+        )}
         <Button title="Log in" onPress={submit} loading={busy} />
-        {/* the wording in the accent colour, the tappable part in white (text colour) and underlined */}
-        <View style={{ alignItems: 'center', marginTop: 18, gap: 14 }}>
-          <Link href="/forgot-password" style={link}>Forgot password?</Link>
-          <Text style={{ color: colors.primary }}>New here? <Link href="/signup" replace={!embedded} style={link}>Create an account</Link></Text>
-          <Text style={{ color: colors.primary }}>Own courts? <Link href="/signup-owner" replace={!embedded} style={link}>Sign up as a court owner</Link></Text>
-        </View>
+        {embedded ? (
+          // two tidy tiles instead of a stack of underlined links, so the whole tab fits on one screen
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+            <JoinTile href="/signup" kicker="New here?" title="Create an account" />
+            <JoinTile href="/signup-owner" kicker="Own courts?" title="Join as an owner" />
+          </View>
+        ) : (
+          <View style={{ alignItems: 'center', marginTop: 18, gap: 14 }}>
+            <Link href="/forgot-password" style={link}>Forgot password?</Link>
+            <Text style={{ color: colors.primary }}>New here? <Link href="/signup" style={link} replace>Create an account</Link></Text>
+            <Text style={{ color: colors.primary }}>Own courts? <Link href="/signup-owner" style={link} replace>Sign up as a court owner</Link></Text>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function JoinTile({ href, kicker, title }: { href: Href; kicker: string; title: string }) {
+  const router = useRouter();
+  return (
+    <Pressable
+      onPress={() => router.push(href)}
+      style={({ pressed }) => ({ flex: 1, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12, opacity: pressed ? 0.7 : 1 })}
+    >
+      <Text style={{ color: colors.muted, fontSize: 12 }}>{kicker}</Text>
+      <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14, marginTop: 2 }}>{title} ›</Text>
+    </Pressable>
   );
 }
