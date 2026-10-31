@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, Share, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ScrollView, Share, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { LoginForm } from '../login';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -219,7 +219,10 @@ export default function Profile() {
         </Card>
       )}
 
-      <View style={{ marginTop: 16 }}><Button title="Log out" onPress={() => { router.replace('/'); supabase.auth.signOut({ scope: 'local' }); }} /></View>
+      <View style={{ marginTop: 16 }}><Button title="Log out" onPress={() => Alert.alert('Do you want to log out?', 'You can log in again any time.', [
+        { text: 'Stay logged in', style: 'cancel' },
+        { text: 'Yes, log out', style: 'destructive', onPress: () => { router.replace('/'); supabase.auth.signOut({ scope: 'local' }); } },
+      ])} /></View>
       {me.role === 'player' && <DeleteAccount />}
       <LegalLinks style={{ marginTop: 18 }} />
     </ScrollView>
