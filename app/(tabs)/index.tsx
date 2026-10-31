@@ -463,7 +463,7 @@ export default function Book() {
               {areas.length > 1 && areas.map((a) => <Chip key={a} label={a} on={area === a} onPress={() => pickArea(area === a ? '' : a)} />)}
             </ScrollView>
           )}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 10 }}>
             <View style={s.seg}>
               {(['list', 'map'] as const).map((v) => (
                 <Pressable accessibilityRole="button" key={v} onPress={() => { setView(v); setSelected(null); }} style={[s.segBtn, view === v && s.chipOn]}>
@@ -472,9 +472,13 @@ export default function Book() {
                 </Pressable>
               ))}
             </View>
+            <Pressable accessibilityRole="button" onPress={nearMe} style={[s.segBtn, s.seg, loc && s.chipOn]} disabled={locBusy}>
+              {loc && <GradientFill />}
+              {locBusy ? <ActivityIndicator size="small" color={colors.muted} /> : <Text style={{ color: loc ? '#fff' : colors.muted, fontWeight: '600' }}>{loc ? '📍 Near me ✕' : '📍 Near me'}</Text>}
+            </Pressable>
             {/* indoor / outdoor, always shown like the website; a kind with no court here is greyed out */}
-            <View style={s.seg}>
-              {([['', 'Indoor & outdoor'], ['indoor', 'Indoor'], ['outdoor', 'Outdoor']] as const).map(([p, l]) => {
+            <View style={[s.seg, { marginLeft: 'auto' }]}>
+              {([['', 'All'], ['indoor', 'Indoor'], ['outdoor', 'Outdoor']] as const).map(([p, l]) => {
                 const none = p !== '' && !places.includes(p);
                 return (
                   <Pressable accessibilityRole="button" key={l} disabled={none} accessibilityState={{ selected: place === p, disabled: none }}
@@ -485,10 +489,6 @@ export default function Book() {
                 );
               })}
             </View>
-            <Pressable accessibilityRole="button" onPress={nearMe} style={[s.segBtn, s.seg, loc && s.chipOn]} disabled={locBusy}>
-              {loc && <GradientFill />}
-              {locBusy ? <ActivityIndicator size="small" color={colors.muted} /> : <Text style={{ color: loc ? '#fff' : colors.muted, fontWeight: '600' }}>{loc ? '📍 Near me ✕' : '📍 Near me'}</Text>}
-            </Pressable>
           </View>
           {!!locMsg && <Text style={{ color: colors.warning, marginTop: 8 }}>{locMsg}</Text>}
           {!!clubName && (
