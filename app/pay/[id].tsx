@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Linking, Platform, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -161,19 +161,25 @@ export default function Pay() {
     return { courtId: b.court?.id, sport: b.sport?.slug, date, start: String(minutes), dur: String(dur) };
   })();
   const bookAgain = () => router.replace({ pathname: '/book/[courtId]', params: again });
+  // like the website's FileDrop: the attached box only shows once a screenshot is picked (to see it, add more or remove one);
+  // before that the one big button picks it, then the same button sends
   const proofPicker = (
     <>
       {files.length > 0 && (
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-          {files.map((f) => <Image key={f.uri} source={{ uri: f.uri }} style={{ width: 90, height: 120, borderRadius: radius.sm }} contentFit="cover" />)}
-        </View>
-      )}
-      {files.length === 0 ? (
-        <Button title="Choose screenshot" variant="ghost" onPress={() => choose()} />
-      ) : (
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {files.length < MAX_PROOFS && <View style={{ flex: 1 }}><Button title="Add another" variant="ghost" small onPress={() => choose(true)} /></View>}
-          <View style={{ flex: 1 }}><Button title="Remove" variant="ghost" small onPress={() => setFiles([])} /></View>
+        <View style={{ marginBottom: 4 }}>
+          <Pressable accessibilityRole="button" disabled={files.length >= MAX_PROOFS} onPress={() => choose(true)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.success, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 9 }}>
+            <Text style={{ color: colors.success, fontWeight: '800' }}>✓</Text>
+            <Text style={{ color: colors.success, fontWeight: '600', flex: 1 }}>{files.length === 1 ? 'File attached' : `${files.length} files attached`}</Text>
+            <Text style={{ color: colors.success, fontSize: 12, textDecorationLine: 'underline' }}>{files.length >= MAX_PROOFS ? 'Max reached' : 'Add more'}</Text>
+          </Pressable>
+          {files.map((f, i) => (
+            <View key={f.uri} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+              <Image source={{ uri: f.uri }} style={{ width: 32, height: 32, borderRadius: 4, borderWidth: 1, borderColor: colors.border }} contentFit="cover" />
+              <Text style={{ color: colors.text, flex: 1 }} numberOfLines={1}>{f.fileName || `Screenshot ${i + 1}`}</Text>
+              <Text accessibilityRole="button" onPress={() => setFiles((x) => x.filter((_, j) => j !== i))} style={{ color: colors.danger, fontSize: 12, paddingVertical: 6 }}>Remove</Text>
+            </View>
+          ))}
         </View>
       )}
       <View style={{ height: 14 }} />
@@ -198,6 +204,10 @@ export default function Pay() {
       {err && <Note kind="error">{err}</Note>}
     </>
   );
+  // one button for both steps, like the website: with no screenshot yet it opens the photo picker, then it sends
+  const sendButton = files.length === 0
+    ? <Button title="Add the screenshot" onPress={() => choose()} />
+    : <Button title={sending ? 'Sending...' : 'Send'} onPress={submit} loading={sending} />;
   // booked or waiting for approval: the ticket screen, like the website
   const ticket = (b.payment_status === 'paid' || b.payment_status === 'pending_review') && b.status !== 'cancelled';
   const extrasSum = (b.booking_extras ?? []).reduce((a: number, x: any) => a + Number(x.amount), 0);
@@ -247,7 +257,7 @@ export default function Pay() {
             <Text style={{ color: colors.text, fontWeight: '700' }}>Already sent the money?</Text>
             <Text style={{ color: colors.muted, marginBottom: 10 }}>Add the screenshot. If the time was taken, you get it all back.</Text>
             {proofPicker}
-            {files.length > 0 && <Button title="Send" onPress={submit} loading={sending} />}
+            {sendButton}
           </View>
         </View>
       )}
@@ -284,7 +294,7 @@ export default function Pay() {
             <Text style={{ color: colors.muted, marginBottom: 10 }}>3. Add it here and press Send.</Text>
 
             {proofPicker}
-            {files.length > 0 && <Button title="Send payment screenshot" onPress={submit} loading={sending} />}
+            {sendButton}
           </View>
           <PolicyNotice feePercent={Number(b.court?.late_fee_percent ?? 50)} />
         </View>

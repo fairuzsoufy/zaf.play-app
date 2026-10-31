@@ -46,7 +46,6 @@ export default function BookCourt() {
   const [err, setErr] = useState<string | null>(null);
   const [waitFor, setWaitFor] = useState<{ start: string; end: string } | null>(null);
   const [waiting, setWaiting] = useState<string[]>([]);
-  const [dragging, setDragging] = useState(false);
   // open game: other players join and pay their own spot (same options as the website)
   const [openMode, setOpenMode] = useState(host === '1');
   const [spots, setSpots] = useState(4);
@@ -55,7 +54,7 @@ export default function BookCourt() {
   const [whoCanJoin, setWhoCanJoin] = useState<'mixed' | 'men' | 'women'>('mixed');
   const [levels, setLevels] = useState<string[]>([]); // empty = any level; up to 2
   const [gameNote, setGameNote] = useState('');
-  const req = useRequestId(); // the page holds still while a booking bar is dragged
+  const req = useRequestId();
   // pressed the button as a guest: once logged in, carry on to Pay by itself (like the website's log-in sheet)
   const goAfterLogin = useRef(false);
 
@@ -211,7 +210,7 @@ export default function BookCourt() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-    <ScrollView scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} style={{ backgroundColor: colors.bg }}>
+    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }} style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: court.name }} />
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{court.name}</Text>
       <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 16 }}>
@@ -225,7 +224,6 @@ export default function BookCourt() {
         rules={rules} busy={busy} value={pick} minMinutes={minMinutes} maxDate={lastDay}
         onChange={(p) => { setPick(p); setErr(null); setWaitFor(null); }}
         onBusyTap={(start, end) => setWaitFor({ start, end })}
-        onDragging={setDragging}
       />
 
       {waitFor && (
