@@ -11,6 +11,7 @@ import { OwnerLangProvider, useT } from '@/lib/ownerLang';
 import { colors, fonts } from '@/lib/theme';
 import { Box, Loading, Muted, OwnerContext } from '@/components/owner';
 import { Button, Field, Note } from '@/components/ui';
+import { HeaderLogOut } from '@/components/HeaderLogOut';
 
 // The owner and staff side, like the website's /owner pages: only for owners and their team.
 // Owners and co-owners sign the partner agreement first, and add their InstaPay for branches moved to them.
@@ -72,6 +73,7 @@ function OwnerShell() {
           headerTitleStyle: { fontFamily: fonts.displayBold, fontSize: 19 },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.bg },
+          headerRight: () => <HeaderLogOut t={t} />,
         }}
       >
         <Stack.Screen name="index" options={title('Dashboard')} />

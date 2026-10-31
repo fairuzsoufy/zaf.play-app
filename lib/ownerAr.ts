@@ -836,4 +836,10 @@ export const AR: Record<string, string> = {
   'Add a court to {name}': 'إضافة ملعب إلى {name}',
   'Create Court': 'إنشاء الملعب',
   'Each time is 30 minutes. Tap as many as you like, then press Block. Tap a blocked time to open it again. Struck-through times are booked by players.': 'كل موعد مدته 30 دقيقة. اختر ما تريد ثم اضغط غلق. اضغط على موعد مغلق لفتحه مرة أخرى. المواعيد المشطوبة محجوزة من اللاعبين.',
+  // ---- log out (top bar) ----
+  'Log out': 'تسجيل الخروج',
+  'Do you want to log out?': 'هل تريد تسجيل الخروج؟',
+  'You can log in again any time.': 'يمكنك تسجيل الدخول مرة أخرى في أي وقت.',
+  'Stay logged in': 'البقاء مسجلاً',
+  'Yes, log out': 'نعم، تسجيل الخروج',
 }

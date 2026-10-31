@@ -10,6 +10,7 @@ import { isAdmin } from '@/lib/admin';
 import { colors, fonts } from '@/lib/theme';
 import { Loading } from '@/components/owner';
 import { Button, Field, Note } from '@/components/ui';
+import { HeaderLogOut } from '@/components/HeaderLogOut';
 
 // The admin side, like the website's /admin: only for admins, and only after the two-step code.
 export default function AdminLayout() {
@@ -30,6 +31,7 @@ export default function AdminLayout() {
         screenOptions={{
           headerStyle: { backgroundColor: colors.bg },
           headerTintColor: colors.text,
+          headerRight: () => <HeaderLogOut />,
           headerTitleStyle: { fontFamily: fonts.displayBold, fontSize: 19 },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.bg },
