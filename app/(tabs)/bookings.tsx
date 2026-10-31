@@ -196,10 +196,11 @@ export default function Bookings() {
                 <Text style={[s.sub, { fontSize: 12, color: colors.text }]} numberOfLines={1}>{b.court?.facility?.name ?? b.court?.name}</Text>
                 <Text style={[s.sub, { fontSize: 12, marginTop: 1 }]} numberOfLines={1}>{dateLabel(b.start_time)}</Text>
                 <Text style={[s.sub, { fontSize: 12, marginTop: 1, color: colors.text }]} numberOfLines={1}>{timeLabel(b.start_time)} → {timeLabel(b.end_time)}</Text>
-                <View style={{ alignSelf: 'flex-start', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 }}>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <View style={{ alignSelf: 'flex-end', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginBottom: 6 }}>
                   <Text style={{ color: bd.color, fontSize: 12, fontWeight: '700', textTransform: 'capitalize' }}>{bd.label}</Text>
                 </View>
-              </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {awaiting && <IconBtn icon="💳" label="Pay" color={colors.brandPinkBright} onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })} />}
                 {paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id) && <IconBtn icon="✏️" label="Modify" color={colors.primaryAlt} onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })} />}
@@ -207,6 +208,7 @@ export default function Bookings() {
                 {b.status !== 'cancelled' && new Date(b.end_time).getTime() > now && b.court?.maps_url && <IconBtn icon="📍" label="Map" color={colors.primaryAlt} onPress={() => Linking.openURL(b.court.maps_url)} />}
                 {tab === 'past' && b.court?.id && <IconBtn icon="🏟" label="Court" color={colors.primaryAlt} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })} />}
                 {tab === 'past' && b.payment_status === 'paid' && ['confirmed', 'completed'].includes(b.status) && !reviews[b.id] && <IconBtn icon="⭐" label="Rate" color={colors.warning} onPress={() => setRateId(rateId === b.id ? null : b.id)} />}
+              </View>
               </View>
             </Pressable>
             {awaiting && <Text style={{ color: colors.brandPinkBright, marginTop: 10, fontWeight: '600', fontSize: 13 }}>Send {egp(b.amount_due)} by InstaPay{holdLeft !== null ? ` · ${countdown(holdLeft)} left` : ''}</Text>}
