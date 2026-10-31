@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { SITE_URL, supabase } from '@/lib/supabase';
@@ -10,6 +10,14 @@ import { Button, Field } from './ui';
 // `bare`: no card or title, for when the Profile's Account tab opens it in place.
 export function ChangeEmail({ current, bare }: { current: string; bare?: boolean }) {
   useTheme();
+  // like the website: an account that only signs in with Google keeps the Google email, or Google sign-in would stop matching
+  const [googleOnly, setGoogleOnly] = useState(false);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const ids = data.user?.identities || [];
+      setGoogleOnly(ids.length > 0 && ids.every((i) => i.provider === 'google'));
+    });
+  }, []);
   const [email, setEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -38,11 +46,19 @@ export function ChangeEmail({ current, bare }: { current: string; bare?: boolean
       {!bare && <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20, marginBottom: 8 }}>Email</Text>}
       {!bare && <Text style={{ color: colors.muted, fontSize: 12 }}>Current email</Text>}
       {!bare && <Text style={{ color: colors.text, marginBottom: 12 }}>{current}</Text>}
-      <Field label="New email" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" placeholder="name@example.com" />
-      <Button title="Change email" onPress={save} loading={saving} disabled={!email.trim()} />
-      <Text style={{ color: msg ? colors.text : colors.muted, fontSize: msg ? 14 : 12, textAlign: 'center', marginTop: 8 }}>
-        {msg || 'We email a link to the new address to confirm it.'}
-      </Text>
+      {googleOnly ? (
+        <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 19 }}>
+          You sign in with Google, so your email is your Google email. To use another email, email support@zafplay.com.
+        </Text>
+      ) : (
+        <>
+          <Field label="New email" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" placeholder="name@example.com" />
+          <Button title="Change email" onPress={save} loading={saving} disabled={!email.trim()} />
+          <Text style={{ color: msg ? colors.text : colors.muted, fontSize: msg ? 14 : 12, textAlign: 'center', marginTop: 8 }}>
+            {msg || 'We email a link to the new address to confirm it.'}
+          </Text>
+        </>
+      )}
     </View>
   );
 }
