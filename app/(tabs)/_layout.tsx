@@ -1,4 +1,7 @@
-import { Tabs } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Tabs, useRouter } from 'expo-router';
+import { useAuth } from '@/lib/auth';
+import { getMyAccess } from '@/lib/access';
 import { View, type ColorValue } from 'react-native';
 import { Text } from '@/components/AppText';
 import { colors, fonts, useTheme } from '@/lib/theme';
@@ -28,6 +31,14 @@ export default function TabsLayout() {
   // Android draws under the system buttons: lift the tab bar above them, with some breathing room
   const insets = useSafeAreaInsets();
   const bottom = insets.bottom + 10;
+  // owners and their team have the whole player side plus their Dashboard, like the website's top bar
+  const router = useRouter();
+  const { session } = useAuth();
+  const [owner, setOwner] = useState(false);
+  useEffect(() => {
+    if (!session) return setOwner(false);
+    getMyAccess().then((a) => setOwner(a?.role === 'owner' || a?.role === 'staff'));
+  }, [session?.user.id]);
   return (
     <Tabs
       screenOptions={{
@@ -46,6 +57,9 @@ export default function TabsLayout() {
       <Tabs.Screen name="(games)" options={{ title: 'Games', tabBarIcon: icon('users'), tabBarLabel: label('Games') }} />
       <Tabs.Screen name="(bookings)" options={{ title: 'Bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('Bookings') }} />
       <Tabs.Screen name="(profile)" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
+      {/* opens the dashboard on top (it has its own top bar and no bottom bar, like the website), so Back returns here */}
+      <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', href: owner ? undefined : null, tabBarIcon: icon('list'), tabBarLabel: label('Dashboard') }}
+        listeners={{ tabPress: (e) => { e.preventDefault(); router.push('/owner'); } }} />
     </Tabs>
   );
 }

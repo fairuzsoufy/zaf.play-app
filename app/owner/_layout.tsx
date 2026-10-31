@@ -150,11 +150,12 @@ function InstapayGate() {
   );
 }
 
-// Back to the player side (the tabs), where the Profile tab has "Open the owner dashboard" to come back.
+// Back to the player side (the tabs, with the Dashboard tab to come back). Opened from that tab it just goes back;
+// straight after logging in (the dashboard is the first screen, like the website) it opens the tabs.
 function PlayerSideLink({ t }: { t: (s: string) => string }) {
   const router = useRouter();
   return (
-    <Pressable onPress={() => router.replace('/(tabs)/(play)')} hitSlop={10} accessibilityRole="button" style={{ marginRight: 12 }}>
+    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/(play)'))} hitSlop={10} accessibilityRole="button" style={{ marginRight: 12 }}>
       <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>‹ {t('Book & play')}</Text>
     </Pressable>
   );
