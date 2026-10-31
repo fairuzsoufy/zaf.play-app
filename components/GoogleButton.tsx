@@ -42,11 +42,14 @@ export function GoogleButton({ label = 'Continue with Google', onDone }: { label
       if (__DEV__) console.log('[google] return address', redirectTo, Constants.executionEnvironment, Constants.appOwnership);
       const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, skipBrowserRedirect: true } });
       if (error || !data?.url) throw new Error('start');
-      // Android: some default browsers (Edge) never hand the player back to the app, so use Chrome when it is there
+      // Android: Edge never hands the player back to the app (a blank page), so use Chrome when it is there,
+      // otherwise any other browser on the phone (Samsung Internet, Firefox...) before Edge
       let browserPackage: string | undefined;
       if (Platform.OS === 'android') {
         const b = await WebBrowser.getCustomTabsSupportingBrowsersAsync().catch(() => null);
-        if (b?.browserPackages.includes('com.android.chrome')) browserPackage = 'com.android.chrome';
+        const all = b?.browserPackages ?? [];
+        const notEdge = all.filter((p) => !p.startsWith('com.microsoft.emmx'));
+        browserPackage = all.includes('com.android.chrome') ? 'com.android.chrome' : notEdge[0];
       }
       const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo, { browserPackage });
       if (res.type !== 'success') { setBusy(false); return; } // closed the window
