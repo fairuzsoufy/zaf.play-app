@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useAuth } from '@/lib/auth';
 import { View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { SITE_URL, supabase } from '@/lib/supabase';
@@ -11,13 +12,10 @@ import { Button, Field } from './ui';
 export function ChangeEmail({ current, bare }: { current: string; bare?: boolean }) {
   useTheme();
   // like the website: an account that only signs in with Google keeps the Google email, or Google sign-in would stop matching
-  const [googleOnly, setGoogleOnly] = useState(false);
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const ids = data.user?.identities || [];
-      setGoogleOnly(ids.length > 0 && ids.every((i) => i.provider === 'google'));
-    });
-  }, []);
+  // read straight from the session (no async check), so the form never flashes before the Google note replaces it
+  const { session } = useAuth();
+  const ids = session?.user.identities ?? [];
+  const googleOnly = ids.length > 0 && ids.every((i) => i.provider === 'google');
   const [email, setEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
