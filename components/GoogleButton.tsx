@@ -3,6 +3,7 @@ import { Platform, Pressable, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import Svg, { Path } from 'react-native-svg';
 import * as Linking from 'expo-linking';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -32,8 +33,13 @@ export function GoogleButton({ label = 'Continue with Google', onDone }: { label
     setBusy(true);
     setError('');
     try {
-      // where Google sends the player back: exp://…/--/auth/google in Expo Go, zafplay://auth/google in the app
-      const redirectTo = Linking.createURL('auth/google');
+      // where Google sends the player back: exp://…/--/auth/google in Expo Go, zafplay://auth/google in the app.
+      // In Expo Go it is built from the project's own link (Constants.linkingUri): on SDK 58 createURL could hand back
+      // zafplay://, which Android can't deliver to Expo Go, so the Google window was left on a blank page
+      const expoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient || Constants.appOwnership === 'expo';
+      const base = expoGo && Constants.linkingUri ? Constants.linkingUri.replace(/\/*$/, '/') : '';
+      const redirectTo = base ? `${base.includes('/--/') ? base : `${base}--/`}auth/google` : Linking.createURL('auth/google');
+      if (__DEV__) console.log('[google] return address', redirectTo, Constants.executionEnvironment, Constants.appOwnership);
       const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, skipBrowserRedirect: true } });
       if (error || !data?.url) throw new Error('start');
       // Android: some default browsers (Edge) never hand the player back to the app, so use Chrome when it is there
