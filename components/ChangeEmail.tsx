@@ -14,8 +14,9 @@ export function ChangeEmail({ current, bare }: { current: string; bare?: boolean
   // like the website: an account that only signs in with Google keeps the Google email, or Google sign-in would stop matching
   // read straight from the session (no async check), so the form never flashes before the Google note replaces it
   const { session } = useAuth();
-  const ids = session?.user.identities ?? [];
-  const googleOnly = ids.length > 0 && ids.every((i) => i.provider === 'google');
+  // app_metadata.providers is inside the login token, so it's there on the very first render (identities can arrive later)
+  const providers: string[] = session?.user.app_metadata?.providers ?? (session?.user.app_metadata?.provider ? [session.user.app_metadata.provider] : []);
+  const googleOnly = providers.length > 0 && providers.every((p) => p === 'google');
   const [email, setEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -46,7 +47,7 @@ export function ChangeEmail({ current, bare }: { current: string; bare?: boolean
       {!bare && <Text style={{ color: colors.text, marginBottom: 12 }}>{current}</Text>}
       {googleOnly ? (
         <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 19 }}>
-          You sign in with Google, so your email is your Google email. To use another email, email support@zafplay.com.
+          You sign in with Google, so your email is your Google email. To use another email, delete your account below and sign up again with the new email.
         </Text>
       ) : (
         <>

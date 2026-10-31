@@ -35,6 +35,9 @@ export default function Profile() {
   const [completing, setCompleting] = useState(false); // just signed in with Google: mobile, gender and username still needed
   const { session, loading: authLoading } = useAuth();
   const uid = session?.user.id;
+  // signs in with Google only (from the login token, so it's known on the first render): no password to change, email stays the Google one
+  const providers: string[] = session?.user.app_metadata?.providers ?? [];
+  const googleOnly = providers.length > 0 && providers.every((p) => p === 'google');
   const [me, setMe] = useState<any>(null);
   const [ref, setRef] = useState<any>(null);
   const [credit, setCredit] = useState<number | null>(null);
@@ -224,9 +227,11 @@ export default function Profile() {
                 <ChangeEmail current={me.email} bare />
               </Row>
             )}
-            <Row icon="lock" title="Password" value="Change your password" open={open === 'password'} onPress={() => toggle('password')} last={!(credit !== null && ledger.length > 0)}>
-              <LoginSecurity bare />
-            </Row>
+            {!googleOnly && (
+              <Row icon="lock" title="Password" value="Change your password" open={open === 'password'} onPress={() => toggle('password')} last={!(credit !== null && ledger.length > 0)}>
+                <LoginSecurity bare />
+              </Row>
+            )}
             {credit !== null && ledger.length > 0 && (
               <Row icon="wallet" title="Credit" value={egp(credit)} open={open === 'credit'} onPress={() => toggle('credit')} last>
                 <Text style={{ color: colors.muted, fontSize: 12 }}>Taken off your next booking automatically.</Text>
