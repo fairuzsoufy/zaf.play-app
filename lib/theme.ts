@@ -1,4 +1,4 @@
-import 'expo-sqlite/localStorage/install';
+import '@/lib/localStorage';
 import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Appearance } from 'react-native';
 

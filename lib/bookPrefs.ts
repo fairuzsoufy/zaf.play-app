@@ -1,4 +1,4 @@
-import 'expo-sqlite/localStorage/install';
+import '@/lib/localStorage';
 import { supabase } from '@/lib/supabase';
 import { isInstapay } from '@/lib/payment';
 
