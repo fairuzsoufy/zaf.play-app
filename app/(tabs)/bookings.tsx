@@ -15,6 +15,27 @@ import { RefundTracker, refundInfo } from '@/components/RefundTracker';
 import { RefundChoice } from '@/components/RefundChoice';
 import { PolicyNotice } from '@/components/PolicyNotice';
 import { LoggedOutPeek } from '@/components/LoggedOutPeek';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const SPORT_LOOK: Record<string, [string, [string, string]]> = {
+  padel: ['🎾', ['#2D5BFF', '#6A3BD6']], tennis: ['🎾', ['#0F9F63', '#2D5BFF']], football: ['⚽', ['#E0206F', '#5A2A8A']],
+  basketball: ['🏀', ['#FF8A3D', '#E0206F']], volleyball: ['🏐', ['#FFB547', '#2D5BFF']], squash: ['🏸', ['#6A3BD6', '#E0206F']],
+};
+const sportKey = (slug?: string) => Object.keys(SPORT_LOOK).find((k) => (slug || '').includes(k));
+const sportEmoji = (slug?: string) => SPORT_LOOK[sportKey(slug) ?? '']?.[0] ?? '🏟';
+const sportGradient = (slug?: string): [string, string] => SPORT_LOOK[sportKey(slug) ?? '']?.[1] ?? ['#2D5BFF', '#E0206F'];
+const hoursLabel = (a: string, b: string) => { const h = (new Date(b).getTime() - new Date(a).getTime()) / 3600000; return `${Number.isInteger(h) ? h : h.toFixed(1)} h`; };
+
+function IconBtn({ icon, label, color, onPress }: { icon: string; label: string; color: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={6} onPress={onPress} style={{ alignItems: 'center' }}>
+      <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color, fontSize: 16, fontWeight: '800' }}>{icon}</Text>
+      </View>
+      <Text style={{ color: colors.muted, fontSize: 10, marginTop: 3 }}>{label}</Text>
+    </Pressable>
+  );
+}
 
 type Tab = 'upcoming' | 'past' | 'cancelled';
 
@@ -49,6 +70,7 @@ export default function Bookings() {
   const [tab, setTab] = useState<Tab>('upcoming');
   const [now, setNow] = useState(Date.now());
   const [cancelId, setCancelId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null); // tapped card shows court, price and links
   const [rateId, setRateId] = useState<string | null>(null);
   const uid = session?.user.id;
 
@@ -164,18 +186,38 @@ export default function Bookings() {
 
         return (
           <View style={s.card}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.title}>{b.court?.name}</Text>
-                <Text style={s.sub}>{b.sport?.name} · {b.court?.is_indoor ? 'Indoor' : 'Outdoor'} · {b.court?.facility?.name}{b.court?.facility?.city ? `, ${b.court.facility.city}` : ''}</Text>
-                <Text style={[s.sub, { color: colors.text, marginTop: 6 }]}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} – {timeLabel(b.end_time)}</Text>
+            {/* compact card: sport square, title, time, status pill and the main actions as icon buttons */}
+            <Pressable accessibilityRole="button" onPress={() => setOpenId(openId === b.id ? null : b.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={s.sq}>
+                <LinearGradient colors={sportGradient(b.sport?.slug)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+                <Text style={{ fontSize: 24 }}>{sportEmoji(b.sport?.slug)}</Text>
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={s.title} numberOfLines={1}>{b.sport?.name} · {b.court?.facility?.name ?? b.court?.name}</Text>
+                <Text style={s.sub} numberOfLines={1}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} · {hoursLabel(b.start_time, b.end_time)}</Text>
+                <View style={{ alignSelf: 'flex-start', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 }}>
+                  <Text style={{ color: bd.color, fontSize: 12, fontWeight: '700', textTransform: 'capitalize' }}>{bd.label}</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {awaiting && <IconBtn icon="💳" label="Pay" color={colors.brandPinkBright} onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })} />}
+                {paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id) && <IconBtn icon="✏️" label="Modify" color={colors.primaryAlt} onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })} />}
+                {canCancel && <IconBtn icon="✕" label="Cancel" color={colors.danger} onPress={() => setCancelId(cancelId === b.id ? null : b.id)} />}
+                {!awaiting && !(paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id)) && !canCancel && b.court?.maps_url && b.status !== 'cancelled' && <IconBtn icon="📍" label="Map" color={colors.primaryAlt} onPress={() => Linking.openURL(b.court.maps_url)} />}
+              </View>
+            </Pressable>
+            {awaiting && <Text style={{ color: colors.brandPinkBright, marginTop: 10, fontWeight: '600', fontSize: 13 }}>Send {egp(b.amount_due)} by InstaPay{holdLeft !== null ? ` · ${countdown(holdLeft)} left` : ''}</Text>}
+            {openId === b.id && (
+              <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 }}>
+                <Text style={s.sub}>{b.court?.name} · {b.court?.is_indoor ? 'Indoor' : 'Outdoor'}{b.court?.facility?.city ? ` · ${b.court.facility.city}` : ''} · {timeLabel(b.start_time)} – {timeLabel(b.end_time)}</Text>
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>{egp(Number(b.total_price) - Number(b.discount_amount || 0))}</Text>
                 {(b.booking_extras ?? []).length > 0 && <Text style={s.sub}>Extras: {b.booking_extras.map((x: any) => `${x.name} × ${x.qty}`).join(', ')}</Text>}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+                  {b.court?.id && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
+                  {b.court?.maps_url && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
+                </View>
               </View>
-              <View style={{ alignSelf: 'flex-start', borderRadius: 999, borderWidth: 1, borderColor: bd.color, paddingHorizontal: 10, paddingVertical: 3 }}>
-                <Text style={{ color: bd.color, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' }}>{bd.label}</Text>
-              </View>
-            </View>
+            )}
 
             {summary && !tracked && <Text style={{ color: colors.warning, marginTop: 10 }}>{summary}</Text>}
             {tracked && (
@@ -189,12 +231,6 @@ export default function Bookings() {
               <Text style={{ color: colors.danger, marginTop: 8 }}>Your cancellation request was declined{b.cancel_request_decline_reason ? `: ${b.cancel_request_decline_reason}` : '.'} Your booking stays as it is.</Text>
             )}
 
-            {awaiting && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ color: colors.warning, marginBottom: 8 }}>Send {egp(b.amount_due)} by InstaPay{holdLeft !== null ? ` · ${countdown(holdLeft)} left` : ''}</Text>
-                <Button title="Pay now" onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })} />
-              </View>
-            )}
             {review && !requestOpen(b) && (
               <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })} style={s.review}>
                 <Text style={{ color: colors.text, flex: 1 }}>⏳ We received your payment screenshot. It will be approved within {REVIEW_MINUTES} minutes.</Text>
@@ -220,17 +256,6 @@ export default function Bookings() {
                 <Button small title="Change" onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })} />
               </View>
             )}
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
-              {b.court?.id && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
-              {b.court?.maps_url && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
-              {paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id) && (
-                <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })}><Text style={s.link}>✏️ Modify booking</Text></Pressable>
-              )}
-              {canCancel && cancelId !== b.id && (
-                <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => setCancelId(b.id)}><Text style={[s.link, { color: colors.danger }]}>{awaiting ? 'Cancel booking' : 'Request cancellation'}</Text></Pressable>
-              )}
-            </View>
 
             {cancelId === b.id && <CancelBox b={b} onClose={() => setCancelId(null)} onDone={(toCancelled) => { setCancelId(null); if (toCancelled) setTab('cancelled'); load(); }} />}
 
@@ -375,8 +400,9 @@ function CancelBox({ b, onClose, onDone }: { b: any; onClose: () => void; onDone
 const useS = themed(() => StyleSheet.create({
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
   tabOn: { borderColor: 'transparent', overflow: 'hidden' },
-  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.accent },
-  title: { color: colors.text, fontFamily: fonts.display, fontSize: 20 },
+  card: { backgroundColor: colors.card, borderRadius: 20, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+  sq: { width: 56, height: 56, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  title: { color: colors.text, fontWeight: '700', fontSize: 16 },
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
   action: { paddingVertical: 4, paddingRight: 4 },
