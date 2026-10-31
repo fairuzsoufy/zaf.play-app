@@ -18,10 +18,12 @@ const icon = (name: IconName) => ({ color, focused }: { color: ColorValue; focus
 );
 
 // The label drawn by us: the slanted font is wider than Android measures it, so the default label gets cut to "Pro..."
-// and short words lose their last letter on Samsung ("Pla"): a trailing space and a minimum width keep it whole
+// and short words lose their last letter on Samsung ("Pla"): a trailing space keeps it whole. The label takes the
+// tab's whole width and shrinks a little when it would not fit (owners have five tabs: "Bookings", "Dashboard")
 const label = (text: string) => ({ color, focused }: { color: ColorValue; focused: boolean }) => (
-  <View style={{ alignItems: 'center' }}>
-  <Text allowFontScaling={false} numberOfLines={1} style={{ color, fontFamily: fonts.displaySemi, fontSize: 12, marginTop: 2, paddingHorizontal: 6, minWidth: 64, textAlign: 'center' }}>{text}{' '}</Text>
+  <View style={{ alignItems: 'center', alignSelf: 'stretch' }}>
+  <Text allowFontScaling={false} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}
+    style={{ color, fontFamily: fonts.displaySemi, fontSize: 12, marginTop: 2, paddingHorizontal: 2, alignSelf: 'stretch', textAlign: 'center' }}>{text}{' '}</Text>
     <View style={{ width: 26, height: 3, borderRadius: 2, marginTop: 3, overflow: 'hidden', opacity: focused ? 1 : 0 }}>{focused && <GradientFill />}</View>
   </View>
 );
