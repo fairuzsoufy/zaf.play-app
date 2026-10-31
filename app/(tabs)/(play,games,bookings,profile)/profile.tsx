@@ -223,9 +223,10 @@ export default function Profile() {
                   <GenderField value={gender} onChange={setGender} />
                   <UsernameField value={username} onChange={setUsername} onStatus={setStatus} current={me.username || ''}
                     hint="Friends use it to find you for teams and games. 3–20 characters: letters, numbers, _ and ." />
-                  <Button title="Save changes" onPress={save} loading={saving} />
-                  <View style={{ height: 8 }} />
-                  <Button title="Cancel" variant="ghost" onPress={cancelEdit} />
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+                    <Button small title="Cancel" variant="ghost" onPress={cancelEdit} />
+                    <Button small title="Save changes" onPress={save} loading={saving} />
+                  </View>
                 </>
               )}
             </Row>
