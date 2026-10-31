@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useRouter } from 'expo-router';
@@ -9,7 +9,8 @@ import { Button, Field, Note, PressableScale } from '@/components/ui';
 // "Delete my account" at the bottom of a player's profile (the App Store and Google Play require it in the app).
 // The database decides whether it is allowed (no upcoming bookings, games, payments or refunds in progress)
 // and returns its own message if not.
-export function DeleteAccount() {
+// `beside`: another small button shown next to it (Profile puts "Log out of all devices" there).
+export function DeleteAccount({ beside }: { beside?: ReactNode }) {
   const s = useS();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -39,9 +40,12 @@ export function DeleteAccount() {
   return (
     <View style={s.wrap}>
       {!open ? (
-        <PressableScale onPress={() => setOpen(true)} accessibilityRole="button" style={s.open}>
-          <Text style={s.openText}>Delete my account</Text>
-        </PressableScale>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+          {beside}
+          <PressableScale onPress={() => setOpen(true)} accessibilityRole="button" style={s.open}>
+            <Text style={s.openText}>Delete my account</Text>
+          </PressableScale>
+        </View>
       ) : (
         <View style={s.box}>
           <Text style={s.title}>Delete my account?</Text>

@@ -36,8 +36,8 @@ export function ChangeEmail({ current, bare }: { current: string; bare?: boolean
   return (
     <View style={bare ? { paddingTop: 4 } : { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border }}>
       {!bare && <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20, marginBottom: 8 }}>Email</Text>}
-      <Text style={{ color: colors.muted, fontSize: 12 }}>Current email</Text>
-      <Text style={{ color: colors.text, marginBottom: 12 }}>{current}</Text>
+      {!bare && <Text style={{ color: colors.muted, fontSize: 12 }}>Current email</Text>}
+      {!bare && <Text style={{ color: colors.text, marginBottom: 12 }}>{current}</Text>}
       <Field label="New email" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" placeholder="name@example.com" />
       <Button title="Change email" onPress={save} loading={saving} disabled={!email.trim()} />
       <Text style={{ color: msg ? colors.text : colors.muted, fontSize: msg ? 14 : 12, textAlign: 'center', marginTop: 8 }}>

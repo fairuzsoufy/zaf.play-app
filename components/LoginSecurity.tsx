@@ -7,6 +7,14 @@ import { passwordProblem } from '@/lib/validate';
 import { colors, fonts, radius, useTheme } from '@/lib/theme';
 import { Button, Field, Note } from './ui';
 
+// "Log out of all devices", always asked first. Like the website, logging out lands on the Book screen.
+export function askLogOutEverywhere(router: ReturnType<typeof useRouter>) {
+  Alert.alert('Log out of all devices?', 'You will be logged out on every phone, computer and the Zaf Play app, including this one. You can log in again straight away.', [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Yes, log out everywhere', style: 'destructive', onPress: () => { router.replace('/'); supabase.auth.signOut({ scope: 'global' }); } },
+  ]);
+}
+
 // Profile → Password, like the website: type the current password, then the new one. Changing it logs out
 // every other phone and browser, so a login someone else may have stays closed.
 // `bare`: no card or title, for when the Profile's Account tab opens it in place.
@@ -46,14 +54,6 @@ export function LoginSecurity({ bare }: { bare?: boolean } = {}) {
     }
   }
 
-  function logOutEverywhere() {
-    Alert.alert('Log out of all devices?', 'You will be logged out on every phone, computer and the Zaf Play app, including this one. You can log in again straight away.', [
-      { text: 'Cancel', style: 'cancel' },
-      // like the website: logging out lands on the Book screen
-      { text: 'Yes, log out everywhere', style: 'destructive', onPress: () => { router.replace('/'); supabase.auth.signOut({ scope: 'global' }); } },
-    ]);
-  }
-
   return (
     <View style={bare ? { paddingTop: 4 } : { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border }}>
       {!bare && <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20, marginBottom: 8 }}>Password</Text>}
@@ -69,8 +69,8 @@ export function LoginSecurity({ bare }: { bare?: boolean } = {}) {
         </>
       )}
       {msg && <View style={{ marginTop: 10 }}><Note kind={msg.ok ? 'ok' : 'error'}>{msg.text}</Note></View>}
-      <View style={{ height: 10 }} />
-      <Button small variant="ghost" title="Log out of all devices" onPress={logOutEverywhere} />
+      {!bare && <View style={{ height: 10 }} />}
+      {!bare && <Button small variant="ghost" title="Log out of all devices" onPress={() => askLogOutEverywhere(router)} />}
     </View>
   );
 }

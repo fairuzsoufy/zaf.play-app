@@ -14,7 +14,7 @@ import { DeleteAccount } from '@/components/DeleteAccount';
 import { AccountStatus, BlockedNotice } from '@/components/BlockedNotice';
 import { FriendsCard } from '@/components/Friends';
 import { ChangeEmail } from '@/components/ChangeEmail';
-import { LoginSecurity } from '@/components/LoginSecurity';
+import { askLogOutEverywhere, LoginSecurity } from '@/components/LoginSecurity';
 import { ThemePicker } from '@/components/ThemeToggle';
 import { nextBadgeText, ProgressRing, StatsPanel, usePlayerStats } from '@/components/PlayerStats';
 import { LegalLinks } from '@/components/LegalLinks';
@@ -121,6 +121,12 @@ export default function Profile() {
   const link = ref?.code ? `${SITE_URL}/signup?ref=${ref.code}` : '';
   const shareText = `Join me on Zaf Play to book courts and play together. Use my code ${ref?.code} and get ${ref?.percent}% off your first booking: ${link}`;
   const initials = (me.full_name || me.email || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w: string) => w[0]?.toUpperCase()).join('');
+  const logOutAll = (
+    <PressableScale onPress={() => askLogOutEverywhere(router)} accessibilityRole="button"
+      style={{ paddingHorizontal: 20, paddingVertical: 10, borderRadius: radius.md, backgroundColor: colors.cardAlt }}>
+      <Text style={{ color: colors.text, fontWeight: '700' }}>Log out of all devices</Text>
+    </PressableScale>
+  );
   const toggle = (s: Section) => { setOpen(open === s ? null : s); if (s !== 'details') setEditing(false); };
 
   return (
@@ -219,7 +225,7 @@ export default function Profile() {
                 <ChangeEmail current={me.email} bare />
               </Row>
             )}
-            <Row icon="lock" title="Password" value="Change, or log out everywhere" open={open === 'password'} onPress={() => toggle('password')} last={!(credit !== null && ledger.length > 0)}>
+            <Row icon="lock" title="Password" value="Change your password" open={open === 'password'} onPress={() => toggle('password')} last={!(credit !== null && ledger.length > 0)}>
               <LoginSecurity bare />
             </Row>
             {credit !== null && ledger.length > 0 && (
@@ -240,7 +246,7 @@ export default function Profile() {
 
           <ThemePicker />
           <Button title="Log out" onPress={logOut} />
-          {isPlayer && <DeleteAccount />}
+          {isPlayer ? <DeleteAccount beside={logOutAll} /> : <View style={{ marginTop: 18, alignItems: 'center' }}>{logOutAll}</View>}
           <LegalLinks style={{ marginTop: 14 }} />
         </View>
       )}
