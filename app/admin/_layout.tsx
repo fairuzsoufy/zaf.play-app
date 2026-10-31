@@ -20,7 +20,7 @@ export default function AdminLayout() {
   useEffect(() => {
     if (loading) return;
     if (!session) return router.replace('/login');
-    isAdmin(session.user.id).then((a) => (a ? setOk(true) : router.replace('/')));
+    isAdmin(session.user.id).then((a) => (a ? setOk(true) : router.replace('/(tabs)/(play)')));
   }, [loading, session?.user.id]);
 
   if (!ok) return <Loading />;

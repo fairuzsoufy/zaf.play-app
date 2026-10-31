@@ -135,7 +135,7 @@ export default function Games() {
             </Pressable>
           ))}
         </View>
-        <View style={{ marginTop: 14 }}><Button title="+ Host a game" onPress={() => router.push('/')} /></View>
+        <View style={{ marginTop: 14 }}><Button title="+ Host a game" onPress={() => router.push('/(tabs)/(play)')} /></View>
         {session && <View style={{ marginTop: 8 }}><Button variant="ghost" title="My games" onPress={() => pickTab('mine')} /></View>}
       </ScrollView>
     );
@@ -145,7 +145,7 @@ export default function Games() {
     <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}>
       <Text style={{ color: colors.muted, marginBottom: 12 }}>Join a game with other players, or host your own and share the cost.</Text>
-      <Button title="+ Host a game" onPress={() => router.push('/')} />
+      <Button title="+ Host a game" onPress={() => router.push('/(tabs)/(play)')} />
       <Text style={{ color: colors.muted, fontSize: 12, marginTop: 6, marginBottom: 14 }}>Pick a court, then turn on “Invite players to share the cost”.</Text>
 
       {gameInvites.length > 0 && tab !== 'mine' && (

@@ -57,7 +57,7 @@ export default function ForgotPassword() {
     await supabase.auth.signOut({ scope: 'others' });
     setBusy(false);
     setStep('done');
-    setTimeout(() => router.replace('/'), 1500);
+    setTimeout(() => router.replace('/(tabs)/(play)'), 1500);
   }
 
   return (

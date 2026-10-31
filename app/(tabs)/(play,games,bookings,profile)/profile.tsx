@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, View } from 'react-native';
 import { Text } from '@/components/AppText';
-import { LoginForm } from '../login';
+import { LoginForm } from '@/app/login';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -106,7 +106,7 @@ export default function Profile() {
   function logOut() {
     Alert.alert('Do you want to log out?', 'You can log in again any time.', [
       { text: 'Stay logged in', style: 'cancel' },
-      { text: 'Yes, log out', style: 'destructive', onPress: () => { router.replace('/'); supabase.auth.signOut({ scope: 'local' }); } },
+      { text: 'Yes, log out', style: 'destructive', onPress: () => { router.replace('/(tabs)/(play)'); supabase.auth.signOut({ scope: 'local' }); } },
     ]);
   }
 

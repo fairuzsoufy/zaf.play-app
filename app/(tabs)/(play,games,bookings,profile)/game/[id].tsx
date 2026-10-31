@@ -229,7 +229,7 @@ export default function OpenGame() {
             {g.is_host ? 'The payment was not sent in time, so the court was released and nobody was charged.' : 'The host did not pay in time, so the court was released and this game is cancelled.'}
           </Note>
           <Button title={g.is_host ? 'Book a new slot →' : 'Find another game →'}
-            onPress={() => g.is_host ? router.replace({ pathname: '/book/[courtId]', params: { courtId: g.court_id, sport: g.sport_slug, host: '1' } }) : router.replace('/games')} />
+            onPress={() => g.is_host ? router.replace({ pathname: '/book/[courtId]', params: { courtId: g.court_id, sport: g.sport_slug, host: '1' } }) : router.replace('/(tabs)/(games)/games')} />
         </View>
       )}
       {spotTimeUp && <View style={{ marginTop: 14 }}><Note kind="error">⏰ Your time ran out and your spot was released. Nothing was charged. Press Join below to get a new spot if there is still room.</Note></View>}
@@ -333,7 +333,7 @@ export default function OpenGame() {
             <Text style={{ color: colors.text, textAlign: 'center' }}>
               This game is for {rule === 'men' ? 'men' : 'women'} only.{needGender ? ' Choose male or female in your Profile to join.' : ''}
             </Text>
-            {needGender && <View style={{ marginTop: 8 }}><Button small variant="ghost" title="Open my profile" onPress={() => router.push({ pathname: '/profile', params: { edit: '1' } })} /></View>}
+            {needGender && <View style={{ marginTop: 8 }}><Button small variant="ghost" title="Open my profile" onPress={() => router.push({ pathname: '/(tabs)/(profile)/profile', params: { edit: '1' } })} /></View>}
           </View>
         )}
         {!active && g.status === 'open' && !hostTimeUp && !wrongGender && !needGender && (

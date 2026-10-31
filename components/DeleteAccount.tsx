@@ -28,7 +28,7 @@ export function DeleteAccount({ beside }: { beside?: ReactNode }) {
       return;
     }
     await supabase.auth.signOut();
-    router.replace('/');
+    router.replace('/(tabs)/(play)');
   }
 
   function close() {

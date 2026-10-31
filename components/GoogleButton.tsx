@@ -56,9 +56,9 @@ export function GoogleButton({ label = 'Continue with Google', onDone }: { label
       setBusy(false);
       onDone?.();
       if ((profile as any)?.role === 'player' && (!(profile as any)?.phone || !(profile as any)?.gender || !(profile as any)?.username)) {
-        router.replace({ pathname: '/profile', params: { edit: '1', complete: '1' } });
+        router.replace({ pathname: '/(tabs)/(profile)/profile', params: { edit: '1', complete: '1' } });
       } else if (router.canGoBack()) router.back();
-      else router.replace('/');
+      else router.replace('/(tabs)/(play)');
     } catch (e: any) {
       setBusy(false);
       setError(e?.message === 'start' ? 'Could not start Google sign-in. Please try again.' : 'Google sign-in was cancelled or did not work. Please try again.');

@@ -91,7 +91,7 @@ export default function Signup() {
     if (error) return setErr(friendly(error.message));
     if (data.user && data.user.identities && data.user.identities.length === 0) return setErr('This email is already registered. Please log in instead.');
     if (!data.session) return setSentTo(email.trim().toLowerCase());
-    router.replace('/');
+    router.replace('/(tabs)/(play)');
   }
 
   async function resend(): Promise<string | null> {
@@ -108,7 +108,7 @@ export default function Signup() {
         <Text style={{ color: colors.muted, marginBottom: 14 }}>
           We sent a code to {sentTo}. Type it here to confirm your account.
         </Text>
-        <CodeEntry type="signup" email={sentTo} onResend={resend} onVerified={() => router.replace('/')} />
+        <CodeEntry type="signup" email={sentTo} onResend={resend} onVerified={() => router.replace('/(tabs)/(play)')} />
         <Pressable accessibilityRole="button" onPress={() => setSentTo('')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 16 }}>Wrong email? Go back</Text></Pressable>
       </ScrollView>
     );

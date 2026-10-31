@@ -11,7 +11,7 @@ import { Button, Field, Note } from './ui';
 export function askLogOutEverywhere(router: ReturnType<typeof useRouter>) {
   Alert.alert('Log out of all devices?', 'You will be logged out on every phone, computer and the Zaf Play app, including this one. You can log in again straight away.', [
     { text: 'Cancel', style: 'cancel' },
-    { text: 'Yes, log out everywhere', style: 'destructive', onPress: () => { router.replace('/'); supabase.auth.signOut({ scope: 'global' }); } },
+    { text: 'Yes, log out everywhere', style: 'destructive', onPress: () => { router.replace('/(tabs)/(play)'); supabase.auth.signOut({ scope: 'global' }); } },
   ]);
 }
 

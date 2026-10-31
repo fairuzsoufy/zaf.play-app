@@ -226,7 +226,7 @@ export function StatsPanel({ stats, trust, days, credit }: { stats: Stats | null
       {days && <MonthBars played={days} />}
       {stats.games === 0 && (
         <Text style={{ color: colors.text, textAlign: 'center', marginTop: 10 }}>
-          Your first game unlocks your first badge. <Link href="/" style={{ color: colors.primaryAlt, textDecorationLine: 'underline' }}>Find a court</Link>
+          Your first game unlocks your first badge. <Link href="/(tabs)/(play)" style={{ color: colors.primaryAlt, textDecorationLine: 'underline' }}>Find a court</Link>
         </Text>
       )}
       <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 15, marginTop: 14, marginBottom: 6 }}>

@@ -188,8 +188,8 @@ export function BookingTicket({ b, mode, now, reviewLeft, isChange }: { b: any; 
           {!waiting && maps && <SmallButton icon="pin" tint="#0f9f63" title="Directions" onPress={() => Linking.openURL(maps)} />}
           {canChange && <SmallButton icon="edit" tint="#f0a020" title="Change" onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })} />}
           {!waiting && <SmallButton icon="calendar" tint="#2d5bff" title="Add to calendar" onPress={() => Linking.openURL(calendarUrl(b))} />}
-          {(waiting || !canChange) && <SmallButton icon="list" tint="#f0a020" title="My bookings" onPress={() => router.replace('/bookings')} />}
-          <SmallButton icon="home" tint="#e0206f" title="Home" onPress={() => router.replace('/')} />
+          {(waiting || !canChange) && <SmallButton icon="list" tint="#f0a020" title="My bookings" onPress={() => router.replace('/(tabs)/(bookings)/bookings')} />}
+          <SmallButton icon="home" tint="#e0206f" title="Home" onPress={() => router.replace('/(tabs)/(play)')} />
         </View>
       </Rise>
     </View>

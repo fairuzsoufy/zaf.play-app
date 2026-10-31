@@ -44,7 +44,7 @@ function OwnerShell() {
 
   // not an owner or staff: back to the player side
   useEffect(() => {
-    if (access === null || (access && access.role !== 'owner' && access.role !== 'staff')) router.replace('/');
+    if (access === null || (access && access.role !== 'owner' && access.role !== 'staff')) router.replace('/(tabs)/(play)');
   }, [access]);
 
   // the partner agreement comes first for the owner and co-owners (only once one is published)

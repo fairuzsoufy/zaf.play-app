@@ -124,7 +124,7 @@ export default function Bookings() {
   if (authLoading || (uid && loading)) return <Skeleton />;
   if (!uid) {
     return (
-      <LoggedOutPeek onLogin={() => router.navigate('/profile')} />
+      <LoggedOutPeek onLogin={() => router.navigate('/(tabs)/(profile)/profile')} />
     );
   }
 
@@ -151,7 +151,7 @@ export default function Bookings() {
         </View>
       }
       ListEmptyComponent={tab === 'upcoming'
-        ? <EmptyState icon="calendar" title="No upcoming bookings" text="Find a court near you and book your next game in a minute." action="Find a court" onAction={() => router.push('/')} />
+        ? <EmptyState icon="calendar" title="No upcoming bookings" text="Find a court near you and book your next game in a minute." action="Find a court" onAction={() => router.push('/(tabs)/(play)')} />
         : <EmptyState icon="clock" title={tab === 'past' ? 'No played games yet' : 'No cancelled bookings'} text={tab === 'past' ? 'Games you play show up here.' : 'Good news, nothing was cancelled.'} />}
       renderItem={({ item: b }) => {
         const bd = badge(holdExpired(b) ? { ...b, status: 'cancelled' } : b, now);

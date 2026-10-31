@@ -31,6 +31,7 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false, // each tab's own stack draws the header
         headerStyle: { backgroundColor: colors.bg },
         headerTintColor: colors.text,
         headerShadowVisible: false,
@@ -41,10 +42,10 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.muted,
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Play', headerShown: false, tabBarIcon: icon('ball'), tabBarLabel: label('Play') }} />
-      <Tabs.Screen name="games" options={{ title: 'Games', tabBarIcon: icon('users'), tabBarLabel: label('Games') }} />
-      <Tabs.Screen name="bookings" options={{ title: 'Bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('Bookings') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
+      <Tabs.Screen name="(play)" options={{ title: 'Play', tabBarIcon: icon('ball'), tabBarLabel: label('Play') }} />
+      <Tabs.Screen name="(games)" options={{ title: 'Games', tabBarIcon: icon('users'), tabBarLabel: label('Games') }} />
+      <Tabs.Screen name="(bookings)" options={{ title: 'Bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('Bookings') }} />
+      <Tabs.Screen name="(profile)" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
     </Tabs>
   );
 }

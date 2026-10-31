@@ -48,7 +48,7 @@ export function LoginForm({ embedded = false, hero }: { embedded?: boolean; hero
     if (role === 'admin') return router.replace('/admin');
     if (embedded) return;
     if (router.canGoBack()) router.back();
-    else router.replace('/');
+    else router.replace('/(tabs)/(play)');
   }
 
   // a code sent less than a minute ago is refused; that code still works, so the screen just asks for it

@@ -58,7 +58,7 @@ export default function Appeal() {
         <View style={card}>
           <Text style={{ color: colors.text, fontWeight: '700' }}>You are not restricted</Text>
           <Text style={{ color: colors.muted }}>You can book anywhere on Zaf Play.</Text>
-          <Button small title="Find a court" onPress={() => router.replace('/')} />
+          <Button small title="Find a court" onPress={() => router.replace('/(tabs)/(play)')} />
         </View>
       ) : rows.map((r) => {
         const value = text[r.block_id] || '';

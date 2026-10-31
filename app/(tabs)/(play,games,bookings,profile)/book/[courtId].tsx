@@ -148,7 +148,7 @@ export default function BookCourt() {
     if ((me as any)?.role === 'player' && !(me as any)?.phone) {
       Alert.alert('One more step', 'Please add your mobile number to your profile first, so the court can reach you.', [
         { text: 'Not now', style: 'cancel' },
-        { text: 'Add number', onPress: () => router.push({ pathname: '/profile', params: { edit: '1' } }) },
+        { text: 'Add number', onPress: () => router.push({ pathname: '/(tabs)/(profile)/profile', params: { edit: '1' } }) },
       ]);
       return false;
     }
