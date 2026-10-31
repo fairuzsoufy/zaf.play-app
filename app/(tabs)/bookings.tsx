@@ -19,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const SPORT_LOOK: Record<string, [string, [string, string]]> = {
   padel: ['🎾', ['#2D5BFF', '#6A3BD6']], tennis: ['🎾', ['#0F9F63', '#2D5BFF']], football: ['⚽', ['#E0206F', '#5A2A8A']],
-  basketball: ['🏀', ['#FF8A3D', '#E0206F']], volleyball: ['🏐', ['#FFB547', '#2D5BFF']], squash: ['🏸', ['#6A3BD6', '#E0206F']],
+  basketball: ['🏀', ['#FF8A3D', '#E0206F']], volleyball: ['🏐', ['#FFB547', '#2D5BFF']], squash: ['🎾', ['#6A3BD6', '#E0206F']],
 };
 const sportKey = (slug?: string) => Object.keys(SPORT_LOOK).find((k) => (slug || '').includes(k));
 const sportEmoji = (slug?: string) => SPORT_LOOK[sportKey(slug) ?? '']?.[0] ?? '🏟';
@@ -198,7 +198,7 @@ export default function Bookings() {
                 <Text style={[s.sub, { fontSize: 12, marginTop: 1, color: colors.text }]} numberOfLines={1}>{timeLabel(b.start_time)} → {timeLabel(b.end_time)}</Text>
               </View>
               <View style={{ alignItems: 'center' }}>
-                <View style={{ alignSelf: 'center', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginBottom: 6 }}>
+                <View style={{ alignSelf: 'stretch', alignItems: 'center', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginBottom: 6 }}>
                   <Text style={{ color: bd.color, fontSize: 12, fontWeight: '700', textTransform: 'capitalize' }}>{bd.label}</Text>
                 </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
