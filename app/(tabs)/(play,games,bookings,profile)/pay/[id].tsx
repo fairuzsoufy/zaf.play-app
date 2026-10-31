@@ -44,6 +44,7 @@ export default function Pay() {
   const [refundTo, setRefundTo] = useState('');
   const [editRefund, setEditRefund] = useState(false); // a remembered refund number shows as one line until "Change"
   const [copied, setCopied] = useState(false);
+  const [policy, setPolicy] = useState(false);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const scroll = useRef<ScrollView>(null);
@@ -201,7 +202,6 @@ export default function Pay() {
           </Text>
         </>
       )}
-      {err && <Note kind="error">{err}</Note>}
     </>
   );
   // one button for both steps, like the website: with no screenshot yet it opens the photo picker, then it sends
@@ -209,19 +209,27 @@ export default function Pay() {
     ? <Button title="Add the screenshot" onPress={() => choose()} />
     : <Button title={sending ? 'Sending...' : 'Send'} onPress={submit} loading={sending} />;
   // booked or waiting for approval: the ticket screen, like the website
+  const compact = b.payment_status === 'unpaid' && !expired;
+  const whenShort = `${new Date(b.start_time).toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo', weekday: 'short', day: 'numeric' })} · ${timeLabel(b.start_time).replace(/:00 /, ' ').replace(/ [AP]M$/, '')}–${timeLabel(b.end_time).replace(/:00 /, ' ')}`;
   const ticket = (b.payment_status === 'paid' || b.payment_status === 'pending_review') && b.status !== 'cancelled';
   const extrasSum = (b.booking_extras ?? []).reduce((a: number, x: any) => a + Number(x.amount), 0);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior="padding" keyboardVerticalOffset={insets.top + (Platform.OS === 'ios' ? 44 : 56)}>
     <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
-      <Stack.Screen options={{ title: ticket ? 'Your booking' : isChange ? 'Pay for your change' : 'Complete your booking' }} />
-      {!ticket && (
-        <>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{b.court?.name} · {b.sport?.name}</Text>
-          <Text style={{ color: colors.muted, marginTop: 4 }}>{b.court?.facility?.name}, {b.court?.facility?.city}</Text>
-          <Text style={{ color: colors.muted, marginBottom: 16 }}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} – {timeLabel(b.end_time)}</Text>
-        </>
+      <Stack.Screen options={{ title: ticket ? 'Your booking' : compact ? '' : isChange ? 'Pay for your change' : 'Complete your booking' }} />
+      {compact ? (
+        // like the website: the day and time big, the court under it
+        <View style={{ alignItems: 'center', marginBottom: 16 }}>
+          <Text style={{ color: colors.text, fontSize: 19, fontWeight: '800' }}>{whenShort}</Text>
+          <Text style={{ color: colors.muted, fontSize: 13 }} numberOfLines={1}>{b.court?.name}</Text>
+        </View>
+      ) : !ticket && (
+        <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 18, marginBottom: 16 }}>
+          <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }}>Your booking</Text>
+          <Text style={{ color: colors.text, fontSize: 19, fontWeight: '800', marginTop: 4 }}>{b.court?.name} · {b.court?.facility?.name}</Text>
+          <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} – {timeLabel(b.end_time)} · {egp(b.total_price)}</Text>
+        </View>
       )}
 
       {(b.payment_status === 'paid' || b.payment_status === 'pending_review') && b.status !== 'cancelled' && (
@@ -248,58 +256,92 @@ export default function Pay() {
       )}
 
       {latePayable && (
-        <View>
-          <Text style={{ fontSize: 40, textAlign: 'center' }}>⏱️</Text>
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center' }}>Your {HOLD_MINUTES} minutes ran out</Text>
-          <Text style={{ color: colors.muted, textAlign: 'center', marginBottom: 14 }}>The time may still be free.</Text>
-          <Button title="Hold it again" onPress={bookAgain} />
-          <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border, marginTop: 14 }}>
-            <Text style={{ color: colors.text, fontWeight: '700' }}>Already sent the money?</Text>
-            <Text style={{ color: colors.muted, marginBottom: 10 }}>Add the screenshot. If the time was taken, you get it all back.</Text>
-            {proofPicker}
-            {sendButton}
+        <View style={{ gap: 14 }}>
+          <Text style={{ fontSize: 44, textAlign: 'center' }}>⏱️</Text>
+          <View>
+            <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', textAlign: 'center' }}>Your {HOLD_MINUTES} minutes ran out</Text>
+            <Text style={{ color: colors.muted, textAlign: 'center', fontSize: 13, marginTop: 2 }}>{timeLabel(b.start_time)} may still be free right now.</Text>
           </View>
+          <Button title="Hold it again" onPress={bookAgain} />
+          <View style={{ backgroundColor: colors.noteBg, borderColor: colors.noteBorder, borderWidth: 1, borderRadius: radius.lg, padding: 14 }}>
+            <Text style={{ color: colors.noteText, fontWeight: '700' }}>Already sent the money?</Text>
+            <Text style={{ color: colors.noteText, fontSize: 13, marginTop: 2 }}>Add the screenshot. If the time was taken, you get it all back.</Text>
+          </View>
+          {proofPicker}
+          <Pressable accessibilityRole="button" onPress={bookAgain} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 14, paddingVertical: 12, alignItems: 'center', backgroundColor: colors.card }}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>Pick another time</Text>
+          </Pressable>
         </View>
       )}
 
       {b.payment_status === 'unpaid' && !expired && (
-        <View>
+        <View style={{ gap: 14 }}>
           {holdLeft !== null && (
-            <View style={{ backgroundColor: colors.card, borderColor: colors.warning, borderWidth: 1, borderRadius: radius.lg, padding: 14, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
-              <Text style={{ color: colors.warning }}>Your time is held for</Text>
-              <Text style={{ color: colors.warning, fontWeight: '800', fontSize: 20 }}>{countdown(holdLeft)}</Text>
+            <View style={{ borderColor: '#c98a1b', borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: '#f0b429', fontWeight: '800' }}>Held for you</Text>
+              <Text style={{ color: '#f0b429', fontWeight: '800', fontSize: 20, fontVariant: ['tabular-nums'] }}>{countdown(holdLeft)}</Text>
             </View>
           )}
-          <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border }}>
-            {isChange ? (
-              <Text style={{ color: colors.muted, marginBottom: 8 }}>New time costs {egp(b.total_price)} − {egp(b.credit_amount)} carried over from your old booking.</Text>
-            ) : (
-              <>
-                <Text style={{ color: colors.muted }}>Court: {egp(Number(b.total_price) - extrasSum)}</Text>
-                {(b.booking_extras ?? []).map((x: any) => <Text key={x.name} style={{ color: colors.muted }}>Extra: {x.name} × {x.qty}: {egp(x.amount)}</Text>)}
-                {Number(b.discount_amount) > 0 && <Text style={{ color: colors.success }}>Referral discount: − {egp(b.discount_amount)}</Text>}
-                {Number(b.credit_used) > 0 && <Text style={{ color: colors.success }}>Zaf Play credit used: − {egp(b.credit_used)}</Text>}
-              </>
-            )}
-            <Text style={{ color: colors.muted, marginTop: 10 }}>Amount to send</Text>
+
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ color: colors.muted, fontSize: 13 }}>Send by InstaPay</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Text style={{ color: colors.text, fontSize: 30, fontWeight: '800' }}>{egp(amountDue)}</Text>
-              <Text accessibilityRole="button" onPress={() => copyAmount(amountDue)} style={{ color: colors.accent, fontWeight: '700', paddingVertical: 8 }}>{copied ? 'Copied ✓' : 'Copy'}</Text>
+              <Text style={{ color: colors.text, fontSize: 36, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{egp(amountDue)}</Text>
+              <Pressable accessibilityRole="button" onPress={() => copyAmount(amountDue)} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 }}>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>{copied ? 'Copied ✓' : 'Copy'}</Text>
+              </Pressable>
             </View>
-            {groupUnpaid.length > 1 && <Text style={{ color: colors.muted }}>One transfer for {groupUnpaid.length} times booked together.</Text>}
-
-            <Text style={{ color: colors.muted, marginTop: 12 }}>1. Send exactly {egp(amountDue)} to Zaf Play by InstaPay.</Text>
-            <View style={{ marginVertical: 10 }}><Button title="Open InstaPay to pay →" onPress={() => Linking.openURL(ZAF_INSTAPAY_LINK)} /></View>
-            <Text style={{ color: colors.muted }}>2. Take a screenshot of the successful transfer.</Text>
-            <Text style={{ color: colors.muted, marginBottom: 10 }}>3. Add it here and press Send.</Text>
-
-            {proofPicker}
-            {sendButton}
+            {isChange && <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: 'center' }}>New time costs {egp(b.total_price)} − {egp(b.credit_amount)} carried over from your old booking.</Text>}
+            {groupUnpaid.length > 1 && <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>For all {groupUnpaid.length} times together: one transfer, one screenshot.</Text>}
           </View>
-          <PolicyNotice feePercent={Number(b.court?.late_fee_percent ?? 50)} />
+
+          {groupUnpaid.length > 1 && (
+            <View style={{ gap: 4 }}>
+              {groupUnpaid.map((g) => <Line key={g.id} l={`${dateLabel(g.start_time)} · ${timeLabel(g.start_time)} – ${timeLabel(g.end_time)}`} r={egp(g.amount_due)} />)}
+              {(b.booking_extras ?? []).length > 0 && <Text style={{ color: colors.muted, fontSize: 12 }}>Extras are on the first time.</Text>}
+            </View>
+          )}
+          {!isChange && groupUnpaid.length <= 1 && ((b.booking_extras ?? []).length > 0 || Number(b.discount_amount) > 0 || Number(b.credit_used) > 0) && (
+            <View style={{ gap: 4 }}>
+              <Line l="Court" r={egp(Number(b.total_price) - extrasSum)} />
+              {(b.booking_extras ?? []).map((x: any) => <Line key={x.name} l={x.court_extras?.is_required ? `${x.name} (the court adds it to every booking)` : `${x.name} × ${x.qty}`} r={egp(x.amount)} />)}
+              {Number(b.discount_amount) > 0 && <Line l="Referral discount" r={`− ${egp(b.discount_amount)}`} good />}
+              {Number(b.credit_used) > 0 && <Line l="Zaf Play credit" r={`− ${egp(b.credit_used)}`} good />}
+              <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 4, flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>You send</Text>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>{egp(amountDue)}</Text>
+              </View>
+            </View>
+          )}
+
+          <Pressable accessibilityRole="link" onPress={() => Linking.openURL(ZAF_INSTAPAY_LINK)} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 14, paddingVertical: 13, alignItems: 'center', backgroundColor: colors.card }}>
+            <Text style={{ color: colors.text, fontWeight: '800' }}>Open InstaPay ↗</Text>
+          </Pressable>
+
+          {proofPicker}
+
+          <Text accessibilityRole="button" onPress={() => setPolicy(!policy)} style={{ color: colors.muted, textAlign: 'center', textDecorationLine: 'underline', fontSize: 13 }}>Cancellation and change policy</Text>
+          {policy && <PolicyNotice feePercent={Number(b.court?.late_fee_percent ?? 50)} />}
         </View>
       )}
     </ScrollView>
+    {/* Send stays at the bottom, where the thumb is (like the website) */}
+    {b.payment_status === 'unpaid' && (!expired || latePayable) && (
+      <View style={{ borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 8 }}>
+        {err && <Text style={{ color: colors.danger, fontSize: 13 }}>{err}</Text>}
+        {sendButton}
+      </View>
+    )}
     </KeyboardAvoidingView>
+  );
+}
+
+function Line({ l, r, good }: { l: string; r: string; good?: boolean }) {
+  useTheme();
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+      <Text style={{ color: good ? colors.success : colors.muted, fontSize: 13, flex: 1 }}>{l}</Text>
+      <Text style={{ color: good ? colors.success : colors.muted, fontSize: 13 }}>{r}</Text>
+    </View>
   );
 }
