@@ -109,7 +109,7 @@ export default function BookCourt() {
     </Text>;
   }
 
-  const minMinutes = Math.max(60, Number(court.min_booking_minutes || 0));
+  const minMinutes = Math.max(30, Number(court.min_booking_minutes || 0));
   const lastDay = cairoDate(0) && new Date(new Date(court.bookable_until).getTime() - 60000).toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
   const courtPrice = Math.round(sport.price * (pick.duration / 60) * 100) / 100;
   const extrasTotal = extras.reduce((sum, x) => sum + x.price * (x.is_required ? 1 : qty[x.id] || 0), 0);

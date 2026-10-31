@@ -463,37 +463,6 @@ export default function Book() {
               {areas.length > 1 && areas.map((a) => <Chip key={a} label={a} on={area === a} onPress={() => pickArea(area === a ? '' : a)} />)}
             </ScrollView>
           )}
-          {view === 'list' && (
-            <View style={[s.row, { flexDirection: 'row' }]}>
-              {shownDays.map((d, i) => {
-                const on = date === d;
-                const dt = new Date(`${d}T12:00:00Z`);
-                return (
-                  <Pressable accessibilityRole="button" key={d} onPress={() => setDate(d)} style={[s.day, { flex: 1, width: undefined }, on && s.chipOn]} accessibilityState={{ selected: on }}>
-                    {on && <GradientFill />}
-                    <Text style={{ color: on ? '#fff' : colors.muted, fontSize: 12, fontWeight: '700' }}>{d === dates[0] ? 'TODAY' : dt.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }).toUpperCase()}</Text>
-                    <Text style={{ color: on ? '#fff' : colors.text, fontSize: 18, fontWeight: '800' }}>{dt.getUTCDate()}</Text>
-                  </Pressable>
-                );
-              })}
-              {/* more days: the phone's calendar */}
-              <Pressable accessibilityRole="button" accessibilityLabel="Pick another day" onPress={openCalendar} style={[s.day, { flex: 1, width: undefined, marginRight: 0, justifyContent: 'center' }]}>
-                <Icon name="calendar" color={colors.text} size={22} />
-                <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>MORE</Text>
-              </Pressable>
-              {Platform.OS === 'ios' && (
-                <Modal visible={calOpen} transparent animationType="fade" onRequestClose={() => setCalOpen(false)}>
-                  <Pressable style={{ flex: 1, backgroundColor: '#0008', justifyContent: 'center', padding: 20 }} onPress={() => setCalOpen(false)}>
-                    <Pressable style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: 12 }}>
-                      <DateTimePicker value={asDate(date)} mode="date" display="inline" themeVariant={scheme}
-                        minimumDate={asDate(cairoDate())} maximumDate={asDate(cairoDate(CAL_DAYS))}
-                        onChange={(_e, d) => { if (d) { setDate(fromPicked(d)); setCalOpen(false); } }} />
-                    </Pressable>
-                  </Pressable>
-                </Modal>
-              )}
-            </View>
-          )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             <View style={s.seg}>
               {(['list', 'map'] as const).map((v) => (
@@ -503,16 +472,19 @@ export default function Book() {
                 </Pressable>
               ))}
             </View>
-            {places.length > 1 && (
-              <View style={s.seg}>
-                {([['', 'All'], ['indoor', 'Indoor'], ['outdoor', 'Outdoor']] as const).map(([p, l]) => (
-                  <Pressable accessibilityRole="button" key={l} onPress={() => pickPlace(p)} style={[s.segBtn, place === p && s.chipOn]}>
+            {/* indoor / outdoor, always shown like the website; a kind with no court here is greyed out */}
+            <View style={s.seg}>
+              {([['', 'Indoor & outdoor'], ['indoor', 'Indoor'], ['outdoor', 'Outdoor']] as const).map(([p, l]) => {
+                const none = p !== '' && !places.includes(p);
+                return (
+                  <Pressable accessibilityRole="button" key={l} disabled={none} accessibilityState={{ selected: place === p, disabled: none }}
+                    onPress={() => pickPlace(place === p ? '' : p)} style={[s.segBtn, place === p && s.chipOn, none && { opacity: 0.35 }]}>
                     {place === p && <GradientFill />}
                     <Text style={{ color: place === p ? '#fff' : colors.muted, fontWeight: '600' }}>{l}</Text>
                   </Pressable>
-                ))}
-              </View>
-            )}
+                );
+              })}
+            </View>
             <Pressable accessibilityRole="button" onPress={nearMe} style={[s.segBtn, s.seg, loc && s.chipOn]} disabled={locBusy}>
               {loc && <GradientFill />}
               {locBusy ? <ActivityIndicator size="small" color={colors.muted} /> : <Text style={{ color: loc ? '#fff' : colors.muted, fontWeight: '600' }}>{loc ? '📍 Near me ✕' : '📍 Near me'}</Text>}

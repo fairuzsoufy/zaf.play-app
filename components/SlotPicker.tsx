@@ -48,7 +48,7 @@ type Sel = { s: number; e: number }; // minutes from that day's Cairo midnight (
 
 // A day calendar like the website's: the court's hours down the side, booked times as grey blocks, holds dashed.
 // Tap the time you start and you get the minimum straight away; tap lower to move the finish, higher to move the
-// start, or use the − / + buttons. Minimum 1 hour (or the court's minimum), maximum 4 hours.
+// start, or use the − / + buttons. Minimum 30 minutes (or the court's minimum), like the website, maximum 4 hours.
 export function SlotPicker({
   rules, busy, value, onChange, minMinutes, maxDate, onBusyTap, current, onDragging,
 }: {

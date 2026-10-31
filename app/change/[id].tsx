@@ -166,7 +166,7 @@ export default function ChangeBooking() {
       </View>
 
       <SlotPicker
-        rules={rules} busy={busy} value={pick} minMinutes={Math.max(60, Number(b.court?.min_booking_minutes || 0))} maxDate={lastDay}
+        rules={rules} busy={busy} value={pick} minMinutes={Math.max(30, Number(b.court?.min_booking_minutes || 0))} maxDate={lastDay}
         current={{ start: b.start_time, end: b.end_time }}
         onDragging={setDragging}
         onChange={(p) => { setPick(p); setErr(null); }}
