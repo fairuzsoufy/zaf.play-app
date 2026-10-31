@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, ScrollView } from 'react-native';
+import { Modal, Pressable, ScrollView } from 'react-native';
 import { Text } from '@/components/AppText';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -76,7 +76,8 @@ function OwnerShell() {
           headerRight: () => <HeaderLogOut t={t} />,
         }}
       >
-        <Stack.Screen name="index" options={title('Dashboard')} />
+        {/* like the website's top bar: an owner also has the whole player side (Play, Games, Bookings, Profile) */}
+        <Stack.Screen name="index" options={{ ...title('Dashboard'), headerLeft: () => <PlayerSideLink t={t} /> }} />
         <Stack.Screen name="agreement" options={title('Partner agreement')} />
         <Stack.Screen name="calendar" options={title('Calendar')} />
         <Stack.Screen name="bookings" options={title('Bookings')} />
@@ -146,5 +147,15 @@ function InstapayGate() {
         <Button title="Save and open the dashboard" onPress={save} loading={busy} />
       </ScrollView>
     </Modal>
+  );
+}
+
+// Back to the player side (the tabs), where the Profile tab has "Open the owner dashboard" to come back.
+function PlayerSideLink({ t }: { t: (s: string) => string }) {
+  const router = useRouter();
+  return (
+    <Pressable onPress={() => router.replace('/(tabs)/(play)')} hitSlop={10} accessibilityRole="button" style={{ marginRight: 12 }}>
+      <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>‹ {t('Book & play')}</Text>
+    </Pressable>
   );
 }
