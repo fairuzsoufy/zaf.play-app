@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, Share, View } from 'react-native';
+import { FormScroll } from '@/components/FormScroll';
 import type { ScrollViewInstance } from 'react-native';
 import { Text } from '@/components/AppText';
 import { LoginForm } from '@/app/login';
@@ -136,7 +137,7 @@ export default function Profile() {
   const toggle = (s: Section) => { setOpen(open === s ? null : s); if (s !== 'details') setEditing(false); };
 
   return (
-    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <FormScroll ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
       {(me.role === 'owner' || me.role === 'staff') && (
         <View style={{ marginBottom: 14 }}><Button title="Open the owner dashboard" onPress={() => router.push('/owner')} /></View>
       )}
@@ -260,7 +261,7 @@ export default function Profile() {
           <LegalLinks style={{ marginTop: 14 }} />
         </View>
       )}
-    </ScrollView>
+    </FormScroll>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { FormScroll } from '@/components/FormScroll';
 import { Text } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -115,8 +116,7 @@ export default function Signup() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
+    <FormScroll contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
         <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 4 }}>Join Zaf Play</Text>
         <Text style={{ color: colors.muted, marginBottom: 22 }}>Book courts in seconds.</Text>
         <GoogleButton label="Sign up with Google" />
@@ -146,7 +146,6 @@ export default function Signup() {
             Own courts? <Text style={{ color: colors.primaryAlt, fontWeight: '600' }}>Sign up as a court owner</Text>
           </Text>
         </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </FormScroll>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { FormScroll } from '@/components/FormScroll';
 import { Text } from '@/components/AppText';
 import { Link, useRouter, type Href } from 'expo-router';
 import { Pressable } from 'react-native';
@@ -69,8 +70,7 @@ export function LoginForm({ embedded = false, hero }: { embedded?: boolean; hero
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: embedded ? 8 : 20 }} keyboardShouldPersistTaps="handled">
+    <FormScroll contentContainerStyle={{ padding: 20, paddingTop: embedded ? 8 : 20 }} keyboardShouldPersistTaps="handled">
         {hero ?? <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: embedded ? 16 : 4 }}>Welcome back</Text>}
         {!embedded && <Text style={{ color: colors.muted, marginBottom: 22 }}>Log in with your email or username.</Text>}
         <GoogleButton />
@@ -115,8 +115,7 @@ export function LoginForm({ embedded = false, hero }: { embedded?: boolean; hero
             <Text style={{ color: colors.primary }}>Own courts? <Link href="/signup-owner" style={link} replace>Sign up as a court owner</Link></Text>
           </View>
         )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </FormScroll>
   );
 }
 

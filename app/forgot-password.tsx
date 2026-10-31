@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { FormScroll } from '@/components/FormScroll';
 import { Text } from '@/components/AppText';
 import { useRouter } from 'expo-router';
 import { Button, Field, Note } from '@/components/ui';
@@ -61,8 +61,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-    <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+    <FormScroll contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
       {step === 'ask' && (
         <>
           <Text style={{ color: colors.muted, marginBottom: 18 }}>Type your email or username and we will email you a code.</Text>
@@ -92,7 +91,6 @@ export default function ForgotPassword() {
         </>
       )}
       {step === 'done' && <Note kind="ok">✅ Your new password is saved and you are logged in.</Note>}
-    </ScrollView>
-    </KeyboardAvoidingView>
+    </FormScroll>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Switch, View } from 'react-native';
+import { FormScroll } from '@/components/FormScroll';
 import { Text } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -150,8 +151,7 @@ export default function OwnerSignup() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
+    <FormScroll contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
         <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginBottom: 4 }}>List your courts on Zaf Play</Text>
         <Text style={{ color: colors.muted, marginBottom: 22 }}>Reach more players and manage your bookings in one place.</Text>
         {err && <Note kind="error">{err}</Note>}
@@ -182,7 +182,6 @@ export default function OwnerSignup() {
         <LegalLinks lead="By creating an account you agree to our" style={{ marginBottom: 12 }} />
         <Button title="Sign up as a court owner" onPress={submit} loading={busy} />
         <Pressable accessibilityRole="button" onPress={() => router.replace('/login')}><Text style={{ color: colors.primaryAlt, textAlign: 'center', marginTop: 18 }}>Already have an account? Log in</Text></Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </FormScroll>
   );
 }

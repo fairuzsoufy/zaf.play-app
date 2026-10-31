@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, Pressable, StyleSheet, View, type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
+  ActivityIndicator, Animated, Pressable, StyleSheet, View, type HostInstance, type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,7 @@ import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 import { useT, withoutArabic } from '@/lib/ownerLang';
 import { Icon, type IconName } from '@/components/Icon';
 import { tap } from '@/lib/haptics';
+import { useRevealOnFocus } from '@/components/FormScroll';
 
 // masked-view 0.3.2 (the newest, the one SDK 58 expects) still ships class typings that React 19.3's JSX types reject; it works the same at run time
 const MaskedView = RNMaskedView as unknown as React.ComponentType<{ maskElement: React.ReactElement; children?: React.ReactNode; style?: StyleProp<ViewStyle> }>;
@@ -80,7 +81,10 @@ export function Field(props: TextInputProps & { label: string }) {
   const { scheme } = useTheme();
   const { owner, t } = useT();
   const [arabicNote, setArabicNote] = useState(false);
-  const { label, style, onChangeText, ...rest } = props;
+  const { label, style, onChangeText, onFocus, ...rest } = props;
+  // inside a FormScroll, a tapped field scrolls itself above the keyboard
+  const reveal = useRevealOnFocus();
+  const box = useRef<HostInstance>(null);
   // on the owner screens Arabic is for reading only: Arabic letters never reach the form or the database
   function change(text: string) {
     const kept = owner ? withoutArabic(text) : null;
@@ -91,9 +95,10 @@ export function Field(props: TextInputProps & { label: string }) {
     onChangeText?.(kept ?? text);
   }
   return (
-    <View style={{ marginBottom: 14 }}>
+    <View ref={box} style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput aria-label={label} placeholderTextColor={colors.muted} keyboardAppearance={scheme} style={[s.input, style]} {...rest} onChangeText={change} />
+      <TextInput aria-label={label} placeholderTextColor={colors.muted} keyboardAppearance={scheme} style={[s.input, style]} {...rest} onChangeText={change}
+        onFocus={(e) => { reveal(box.current); onFocus?.(e); }} />
       {arabicNote && <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: 12, marginTop: 4 }}>{t('Please type in English (A–Z). Arabic letters can’t be used in fields.')}</Text>}
     </View>
   );
