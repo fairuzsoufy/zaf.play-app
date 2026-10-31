@@ -30,9 +30,9 @@ export default function ForgotPassword() {
       if (error) return 'Could not send the code right now. Please try again in a minute.';
       return data?.error ? String(data.error) : null;
     }
-    const { error } = await supabase.auth.resetPasswordForEmail(who, { redirectTo });
-    if (!error || /rate|seconds|too many/i.test(error.message)) return null;
-    return 'Could not send the code right now. Please try again in a minute.';
+    // an email goes through the server too, so an account that signs in only with Google gets no reset code
+    const { error } = await supabase.functions.invoke('forgot-password', { body: { email: who, redirectTo } });
+    return error ? 'Could not send the code right now. Please try again in a minute.' : null;
   }
 
   async function submit() {
@@ -75,7 +75,7 @@ export default function ForgotPassword() {
       {step === 'code' && (
         <>
           <Text style={{ color: colors.text, marginBottom: 14 }}>
-            📬 If an account exists for {who}, we've emailed it a code. Type the code below, then choose a new password.
+            📬 If an account exists for {who}, we've emailed it a code. Type the code below, then choose a new password. Signed up with Google? There is no password: use Continue with Google to log in.
           </Text>
           <CodeEntry type="recovery" email={isUsername ? undefined : who} username={isUsername ? who.replace(/^@/, '') : undefined}
             onVerified={() => { setErr(null); setStep('password'); }} onResend={sendCode} />
