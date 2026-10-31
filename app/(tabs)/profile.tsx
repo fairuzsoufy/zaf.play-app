@@ -220,9 +220,16 @@ export default function Profile() {
               )}
             </Row>
             {me.email && (
-              <Row icon="info" title="Email" value={me.email} open={open === 'email'} onPress={() => toggle('email')}>
-                <ChangeEmail current={me.email} bare />
-              </Row>
+              // like the website: a Google-only account keeps its Google email, so it can't be changed here
+              (session.user.identities ?? []).length > 0 && (session.user.identities ?? []).every((i) => i.provider === 'google') ? (
+                <Row icon="info" title="Email" value={`${me.email} · Signed in with Google`} open={open === 'email'} onPress={() => toggle('email')}>
+                  <Text style={{ color: colors.muted, fontSize: 13 }}>You sign in with Google, so your email is your Google email. To use another email, email support@zafplay.com.</Text>
+                </Row>
+              ) : (
+                <Row icon="info" title="Email" value={me.email} open={open === 'email'} onPress={() => toggle('email')}>
+                  <ChangeEmail current={me.email} bare />
+                </Row>
+              )
             )}
             <Row icon="lock" title="Password" value="Change your password" open={open === 'password'} onPress={() => toggle('password')} last={!(credit !== null && ledger.length > 0)}>
               <LoginSecurity bare />
