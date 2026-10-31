@@ -1,4 +1,4 @@
-﻿import { Alert, Pressable } from 'react-native';
+import { Alert, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from '@/components/AppText';
 import { supabase } from '@/lib/supabase';
