@@ -13,6 +13,7 @@ import { Button, Note } from '@/components/ui';
 import { toast } from '@/components/Toast';
 import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
 import { useRequestId } from '@/lib/requestId';
+import { useBusyPing } from '@/lib/useBusyPing';
 
 // Modify a paid, upcoming booking: a new time (or more time around it) and/or different extras.
 // Same rules and maths as the website's /bookings/[id]/change page; the database does the real work (reschedule_booking_v2).
@@ -71,6 +72,7 @@ export default function ChangeBooking() {
       setLoading(false);
     })();
   }, [id, session, loadBusy]);
+  useBusyPing(b?.court_id ? `court-busy:${b.court_id}` : null, () => b?.court_id && loadBusy(b.court_id));
 
   if (!session) return <Text style={st.center}>Please log in to change your booking.</Text>;
   if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.accent} />;

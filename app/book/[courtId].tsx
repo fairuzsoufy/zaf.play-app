@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, radius, themed, useTheme } from '@/lib/theme';
-import { cairoDate, cairoToDate, dateLabel, durationText, egp } from '@/lib/format';
+import { cairoDate, cairoToDate, egp, timeLabel } from '@/lib/format';
 import { FREE_CHANGE_HOURS, HOLD_MINUTES } from '@/lib/payment';
 import { useRequestId } from '@/lib/requestId';
+import { useBusyPing } from '@/lib/useBusyPing';
 import { Button, Note } from '@/components/ui';
 import { Busy, Pick, Rule, SlotPicker } from '@/components/SlotPicker';
-import { PolicyNotice } from '@/components/PolicyNotice';
 import { BlockedNotice } from '@/components/BlockedNotice';
 
 const LEVELS = [
@@ -48,6 +48,7 @@ export default function BookCourt() {
   const [waiting, setWaiting] = useState<string[]>([]);
   // open game: other players join and pay their own spot (same options as the website)
   const [openMode, setOpenMode] = useState(host === '1');
+  const [more, setMore] = useState(false);
   const [spots, setSpots] = useState(4);
   const [mySeats, setMySeats] = useState(1); // spots the host pays for (the host + friends)
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
@@ -62,6 +63,7 @@ export default function BookCourt() {
     const { data } = await supabase.rpc('court_busy_slots', { p_court_id: courtId });
     setBusy((data ?? []) as Busy[]);
   }, [courtId]);
+  useBusyPing(`court-busy:${courtId}`, loadBusy); // someone else's hold shows up straight away, like the website
 
   useEffect(() => {
     (async () => {
@@ -117,6 +119,27 @@ export default function BookCourt() {
   const seatsPaid = Math.min(mySeats, spots);
   const seatsAmount = Math.ceil((Math.round(total * 100) * seatsPaid) / spots) / 100;
   const optional = extras.filter((x) => !x.is_required);
+  // Zaf Play credit is taken off by the database; show it here so the amount matches (website's maths)
+  const creditUse = session && credit > 0 ? Math.min(credit, Math.max(total - discount, 0)) : 0;
+  const toPay = Math.max(Math.round((total - discount - creditUse) * 100) / 100, 0);
+  const perSpot = spots > 0 ? Math.ceil(Math.round(total * 100) / spots) / 100 : 0;
+  const requiredTotal = extras.filter((x) => x.is_required).reduce((a, x) => a + x.price, 0);
+  const payAmount = openMode ? seatsAmount : toPay;
+  const startD = pick.start !== null ? cairoToDate(pick.date, pick.start) : null;
+  const endD = startD ? new Date(startD.getTime() + pick.duration * 60000) : null;
+  const whenShort = startD && endD
+    ? `${startD.toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo', weekday: 'short', day: 'numeric' })} · ${timeLabel(startD.toISOString()).replace(/ [AP]M$/, '')}–${timeLabel(endD.toISOString())}`
+    : '';
+  const freeUntil = startD ? new Date(startD.getTime() - FREE_CHANGE_HOURS * 3600000) : null;
+  const payLabel = !session && pick.start !== null ? `Log in to pay ${egp(payAmount)}`
+    : saving ? 'Holding your time...'
+    : pick.start === null ? 'Pick a time'
+    : openMode ? `Pay my spot · ${egp(payAmount)}`
+    : toPay === 0 && creditUse > 0 ? 'Confirm with credit' : `Pay ${egp(toPay)}`;
+  const policyLine = !openMode && creditUse > 0 && toPay === 0
+    ? 'Your credit covers it all, so the booking is confirmed straight away.'
+    : `Held ${HOLD_MINUTES} minutes after you tap Pay`;
+  const lengthLabel = (m: number) => (m < 60 ? `${m} min` : Number.isInteger(m / 60) ? `${m / 60} h` : `${Math.floor(m / 60)}½ h`);
   const required = extras.filter((x) => x.is_required);
 
   async function ensureReady(): Promise<boolean> {
@@ -254,43 +277,59 @@ export default function BookCourt() {
         </View>
       )}
 
+      {/* Just me or split the cost: two big cards, then the price each player pays (as on the website) */}
       <View style={st.card}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontWeight: '700' }}>Invite players to share the cost</Text>
-            <Text style={{ color: colors.muted, fontSize: 12 }}>Others join and pay their spot</Text>
-          </View>
-          <Switch value={openMode} onValueChange={(v) => { setOpenMode(v); setErr(null); }} trackColor={{ true: colors.accent, false: colors.cardAlt }} />
+        <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup">
+          {([[false, 'Just me', 'I pay the full court'], [true, 'Split the cost', 'Others pay their spot']] as const).map(([v, title, sub]) => {
+            const on = openMode === v;
+            return (
+              <Pressable key={title} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => { setOpenMode(v); setErr(null); }}
+                style={[st.optPick, on && st.optPickOn]}>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>{title}</Text>
+                <Text style={{ color: colors.muted, fontSize: 12 }}>{sub}</Text>
+              </Pressable>
+            );
+          })}
         </View>
         {openMode && (
-          <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, gap: 12 }}>
+          <View style={{ marginTop: 12, gap: 12 }}>
             <Stepper label="Players in total" value={spots} min={2} max={12} onChange={(n) => { setSpots(n); setMySeats((m) => Math.min(m, n)); }} />
-            <Stepper label="Spots I pay" hint="you + friends you pay for" value={seatsPaid} min={1} max={spots} onChange={setMySeats} />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <Chip on={visibility === 'public'} label="🌍 Public" onPress={() => setVisibility('public')} />
-              <Chip on={visibility === 'private'} label="🔒 Private" onPress={() => { setVisibility('private'); setWhoCanJoin('mixed'); setLevels([]); }} />
-            </View>
-            {visibility === 'public' && (
-              <>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {(['mixed', 'men', 'women'] as const).map((v) => <Chip key={v} on={whoCanJoin === v} label={v === 'mixed' ? 'Mixed' : v === 'men' ? 'Men' : 'Women'} onPress={() => setWhoCanJoin(v)} />)}
-                </View>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  <Chip on={levels.length === 0} label="Any level" onPress={() => { setLevels([]); setErr(null); }} />
-                  {LEVELS.map((l) => {
-                    const on = levels.includes(l.v);
-                    return <Chip key={l.v} on={on} label={l.label} onPress={() => {
-                      if (on) return setLevels(levels.filter((x) => x !== l.v));
-                      if (levels.length >= 2) return setErr('You can pick up to 2 levels. Tap one to remove it first, or choose Any level.');
-                      setErr(null);
-                      setLevels([...levels, l.v]);
-                    }} />;
-                  })}
-                </View>
-              </>
+            <Stepper label="Spots I pay for" hint="you + friends you pay for" value={seatsPaid} min={1} max={spots} onChange={setMySeats} />
+            {pick.start !== null && (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <Text style={{ color: colors.text, fontWeight: '700' }}>Each player pays</Text>
+                <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 20 }}>{egp(perSpot)}</Text>
+              </View>
             )}
-            <TextInput value={gameNote} onChangeText={setGameNote} maxLength={200} placeholder="Note for players (optional)" placeholderTextColor={colors.muted}
-              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 10, color: colors.text }} />
+            <Pressable accessibilityRole="button" accessibilityState={{ expanded: more }} onPress={() => setMore(!more)}
+              style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, minHeight: 40, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, borderRadius: 12, paddingHorizontal: 14 }}>
+              <Text style={{ color: colors.text, fontWeight: '700' }}>More options</Text>
+              <Text style={{ color: colors.muted, fontSize: 12, flexShrink: 1 }} numberOfLines={1}>
+                {more ? 'Hide' : `${visibility === 'public' ? 'Public' : 'Private'} · ${whoCanJoin === 'mixed' ? 'Mixed' : whoCanJoin === 'men' ? 'Men' : 'Women'} · ${levels.length ? LEVELS.filter((l) => levels.includes(l.v)).map((l) => l.label).join(', ') : 'Any level'}`}
+              </Text>
+            </Pressable>
+            {more && (
+              <View style={{ gap: 12 }}>
+                <Seg label="Game" options={[['private', '🔒 Private'], ['public', 'Public']]} isOn={(v) => visibility === v}
+                  onPick={(v) => { setVisibility(v as 'public' | 'private'); if (v === 'private') { setWhoCanJoin('mixed'); setLevels([]); } }} />
+                {visibility === 'public' && (
+                  <>
+                    <Seg label="Who can join" options={[['mixed', 'Mixed'], ['men', 'Men'], ['women', 'Women']]} isOn={(v) => whoCanJoin === v} onPick={(v) => setWhoCanJoin(v as 'mixed' | 'men' | 'women')} />
+                    <Seg label="Level · up to 2" options={[['any', 'Any'], ...LEVELS.map((l) => [l.v, l.label] as [string, string])]}
+                      isOn={(v) => (v === 'any' ? levels.length === 0 : levels.includes(v))}
+                      onPick={(v) => {
+                        if (v === 'any') { setLevels([]); return setErr(null); }
+                        if (levels.includes(v)) return setLevels(levels.filter((x) => x !== v));
+                        if (levels.length >= 2) return setErr('You can pick up to 2 levels. Tap one to remove it first, or choose Any level.');
+                        setErr(null);
+                        setLevels([...levels, v]);
+                      }} />
+                  </>
+                )}
+                <TextInput value={gameNote} onChangeText={setGameNote} maxLength={200} placeholder="Note for players (optional)" placeholderTextColor={colors.muted}
+                  style={{ height: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 12, color: colors.text, fontSize: 14 }} />
+              </View>
+            )}
             <Text style={{ color: colors.muted, fontSize: 12 }}>
               Must fill by {FREE_CHANGE_HOURS} hours before, or everyone gets a full refund. Pick a time at least {FREE_CHANGE_HOURS + 1} hours from now.
             </Text>
@@ -298,58 +337,43 @@ export default function BookCourt() {
         )}
       </View>
 
-      <View style={st.card}>
-        {pick.start === null ? (
-          <Text style={{ color: colors.muted }}>Choose your time above to see the total (minimum {durationText(minMinutes)}).</Text>
-        ) : (
-          <>
-            <Text style={{ color: colors.text, fontWeight: '700' }}>{dateLabel(cairoToDate(pick.date, pick.start).toISOString())}</Text>
-            <Row l={`Court · ${durationText(pick.duration)}`} r={egp(courtPrice)} />
-            {required.map((x) => <Row key={x.id} l={x.name} r={egp(x.price)} />)}
-            {optional.filter((x) => (qty[x.id] || 0) > 0).map((x) => <Row key={x.id} l={`${x.name} × ${qty[x.id]}`} r={egp(x.price * qty[x.id])} />)}
-            {discount > 0 && <Row l={`Referral discount (${rewardPercent}%)`} r={`− ${egp(discount)}`} good />}
-            <View style={{ borderTopWidth: 1, borderTopColor: colors.border, marginTop: 8, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ color: colors.text, fontWeight: '700' }}>Total</Text>
-              <Text style={{ color: colors.text, fontWeight: '800', fontSize: 20 }}>{egp(total - discount)}</Text>
-            </View>
-            {openMode && <Row l={`Your spot (${seatsPaid} of ${spots})`} r={egp(seatsAmount)} />}
-            {credit > 0 && !openMode && <Text style={{ color: colors.success, marginTop: 8 }}>💳 You have {egp(credit)} credit. It is taken off automatically.</Text>}
-          </>
-        )}
-        <Text style={{ color: colors.muted, fontSize: 12, marginTop: 10 }}>
-          Next: pay by InstaPay and upload the screenshot. Your time is held for {HOLD_MINUTES} minutes.
+      {freeUntil && (
+        <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 12 }}>
+          Free change or cancel until {timeLabel(freeUntil.toISOString())}{freeUntil.toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' }) !== pick.date ? ' the day before' : ''}.
         </Text>
-      </View>
+      )}
 
-      <PolicyNotice feePercent={Number(court.late_fee_percent ?? 50)} />
       <BlockedNotice facilityId={court.facility_id} />
 
       {err && <Note kind="error">{err}</Note>}
     </ScrollView>
-    {/* always-visible pay bar: the chosen time, the total and the button, so nobody scrolls to find it */}
-    <View style={{ borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10 + insets.bottom }}>
+    {/* the total and Pay never leave the screen, like the website */}
+    <View style={{ borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 + insets.bottom, gap: 8 }}>
       {pick.start !== null && (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-          <Text style={{ color: colors.muted }}>{durationText(pick.duration)}</Text>
-          <Text style={{ color: colors.text, fontWeight: '800' }}>{egp(openMode ? seatsAmount : total - discount)}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+          <Text style={{ color: colors.muted, fontSize: 13, flex: 1 }} numberOfLines={1}>
+            {whenShort} · {lengthLabel(pick.duration)}{openMode ? ` · Your spot (${seatsPaid} of ${spots})` : ''}
+          </Text>
+          <Text style={{ color: colors.text, fontWeight: '800', fontSize: 22 }}>{egp(payAmount)}</Text>
         </View>
       )}
-      <Button title={!session ? 'Log in to continue →' : openMode ? `Host game · pay my spot${pick.start !== null ? ` ${egp(seatsAmount)}` : ''} →` : 'Continue to payment →'}
-        onPress={openMode ? hostGame : book} loading={saving} disabled={pick.start === null && !!session} />
+      {pick.start !== null && !openMode && (extrasTotal > 0 || discount > 0 || creditUse > 0) && (
+        <Text style={{ color: colors.muted, fontSize: 12 }}>
+          Court {egp(courtPrice)}
+          {required.map((e) => ` + ${e.name} ${egp(e.price)}`).join('')}
+          {extrasTotal - requiredTotal > 0 ? ` + extras ${egp(extrasTotal - requiredTotal)}` : ''}
+          {discount > 0 ? ` - reward ${egp(discount)}` : ''}
+          {creditUse > 0 ? ` - your credit ${egp(creditUse)}` : ''}
+        </Text>
+      )}
+      {err && <Text style={{ color: colors.danger, fontSize: 13 }}>{err}</Text>}
+      <Button title={payLabel} onPress={openMode ? hostGame : book} loading={saving} disabled={pick.start === null} />
+      {pick.start !== null && <Text style={{ color: colors.muted, fontSize: 12, textAlign: 'center' }}>{policyLine}</Text>}
     </View>
     </View>
   );
 }
 
-function Row({ l, r, good }: { l: string; r: string; good?: boolean }) {
-  useTheme();
-  return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-      <Text style={{ color: good ? colors.success : colors.muted }}>{l}</Text>
-      <Text style={{ color: good ? colors.success : colors.text }}>{r}</Text>
-    </View>
-  );
-}
 
 function Stepper({ label, hint, value, min, max, onChange }: { label: string; hint?: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
   const st = useSt();
@@ -366,18 +390,32 @@ function Stepper({ label, hint, value, min, max, onChange }: { label: string; hi
   );
 }
 
-function Chip({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
-  useTheme();
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, borderWidth: 1,
-      borderColor: on ? colors.accent : colors.border, backgroundColor: on ? colors.soft : 'transparent' }}>
-      <Text style={{ color: on ? colors.text : colors.muted, fontWeight: '600' }}>{label}</Text>
-    </Pressable>
-  );
-}
 
 const useSt = themed(() => ({
+  optPick: { flex: 1, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 11, backgroundColor: colors.card },
+  optPickOn: { borderWidth: 2, borderColor: colors.accent, backgroundColor: colors.soft },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, marginVertical: 14, borderWidth: 1, borderColor: colors.border },
   step: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.cardAlt, alignItems: 'center' as const, justifyContent: 'center' as const },
   stepText: { color: colors.text, fontSize: 18, fontWeight: '700' as const },
 }));
+
+// the website's segmented control (zaf-seg): a label, then the options side by side
+function Seg({ label, options, isOn, onPick }: { label: string; options: readonly (readonly [string, string])[]; isOn: (v: string) => boolean; onPick: (v: string) => void }) {
+  useTheme();
+  return (
+    <View>
+      <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>{label}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, padding: 3, borderRadius: 12, backgroundColor: colors.soft }}>
+        {options.map(([v, l]) => {
+          const on = isOn(v);
+          return (
+            <Pressable key={v} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => onPick(v)}
+              style={{ flexGrow: 1, flexBasis: options.length > 3 ? '30%' : 0, minHeight: 36, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, backgroundColor: on ? colors.card : 'transparent', opacity: on ? 1 : 0.75 }}>
+              <Text style={{ color: on ? colors.primary : colors.text, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>{l}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
