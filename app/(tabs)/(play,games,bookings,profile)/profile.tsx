@@ -55,6 +55,8 @@ export default function Profile() {
   const [tab, setTab] = useState<Tab>('me');
   const [open, setOpen] = useState<Section>(null);
   const scroll = useRef<ScrollView>(null);
+  const friendsY = useRef(0);
+  const friendsCardY = useRef(0);
   const player = usePlayerStats(me?.role === 'player' ? uid : undefined);
 
   function editDetails() { setTab('account'); setOpen('details'); setEditing(true); }
@@ -133,7 +135,7 @@ export default function Profile() {
   const toggle = (s: Section) => { setOpen(open === s ? null : s); if (s !== 'details') setEditing(false); };
 
   return (
-    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       {(me.role === 'owner' || me.role === 'staff') && (
         <View style={{ marginBottom: 14 }}><Button title="Open the owner dashboard" onPress={() => router.push('/owner')} /></View>
       )}
@@ -173,7 +175,7 @@ export default function Profile() {
       {shown === 'me' && <StatsPanel stats={player.stats} trust={player.trust} days={player.days} credit={credit} />}
 
       {shown === 'friends' && (
-        <View style={{ marginTop: 8 }}>
+        <View style={{ marginTop: 8 }} onLayout={(e) => { friendsY.current = e.nativeEvent.layout.y; }}>
           {ref?.code && (
             <Card glow style={{ padding: 14, marginBottom: 14 }}>
               <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 17 }}>🎁 Invite friends · both get {ref.percent}% off</Text>
@@ -190,7 +192,10 @@ export default function Profile() {
               <Text style={{ color: colors.muted, fontSize: 12, marginTop: 8 }}>{ref.friends_joined} joined · {ref.available} discount{ref.available === 1 ? '' : 's'} waiting for you</Text>
             </Card>
           )}
-          <FriendsCard />
+          <View onLayout={(e) => { friendsCardY.current = e.nativeEvent.layout.y; }}>
+            {/* searching: bring the search box to the top so its results show above the keyboard */}
+            <FriendsCard onSearchFocus={() => setTimeout(() => scroll.current?.scrollTo({ y: friendsY.current + friendsCardY.current - 8, animated: true }), 250)} />
+          </View>
         </View>
       )}
 
@@ -223,7 +228,7 @@ export default function Profile() {
               )}
             </Row>
             {me.email && (
-              <Row icon="info" title="Email" value={me.email} open={open === 'email'} onPress={() => toggle('email')}>
+              <Row icon="info" title="Email" value={me.email} open={open === 'email'} onPress={() => toggle('email')} last={googleOnly && !(credit !== null && ledger.length > 0)}>
                 <ChangeEmail current={me.email} bare />
               </Row>
             )}

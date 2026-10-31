@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '@/components/AppText';
 import { useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -35,7 +35,8 @@ export function TrustChip({ trust }: { trust?: Trust | null }) {
 }
 
 // Profile: my friends, 5 per page. Find a player by @username, email or phone and add them; remove with one tap.
-export function FriendsCard() {
+// `onSearchFocus`: lets the Profile scroll the search box to the top, so the results show above the keyboard.
+export function FriendsCard({ onSearchFocus }: { onSearchFocus?: () => void } = {}) {
   const s = useS();
   const { scheme } = useTheme();
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -62,7 +63,8 @@ export function FriendsCard() {
     return () => clearTimeout(t);
   }, [term]);
   const mine = new Set(friends.map((f) => f.id));
-  const results = found && found.term === term ? found.list.filter((p) => !mine.has(p.id)) : [];
+  // while a new search runs the last results stay on screen (dimmed), so the page doesn't jump on every key
+  const results = found ? found.list.filter((p) => !mine.has(p.id)) : [];
   const searching = term.length >= 3 && !(found && found.term === term);
 
   async function add(username: string) {
@@ -77,9 +79,12 @@ export function FriendsCard() {
     load();
   }
 
-  async function remove(id: string) {
-    await supabase.rpc('remove_friend', { p_friend_id: id });
-    load();
+  // always asked first, like the website
+  function remove(f: Friend) {
+    Alert.alert(`Remove ${f.name} from your friends?`, 'You can add them again any time.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: async () => { await supabase.rpc('remove_friend', { p_friend_id: f.id }); load(); } },
+    ]);
   }
 
   const pages = Math.max(1, Math.ceil(friends.length / PER_PAGE));
@@ -95,14 +100,14 @@ export function FriendsCard() {
         <TextInput
           value={q} onChangeText={setQ} placeholder="@username, email or phone" placeholderTextColor={colors.muted}
           autoCapitalize="none" autoCorrect={false} keyboardAppearance={scheme} returnKeyType="done"
-          onSubmitEditing={() => add(term)} aria-label="Find a player" style={s.input}
+          onSubmitEditing={() => add(term)} onFocus={onSearchFocus} aria-label="Find a player" style={s.input}
         />
         <Button small title="Add" onPress={() => add(term)} loading={busy} disabled={!term} />
       </View>
 
       {term.length >= 3 && (
-        <View style={s.results}>
-          {searching && <Text style={s.resultText}>Searching...</Text>}
+        <View style={[s.results, searching && found && { opacity: 0.5 }]}>
+          {searching && !found && <Text style={s.resultText}>Searching...</Text>}
           {!searching && results.length === 0 && <Text style={s.resultText}>No player found. Emails and phone numbers must match exactly.</Text>}
           {results.map((p, i) => (
             <Pressable accessibilityRole="button" key={p.id} disabled={!p.username || busy} onPress={() => p.username && add(p.username)}
@@ -129,7 +134,7 @@ export function FriendsCard() {
                   <Text style={{ color: colors.text, fontWeight: '600' }}>{f.name} <Text style={{ color: colors.muted, fontWeight: '400' }}>@{f.username}</Text></Text>
                   <TrustChip trust={f.trust} />
                 </View>
-                <Pressable accessibilityRole="button" hitSlop={10} onPress={() => remove(f.id)}>
+                <Pressable accessibilityRole="button" hitSlop={10} onPress={() => remove(f)} accessibilityLabel={`Remove ${f.name} from your friends`}>
                   <Text style={{ color: colors.muted, fontSize: 12, textDecorationLine: 'underline' }}>Remove</Text>
                 </Pressable>
               </View>
