@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 import { getMyAccess } from '@/lib/access';
 import { View, type ColorValue } from 'react-native';
@@ -34,7 +34,6 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const bottom = insets.bottom + 10;
   // owners and their team have the whole player side plus their Dashboard, like the website's top bar
-  const router = useRouter();
   const { session } = useAuth();
   const [owner, setOwner] = useState(false);
   useEffect(() => {
@@ -57,9 +56,8 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="(play)" options={{ title: 'Play', tabBarIcon: icon('ball'), tabBarLabel: label('Play') }} />
       <Tabs.Screen name="(games)" options={{ title: 'Games', tabBarIcon: icon('users'), tabBarLabel: label('Games') }} />
-      {/* owners and staff only, in the middle. It opens the dashboard on top (its own top bar, no bottom bar, like the website), so Back returns here */}
-      <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', href: owner ? undefined : null, tabBarIcon: icon('list'), tabBarLabel: label('Dashboard') }}
-        listeners={{ tabPress: (e) => { e.preventDefault(); router.push('/owner'); } }} />
+      {/* owners and staff only, in the middle: the owner dashboard and its pages, with the bottom bar like every tab */}
+      <Tabs.Screen name="owner" options={{ title: 'Dashboard', href: owner ? undefined : null, tabBarIcon: icon('list'), tabBarLabel: label('Dashboard') }} />
       <Tabs.Screen name="(bookings)" options={{ title: 'Bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('Bookings') }} />
       <Tabs.Screen name="(profile)" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
     </Tabs>

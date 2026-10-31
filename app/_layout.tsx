@@ -54,7 +54,6 @@ function App() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
-          <Stack.Screen name="owner" options={{ headerShown: false }} />
           <Stack.Screen name="admin" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ title: 'Log in', presentation: 'modal' }} />
           <Stack.Screen name="signup" options={{ title: 'Create account', presentation: 'modal' }} />
