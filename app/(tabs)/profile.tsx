@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, Share, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { LoginForm } from '../login';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -7,7 +7,7 @@ import { SITE_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { colors, fonts, radius, themed, useTheme } from '@/lib/theme';
 import { dateLabel, egp } from '@/lib/format';
-import { Button, Card, Field, GradientFill, GradientText, Note, PressableScale } from '@/components/ui';
+import { Button, Card, Field, GradientText, Note, PressableScale } from '@/components/ui';
 import { Icon, type IconName } from '@/components/Icon';
 import { Logo } from '@/components/Logo';
 import { DeleteAccount } from '@/components/DeleteAccount';
@@ -16,7 +16,7 @@ import { FriendsCard } from '@/components/Friends';
 import { ChangeEmail } from '@/components/ChangeEmail';
 import { LoginSecurity } from '@/components/LoginSecurity';
 import { ThemePicker } from '@/components/ThemeToggle';
-import { ProgressRing, StreakProfile } from '@/components/PlayerStats';
+import { nextBadgeText, ProgressRing, StatsPanel, usePlayerStats } from '@/components/PlayerStats';
 import { LegalLinks } from '@/components/LegalLinks';
 import { toast } from '@/components/Toast';
 import { Gender, GenderField, UsernameField, UsernameStatus } from '@/components/forms';
@@ -24,6 +24,9 @@ import { capitalizeWords, FULL_NAME_HELP, isEgyptMobile, isFullName, onlyDigits,
 
 const KIND: Record<string, string> = { earned: 'Added from a cancelled booking', used: 'Used on a booking', restored: 'Returned (booking was not paid)' };
 const useCard = themed(() => ({ backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border }));
+
+type Tab = 'me' | 'friends' | 'account';
+type Section = 'details' | 'email' | 'password' | 'credit' | null;
 
 export default function Profile() {
   const card = useCard();
@@ -45,13 +48,18 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [editing, setEditing] = useState(false);
+  // Profile is one page: the Me / Friends / Account tabs only change what's below, and Account's sections open in place.
+  const [tab, setTab] = useState<Tab>('me');
+  const [open, setOpen] = useState<Section>(null);
   const scroll = useRef<ScrollView>(null);
-  const detailsY = useRef(0);
+  const player = usePlayerStats(me?.role === 'player' ? uid : undefined);
+
+  function editDetails() { setTab('account'); setOpen('details'); setEditing(true); }
 
   // opened from booking to add a missing mobile number: start in edit mode
   useEffect(() => {
-    if (params.edit === '1') { setEditing(true); router.setParams({ edit: undefined }); }
-    if (params.complete === '1') { setCompleting(true); router.setParams({ complete: undefined }); }
+    if (params.edit === '1') { editDetails(); router.setParams({ edit: undefined }); }
+    if (params.complete === '1') { setCompleting(true); editDetails(); router.setParams({ complete: undefined }); }
   }, [params.edit, params.complete]);
 
   const load = useCallback(async () => {
@@ -95,141 +103,171 @@ export default function Profile() {
     setGender(savedGender); setStatus(''); setMsg(null); setEditing(false);
   }
 
+  function logOut() {
+    Alert.alert('Do you want to log out?', 'You can log in again any time.', [
+      { text: 'Stay logged in', style: 'cancel' },
+      { text: 'Yes, log out', style: 'destructive', onPress: () => { router.replace('/'); supabase.auth.signOut({ scope: 'local' }); } },
+    ]);
+  }
+
   if (authLoading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
   if (!session) {
     return <LoginForm embedded hero={<LoggedOutHero />} />;
   }
   if (!me) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;
 
+  const isPlayer = me.role === 'player';
+  const shown: Tab = isPlayer ? tab : 'account'; // owners, staff and admins have no stats or friends here
   const link = ref?.code ? `${SITE_URL}/signup?ref=${ref.code}` : '';
   const shareText = `Join me on Zaf Play to book courts and play together. Use my code ${ref?.code} and get ${ref?.percent}% off your first booking: ${link}`;
-
-  const initialsText = <GradientText style={{ fontFamily: fonts.display, fontSize: 38 }}>{(me.full_name || me.email || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w: string) => w[0]?.toUpperCase()).join('')}</GradientText>;
-  const nameBlock = (
-    <>
-      <Text style={{ color: colors.tabOn, fontFamily: fonts.display, fontSize: 24, textAlign: 'center' }}>{me.full_name || 'Your name'}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
-        {me.username ? <Text style={{ color: colors.primary, fontWeight: '700' }}>@{me.username}</Text> : null}
-        {me.role === 'player' && <AccountStatus />}
-      </View>
-    </>
-  );
+  const initials = (me.full_name || me.email || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w: string) => w[0]?.toUpperCase()).join('');
+  const toggle = (s: Section) => { setOpen(open === s ? null : s); if (s !== 'details') setEditing(false); };
 
   return (
-    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
       {(me.role === 'owner' || me.role === 'staff') && (
         <View style={{ marginBottom: 14 }}><Button title="Open the owner dashboard" onPress={() => router.push('/owner')} /></View>
       )}
-      {me.role === 'admin' && <Button title="Open the admin screens" onPress={() => router.push('/admin')} />}
+      {me.role === 'admin' && <View style={{ marginBottom: 14 }}><Button title="Open the admin screens" onPress={() => router.push('/admin')} /></View>}
 
-      {/* who you are: the Streak Ring (progress to the next badge) around your initials */}
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginBottom: -24, zIndex: 1 }}>
-        {ref?.code && <IconButton icon="share" label="Invite friends" onPress={() => Share.share({ message: shareText })} />}
-        <IconButton icon="edit" label="Edit my details" onPress={() => { setEditing(true); scroll.current?.scrollTo({ y: detailsY.current - 12, animated: true }); }} />
+      {/* who you are: initials inside the Streak Ring (progress to the next game badge) */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <ProgressRing progress={isPlayer ? player.progress : 1} size={68} stroke={6}>
+          <GradientText style={{ fontFamily: fonts.display, fontSize: 20 }}>{initials}</GradientText>
+        </ProgressRing>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ color: colors.tabOn, fontFamily: fonts.display, fontSize: 21 }} numberOfLines={1}>{me.full_name || 'Your name'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            {me.username ? <Text style={{ color: colors.primary, fontWeight: '700' }} numberOfLines={1}>@{me.username}</Text> : null}
+            {isPlayer && <AccountStatus />}
+          </View>
+          {isPlayer && player.stats && <Text style={{ color: colors.muted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{nextBadgeText(player.stats.games, player.next)}</Text>}
+        </View>
+        <IconButton icon="edit" label="Edit my details" onPress={editDetails} />
       </View>
-      {me.role === 'player' ? (
-        <StreakProfile uid={uid!} credit={credit} initials={initialsText} header={nameBlock} />
-      ) : (
-        <>
-          <ProgressRing progress={1}>{initialsText}</ProgressRing>
-          <View style={{ alignItems: 'center', marginTop: 10 }}>{nameBlock}</View>
-          {credit !== null && credit > 0 && (
-            <View style={{ alignSelf: 'center', marginTop: 10, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.soft }}>
-              <Text style={{ color: colors.success, fontWeight: '800' }}>{egp(credit)} credit</Text>
-            </View>
-          )}
-        </>
+
+      {isPlayer && <View style={{ marginTop: 12 }}><BlockedNotice /></View>}
+
+      {isPlayer && (
+        <View style={{ flexDirection: 'row', marginTop: 12, marginBottom: 4, backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 3 }}>
+          {([['me', 'Me'], ['friends', 'Friends'], ['account', 'Account']] as [Tab, string][]).map(([t, label]) => {
+            const on = tab === t;
+            return (
+              <Pressable key={t} onPress={() => setTab(t)} accessibilityRole="tab" accessibilityState={{ selected: on }}
+                style={{ flex: 1, paddingVertical: 9, borderRadius: radius.sm, alignItems: 'center', backgroundColor: on ? colors.accent : 'transparent' }}>
+                <Text style={{ color: on ? '#fff' : colors.muted, fontFamily: fonts.displayBold, fontSize: 14 }}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
       )}
-      <View style={{ height: 16 }} />
 
-      {me.role === 'player' && <BlockedNotice />}
+      {shown === 'me' && <StatsPanel stats={player.stats} trust={player.trust} days={player.days} credit={credit} />}
 
-      {credit !== null && ledger.length > 0 && (
-        <View style={card}>
-          <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 18 }}>Credit history</Text>
-          <Text style={{ color: colors.muted, marginTop: 2, fontSize: 12 }}>Taken off your next booking automatically.</Text>
-          {ledger.map((r) => (
-            <View key={r.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text }}>{KIND[r.kind] ?? r.kind}</Text>
-                <Text style={{ color: colors.muted, fontSize: 12 }}>{dateLabel(r.created_at)}{r.booking?.court?.name ? ` · ${r.booking.court.name}` : ''}</Text>
+      {shown === 'friends' && (
+        <View style={{ marginTop: 8 }}>
+          {ref?.code && (
+            <Card glow style={{ padding: 14, marginBottom: 14 }}>
+              <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 17 }}>🎁 Invite friends · both get {ref.percent}% off</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                <View style={{ flex: 1, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong, paddingVertical: 8, alignItems: 'center' }}>
+                  <GradientText style={{ fontFamily: fonts.display, fontSize: 22, letterSpacing: 2 }}>{ref.code}</GradientText>
+                </View>
+                <Button small title="Share" onPress={() => Share.share({ message: shareText })} />
+                <PressableScale onPress={() => Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareText)}`)} accessibilityLabel="Share on WhatsApp"
+                  style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: '#25D366', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="whatsapp" color="#fff" size={22} />
+                </PressableScale>
               </View>
-              <Text style={{ color: Number(r.amount) > 0 ? colors.success : colors.muted, fontWeight: '700' }}>{Number(r.amount) > 0 ? '+' : '−'} {egp(Math.abs(Number(r.amount)))}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={card} onLayout={(e) => { detailsY.current = e.nativeEvent.layout.y; }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-          <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20 }}>My details</Text>
-          {!editing && (
-            <PressableScale onPress={() => setEditing(true)} hitSlop={8} accessibilityRole="button"
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, overflow: 'hidden' }}>
-              <GradientFill />
-              <Icon name="edit" color="#fff" size={15} />
-              <Text style={{ color: '#fff', fontFamily: fonts.displayBold, fontSize: 15 }}>Edit</Text>
-            </PressableScale>
+              <Text style={{ color: colors.muted, fontSize: 12, marginTop: 8 }}>{ref.friends_joined} joined · {ref.available} discount{ref.available === 1 ? '' : 's'} waiting for you</Text>
+            </Card>
           )}
+          <FriendsCard />
         </View>
-        {!editing ? (
-          <>
-            <Detail label="Full name" value={me.full_name} />
-            <Detail label="Username" value={me.username ? `@${me.username}` : ''} />
-            <Detail label="Mobile number" value={me.phone} />
-            <Detail label="Gender" value={savedGender ? savedGender[0].toUpperCase() + savedGender.slice(1) : ''} />
-            <Detail label="Email" value={me.email} last />
-          </>
-        ) : (
-          <View style={{ marginTop: 10 }}>
-            {completing && <Note kind="ok">Welcome to Zaf Play! One last step: add your mobile number, gender and a username, then save.</Note>}
-            {msg && <Note kind={msg.kind}>{msg.text}</Note>}
-            <Field label="Full name" value={fullName} onChangeText={setFullName} autoComplete="name" placeholder="First and last name" />
-            <Field label="Mobile number" value={phone} onChangeText={(v) => setPhone(onlyDigits(v))} keyboardType="number-pad" maxLength={11} />
-            <GenderField value={gender} onChange={setGender} />
-            <UsernameField value={username} onChange={setUsername} onStatus={setStatus} current={me.username || ''}
-              hint="Friends use it to find you for teams and games. 3–20 characters: letters, numbers, _ and ." />
-            <Button title="Save changes" onPress={save} loading={saving} />
-            <View style={{ height: 8 }} />
-            <Button title="Cancel" variant="ghost" onPress={cancelEdit} />
-          </View>
-        )}
-      </View>
-
-      {me.email && <ChangeEmail current={me.email} />}
-      <ThemePicker />
-      <LoginSecurity />
-
-      {me.role === 'player' && <FriendsCard />}
-
-      {ref?.code && (
-        <Card glow style={{ padding: 14 }}>
-          <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 17 }}>🎁 Invite friends · both get {ref.percent}% off</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
-            <View style={{ flex: 1, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong, paddingVertical: 8, alignItems: 'center' }}>
-              <GradientText style={{ fontFamily: fonts.display, fontSize: 22, letterSpacing: 2 }}>{ref.code}</GradientText>
-            </View>
-            <Button small title="Share" onPress={() => Share.share({ message: shareText })} />
-            <PressableScale onPress={() => Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareText)}`)} accessibilityLabel="Share on WhatsApp"
-              style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: '#25D366', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="whatsapp" color="#fff" size={22} />
-            </PressableScale>
-          </View>
-          <Text style={{ color: colors.muted, fontSize: 12, marginTop: 8 }}>{ref.friends_joined} joined · {ref.available} discount{ref.available === 1 ? '' : 's'} waiting for you</Text>
-        </Card>
       )}
 
-      <View style={{ marginTop: 16 }}><Button title="Log out" onPress={() => Alert.alert('Do you want to log out?', 'You can log in again any time.', [
-        { text: 'Stay logged in', style: 'cancel' },
-        { text: 'Yes, log out', style: 'destructive', onPress: () => { router.replace('/'); supabase.auth.signOut({ scope: 'local' }); } },
-      ])} /></View>
-      {me.role === 'player' && <DeleteAccount />}
-      <LegalLinks style={{ marginTop: 18 }} />
+      {shown === 'account' && (
+        <View style={{ marginTop: 8 }}>
+          {/* each row opens right here; only one is open at a time */}
+          <View style={[card, { paddingVertical: 2, paddingHorizontal: 14 }]}>
+            <Row icon="user" title="My details" value={me.phone || 'Add your mobile'} open={open === 'details'} onPress={() => toggle('details')}>
+              {!editing ? (
+                <>
+                  <Detail label="Full name" value={me.full_name} />
+                  <Detail label="Username" value={me.username ? `@${me.username}` : ''} />
+                  <Detail label="Mobile number" value={me.phone} />
+                  <Detail label="Gender" value={savedGender ? savedGender[0].toUpperCase() + savedGender.slice(1) : ''} last />
+                  <View style={{ marginTop: 6 }}><Button small title="Edit my details" onPress={() => setEditing(true)} /></View>
+                </>
+              ) : (
+                <>
+                  {completing && <Note kind="ok">Welcome to Zaf Play! One last step: add your mobile number, gender and a username, then save.</Note>}
+                  {msg && <Note kind={msg.kind}>{msg.text}</Note>}
+                  <Field label="Full name" value={fullName} onChangeText={setFullName} autoComplete="name" placeholder="First and last name" />
+                  <Field label="Mobile number" value={phone} onChangeText={(v) => setPhone(onlyDigits(v))} keyboardType="number-pad" maxLength={11} />
+                  <GenderField value={gender} onChange={setGender} />
+                  <UsernameField value={username} onChange={setUsername} onStatus={setStatus} current={me.username || ''}
+                    hint="Friends use it to find you for teams and games. 3–20 characters: letters, numbers, _ and ." />
+                  <Button title="Save changes" onPress={save} loading={saving} />
+                  <View style={{ height: 8 }} />
+                  <Button title="Cancel" variant="ghost" onPress={cancelEdit} />
+                </>
+              )}
+            </Row>
+            {me.email && (
+              <Row icon="info" title="Email" value={me.email} open={open === 'email'} onPress={() => toggle('email')}>
+                <ChangeEmail current={me.email} bare />
+              </Row>
+            )}
+            <Row icon="lock" title="Password" value="Change, or log out everywhere" open={open === 'password'} onPress={() => toggle('password')} last={!(credit !== null && ledger.length > 0)}>
+              <LoginSecurity bare />
+            </Row>
+            {credit !== null && ledger.length > 0 && (
+              <Row icon="wallet" title="Credit" value={egp(credit)} open={open === 'credit'} onPress={() => toggle('credit')} last>
+                <Text style={{ color: colors.muted, fontSize: 12 }}>Taken off your next booking automatically.</Text>
+                {ledger.map((r) => (
+                  <View key={r.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.text }}>{KIND[r.kind] ?? r.kind}</Text>
+                      <Text style={{ color: colors.muted, fontSize: 12 }}>{dateLabel(r.created_at)}{r.booking?.court?.name ? ` · ${r.booking.court.name}` : ''}</Text>
+                    </View>
+                    <Text style={{ color: Number(r.amount) > 0 ? colors.success : colors.muted, fontWeight: '700' }}>{Number(r.amount) > 0 ? '+' : '−'} {egp(Math.abs(Number(r.amount)))}</Text>
+                  </View>
+                ))}
+              </Row>
+            )}
+          </View>
+
+          <ThemePicker />
+          <Button title="Log out" onPress={logOut} />
+          {isPlayer && <DeleteAccount />}
+          <LegalLinks style={{ marginTop: 14 }} />
+        </View>
+      )}
     </ScrollView>
   );
 }
 
-// Small square button over the ring (share, edit).
+// One line in the Account tab; tapping it opens its section underneath, in place.
+function Row({ icon, title, value, open, onPress, last, children }: { icon: IconName; title: string; value?: string; open: boolean; onPress: () => void; last?: boolean; children: ReactNode }) {
+  useTheme();
+  return (
+    <View style={{ borderBottomWidth: last ? 0 : 1, borderBottomColor: colors.border }}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ expanded: open }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11 }}>
+        <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} color={colors.primary} size={16} />
+        </View>
+        <Text style={{ color: colors.text, fontFamily: fonts.bodySemi, fontSize: 15 }}>{title}</Text>
+        <Text style={{ flex: 1, color: colors.muted, fontSize: 12, textAlign: 'right' }} numberOfLines={1}>{value}</Text>
+        <Text style={{ color: colors.muted, fontSize: 16, transform: [{ rotate: open ? '90deg' : '0deg' }] }}>›</Text>
+      </Pressable>
+      {open && <View style={{ paddingBottom: 12 }}>{children}</View>}
+    </View>
+  );
+}
+
+// Small square button beside the name (edit).
 function IconButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   useTheme();
   return (
@@ -257,9 +295,9 @@ function LoggedOutHero() {
 function Detail({ label, value, last }: { label: string; value?: string | null; last?: boolean }) {
   useTheme();
   return (
-    <View style={{ paddingVertical: 10, borderBottomWidth: last ? 0 : 1, borderBottomColor: colors.border }}>
+    <View style={{ paddingVertical: 8, borderBottomWidth: last ? 0 : 1, borderBottomColor: colors.border }}>
       <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
-      <Text style={{ color: value ? colors.text : colors.muted, fontSize: 16, fontWeight: '600', marginTop: 2 }}>{value || 'Not added yet'}</Text>
+      <Text style={{ color: value ? colors.text : colors.muted, fontSize: 15, fontWeight: '600', marginTop: 1 }}>{value || 'Not added yet'}</Text>
     </View>
   );
 }

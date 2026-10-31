@@ -7,7 +7,8 @@ import { Button, Field } from './ui';
 
 // Change login email, like the website: Supabase sends a confirmation link to the new address and
 // the change only happens once it's opened (the database copy then syncs itself).
-export function ChangeEmail({ current }: { current: string }) {
+// `bare`: no card or title, for when the Profile's Account tab opens it in place.
+export function ChangeEmail({ current, bare }: { current: string; bare?: boolean }) {
   useTheme();
   const [email, setEmail] = useState('');
   const [saving, setSaving] = useState(false);
@@ -33,8 +34,8 @@ export function ChangeEmail({ current }: { current: string }) {
   }
 
   return (
-    <View style={{ backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border }}>
-      <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20, marginBottom: 8 }}>Email</Text>
+    <View style={bare ? { paddingTop: 4 } : { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border }}>
+      {!bare && <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20, marginBottom: 8 }}>Email</Text>}
       <Text style={{ color: colors.muted, fontSize: 12 }}>Current email</Text>
       <Text style={{ color: colors.text, marginBottom: 12 }}>{current}</Text>
       <Field label="New email" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" placeholder="name@example.com" />

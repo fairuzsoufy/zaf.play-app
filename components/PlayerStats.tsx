@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Animated, Easing, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { Text } from '@/components/AppText';
 import { Link, useFocusEffect } from 'expo-router';
@@ -10,6 +10,7 @@ import { tap } from '@/lib/haptics';
 import { GRADIENT } from './ui';
 import { Icon, type IconName } from './Icon';
 import { TrustChip, type Trust } from './Friends';
+import { toast } from './Toast';
 
 export type Stats = {
   games: number; hosted: number; courts: number; tournaments: number; streak: number; best_streak: number;
@@ -179,14 +180,11 @@ function Tile({ icon, value, label, flicker, suffix }: { icon: IconName; value: 
   );
 }
 
-// Profile hero for a player: the ring toward the next badge, name, stat tiles, this month and badges.
-// `header` sits under the ring (name, username); `credit` is shown as the fourth tile.
-export function StreakProfile({ uid, initials, header, credit }: { uid: string; initials: ReactNode; header: ReactNode; credit: number | null }) {
-  const s = useS();
+// A player's numbers for the Profile: stats, trust level and the days played this month. Reloads when the screen comes back.
+export function usePlayerStats(uid?: string) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [trust, setTrust] = useState<Trust | null>(null);
   const days = useMonthDays(uid);
-
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('my_player_stats');
     if (!error && data) setStats(data as Stats);
@@ -194,61 +192,57 @@ export function StreakProfile({ uid, initials, header, credit }: { uid: string; 
     if (t) setTrust(t as Trust);
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+  const { p, next } = ringProgress(stats?.games ?? 0);
+  return { stats, trust, days, progress: stats ? p : 0, next };
+}
 
-  const games = stats?.games ?? 0;
-  const { p, next } = ringProgress(games);
-  const earned = stats ? BADGES.filter((b) => b.earned(stats)) : [];
-  const ordered = stats ? [...earned, ...BADGES.filter((b) => !b.earned(stats))] : [];
+// One line under the name: how many games to the next game badge.
+export function nextBadgeText(games: number, next: number | null) {
+  if (!next) return 'Every game badge earned 🥇';
+  const left = next - games;
+  return `${left} game${left === 1 ? '' : 's'} to ${BADGE_EMOJI[next]} ${next === 1 ? 'your first game badge' : `${next} games`}`;
+}
 
+// The Me tab: stat tiles, this month and every badge in one row (tap one to see what it's for). Fits one screen.
+export function StatsPanel({ stats, trust, days, credit }: { stats: Stats | null; trust: Trust | null; days: Set<number> | null; credit: number | null }) {
+  const s = useS();
+  if (!stats) return <ActivityIndicator style={{ marginTop: 30 }} color={colors.primary} />;
+  const earned = BADGES.filter((b) => b.earned(stats));
+  const ordered = [...earned, ...BADGES.filter((b) => !b.earned(stats))];
   return (
     <View>
-      <ProgressRing progress={stats ? p : 0}>{initials}</ProgressRing>
-      <View style={{ alignItems: 'center', marginTop: 10 }}>
-        {header}
-        {stats && (
-          <Text style={[s.small, { marginTop: 3, fontSize: 13 }]}>
-            {next ? `${next - games} game${next - games === 1 ? '' : 's'} to ${BADGE_EMOJI[next]} ${next === 1 ? 'your first game badge' : `${next} games`}` : 'Every game badge earned 🥇'}
-          </Text>
-        )}
-        {trust && <View style={{ marginTop: 8 }}><TrustChip trust={trust} /></View>}
+      {trust && <View style={{ alignSelf: 'flex-start', marginBottom: 2 }}><TrustChip trust={trust} /></View>}
+      <View style={[s.grid, { marginTop: 6 }]}>
+        <Tile icon="ball" value={stats.games} label={stats.games === 1 ? 'Game played' : 'Games played'} />
+        <Tile icon="flame" value={stats.streak} label={stats.streak === 1 ? 'Week in a row' : 'Weeks in a row'} flicker={stats.streak > 0} />
+        <Tile icon="pin" value={stats.courts} label={stats.courts === 1 ? 'Court' : 'Courts'} />
+        <Tile icon="wallet" value={credit ?? 0} suffix="EGP" label="Credit" />
       </View>
-
-      {stats && (
-        <>
-          <View style={s.grid}>
-            <Tile icon="ball" value={stats.games} label={stats.games === 1 ? 'Game played' : 'Games played'} />
-            <Tile icon="flame" value={stats.streak} label={stats.streak === 1 ? 'Week in a row' : 'Weeks in a row'} flicker={stats.streak > 0} />
-            <Tile icon="pin" value={stats.courts} label={stats.courts === 1 ? 'Court' : 'Courts'} />
-            <Tile icon="wallet" value={credit ?? 0} suffix="EGP" label="Credit" />
-          </View>
-          {stats.best_streak > stats.streak && (
-            <Text style={[s.small, { textAlign: 'center', marginTop: 6 }]}>
-              {stats.streak > 0 ? 'Keep it going' : 'Play this week to start a new streak'} · best {stats.best_streak} weeks
-            </Text>
-          )}
-          {days && <MonthBars played={days} />}
-          {stats.games === 0 && (
-            <Text style={{ color: colors.text, textAlign: 'center', marginTop: 12 }}>
-              Your first game unlocks your first badge. <Link href="/" style={{ color: colors.primaryAlt, textDecorationLine: 'underline' }}>Find a court</Link>
-            </Text>
-          )}
-          <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 16, marginTop: 16, marginBottom: 8 }}>
-            Badges <Text style={{ color: colors.muted, fontFamily: fonts.body, fontSize: 14 }}>· {earned.length} of {BADGES.length}</Text>
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-            {ordered.map((b) => {
-              const got = b.earned(stats);
-              return (
-                <View key={b.key} style={[s.badge, !got && { opacity: 0.4 }]} accessibilityLabel={got ? b.title : `${b.title}: ${b.hint}`}>
-                  <Text style={{ fontSize: 22 }}>{b.emoji}</Text>
-                  <Text style={s.badgeTitle} numberOfLines={2}>{b.title}</Text>
-                  {!got && <Text style={[s.small, { fontSize: 11, textAlign: 'center' }]} numberOfLines={2}>{b.hint}</Text>}
-                </View>
-              );
-            })}
-          </ScrollView>
-        </>
+      {stats.best_streak > stats.streak && (
+        <Text style={[s.small, { textAlign: 'center', marginTop: 6 }]}>
+          {stats.streak > 0 ? 'Keep it going' : 'Play this week to start a new streak'} · best {stats.best_streak} weeks
+        </Text>
       )}
+      {days && <MonthBars played={days} />}
+      {stats.games === 0 && (
+        <Text style={{ color: colors.text, textAlign: 'center', marginTop: 10 }}>
+          Your first game unlocks your first badge. <Link href="/" style={{ color: colors.primaryAlt, textDecorationLine: 'underline' }}>Find a court</Link>
+        </Text>
+      )}
+      <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 15, marginTop: 14, marginBottom: 6 }}>
+        Badges <Text style={{ color: colors.muted, fontFamily: fonts.body, fontSize: 13 }}>· {earned.length} of {BADGES.length}</Text>
+      </Text>
+      <View style={{ flexDirection: 'row', gap: 5 }}>
+        {ordered.map((b) => {
+          const got = b.earned(stats);
+          return (
+            <Pressable key={b.key} onPress={() => toast(got ? `${b.emoji} ${b.title}` : `${b.title}: ${b.hint}`)} accessibilityRole="button"
+              accessibilityLabel={got ? b.title : `${b.title}: ${b.hint}`} style={[s.badge, !got && { opacity: 0.35 }]}>
+              <Text style={{ fontSize: 17 }}>{b.emoji}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -261,6 +255,5 @@ const useS = themed(() => StyleSheet.create({
   num: { color: colors.tabOn, fontFamily: fonts.display, fontSize: 21, fontVariant: ['tabular-nums'] },
   cap: { color: colors.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 },
   small: { color: colors.muted, fontSize: 12 },
-  badge: { width: 84, alignItems: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: radius.md, padding: 8 },
-  badgeTitle: { color: colors.text, fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 2 },
+  badge: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: radius.sm },
 }));

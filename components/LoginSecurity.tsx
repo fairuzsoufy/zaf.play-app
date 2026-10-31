@@ -9,7 +9,8 @@ import { Button, Field, Note } from './ui';
 
 // Profile → Password, like the website: type the current password, then the new one. Changing it logs out
 // every other phone and browser, so a login someone else may have stays closed.
-export function LoginSecurity() {
+// `bare`: no card or title, for when the Profile's Account tab opens it in place.
+export function LoginSecurity({ bare }: { bare?: boolean } = {}) {
   useTheme();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -54,8 +55,8 @@ export function LoginSecurity() {
   }
 
   return (
-    <View style={{ backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border }}>
-      <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20, marginBottom: 8 }}>Password</Text>
+    <View style={bare ? { paddingTop: 4 } : { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border }}>
+      {!bare && <Text style={{ color: colors.text, fontFamily: fonts.displayBold, fontSize: 20, marginBottom: 8 }}>Password</Text>}
       {!open ? (
         <Button small variant="ghost" title="Change password" onPress={() => { setOpen(true); setMsg(null); }} />
       ) : (
