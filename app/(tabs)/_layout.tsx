@@ -55,11 +55,11 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="(play)" options={{ title: 'Play', tabBarIcon: icon('ball'), tabBarLabel: label('Play') }} />
       <Tabs.Screen name="(games)" options={{ title: 'Games', tabBarIcon: icon('users'), tabBarLabel: label('Games') }} />
-      <Tabs.Screen name="(bookings)" options={{ title: 'Bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('Bookings') }} />
-      <Tabs.Screen name="(profile)" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
-      {/* opens the dashboard on top (it has its own top bar and no bottom bar, like the website), so Back returns here */}
+      {/* owners and staff only, in the middle. It opens the dashboard on top (its own top bar, no bottom bar, like the website), so Back returns here */}
       <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', href: owner ? undefined : null, tabBarIcon: icon('list'), tabBarLabel: label('Dashboard') }}
         listeners={{ tabPress: (e) => { e.preventDefault(); router.push('/owner'); } }} />
+      <Tabs.Screen name="(bookings)" options={{ title: 'Bookings', tabBarIcon: icon('calendar'), tabBarLabel: label('Bookings') }} />
+      <Tabs.Screen name="(profile)" options={{ title: 'Profile', tabBarIcon: icon('user'), tabBarLabel: label('Profile') }} />
     </Tabs>
   );
 }
