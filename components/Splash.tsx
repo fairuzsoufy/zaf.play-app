@@ -1,25 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import { Text } from '@/components/AppText';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { colors, fonts, themed } from '@/lib/theme';
+import { colors, themed } from '@/lib/theme';
 import { Logo } from './Logo';
+import { Tagline } from './Tagline';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const SIZE = 240;
 const R = 47;
 const LENGTH = 2 * Math.PI * R;
 
+// once per app launch: kept on the global object, so a Fast Refresh or a remount doesn't play it again
+const g = globalThis as { __zafSplashShown?: boolean };
+
 // The website's intro: a gradient ring draws itself around the logo, the tagline rises, then it all fades away.
 export function Splash() {
   const s = useS();
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(!!g.__zafSplashShown);
   const ring = useRef(new Animated.Value(0)).current;
   const logoIn = useRef(new Animated.Value(0)).current;
   const tagIn = useRef(new Animated.Value(0)).current;
   const out = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (g.__zafSplashShown) return;
+    g.__zafSplashShown = true;
     Animated.parallel([
       Animated.timing(ring, { toValue: 1, duration: 1000, easing: Easing.bezier(0.6, 0, 0.2, 1), useNativeDriver: false }),
       Animated.sequence([
@@ -55,9 +60,7 @@ export function Splash() {
         </Animated.View>
       </View>
       <Animated.View style={{ opacity: tagIn, transform: [{ translateY: tagIn.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
-        <Text style={s.tag}>
-          Play. Compete. <Text style={s.tagStrong}>Connect.</Text>
-        </Text>
+        <View style={{ marginTop: 16 }}><Tagline width={210} /></View>
       </Animated.View>
     </Animated.View>
   );
@@ -66,6 +69,4 @@ export function Splash() {
 const useS = themed(() => StyleSheet.create({
   wrap: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', zIndex: 100 },
   logo: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  tag: { color: colors.muted, fontFamily: fonts.displaySemi, fontSize: 17, marginTop: 16 },
-  tagStrong: { color: colors.brandPinkBright, fontFamily: fonts.display },
 }));
