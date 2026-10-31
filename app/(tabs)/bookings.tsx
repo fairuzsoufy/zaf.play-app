@@ -205,6 +205,7 @@ export default function Bookings() {
                 {canCancel && <IconBtn icon="✕" label="Cancel" color={colors.danger} onPress={() => setCancelId(cancelId === b.id ? null : b.id)} />}
                 {b.status !== 'cancelled' && new Date(b.end_time).getTime() > now && b.court?.maps_url && <IconBtn icon="📍" label="Map" color={colors.primaryAlt} onPress={() => Linking.openURL(b.court.maps_url)} />}
                 {tab === 'past' && b.court?.id && <IconBtn icon="🏟" label="Court" color={colors.primaryAlt} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })} />}
+                {tab === 'past' && b.payment_status === 'paid' && ['confirmed', 'completed'].includes(b.status) && !reviews[b.id] && <IconBtn icon="⭐" label="Rate" color={colors.warning} onPress={() => setRateId(rateId === b.id ? null : b.id)} />}
               </View>
             </Pressable>
             {awaiting && <Text style={{ color: colors.brandPinkBright, marginTop: 10, fontWeight: '600', fontSize: 13 }}>Send {egp(b.amount_due)} by InstaPay{holdLeft !== null ? ` · ${countdown(holdLeft)} left` : ''}</Text>}
@@ -262,12 +263,10 @@ export default function Bookings() {
 
             {tab === 'past' && b.payment_status === 'paid' && ['confirmed', 'completed'].includes(b.status) && (
               reviews[b.id] ? (
-                <Text style={{ color: colors.warning, marginTop: 10, textAlign: 'center' }}>Your rating {'★'.repeat(reviews[b.id])}{'☆'.repeat(5 - reviews[b.id])}</Text>
+                <Text style={{ color: colors.warning, marginTop: 8, fontSize: 12 }}>Your rating {'★'.repeat(reviews[b.id])}{'☆'.repeat(5 - reviews[b.id])}</Text>
               ) : rateId === b.id ? (
                 <Rate bookingId={b.id} onDone={() => { setRateId(null); load(); }} onClose={() => setRateId(null)} />
-              ) : (
-                <View style={{ marginTop: 10 }}><Button title="⭐ Rate this court" variant="ghost" onPress={() => setRateId(b.id)} /></View>
-              )
+              ) : null
             )}
 
             {phones[b.id] && b.status !== 'cancelled' && !requestOpen(b) && (
