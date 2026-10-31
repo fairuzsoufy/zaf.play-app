@@ -19,6 +19,7 @@ import { PolicyNotice } from '@/components/PolicyNotice';
 import { dateLabel, timeLabel } from '@/lib/format';
 import { useRequestId } from '@/lib/requestId';
 import { RefundChoice } from '@/components/RefundChoice';
+import { BookingTicket } from '@/components/BookingTicket';
 
 const LATE_PAY_MINUTES = 60; // must match submit_payment_proof: a screenshot can still come this long after the hold
 
@@ -60,7 +61,7 @@ export default function Pay() {
       .from('bookings')
       .select(`id,start_time,end_time,status,payment_status,total_price,amount_due,credit_amount,credit_used,hold_expires_at,rescheduled_from,
         cancellation_reason,cancelled_by,group_id,refund_to,refund_status,refund_amount,refund_fee,refund_as_credit,discount_amount,booking_extras(name,qty,amount),payments(created_at,status),sport:sports(name,slug),
-        court:courts(id,name,is_indoor,late_fee_percent,facility:facilities(name,city))`)
+        court:courts(id,name,is_indoor,late_fee_percent,maps_url,facility:facilities(name,city,latitude,longitude))`)
       .eq('id', id).maybeSingle();
     if ((data as any)?.group_id) {
       const { data: g } = await supabase.from('bookings').select('id,start_time,end_time,status,payment_status,amount_due')
@@ -196,35 +197,24 @@ export default function Pay() {
       {err && <Note kind="error">{err}</Note>}
     </>
   );
+  // booked or waiting for approval: the ticket screen, like the website
+  const ticket = (b.payment_status === 'paid' || b.payment_status === 'pending_review') && b.status !== 'cancelled';
   const extrasSum = (b.booking_extras ?? []).reduce((a: number, x: any) => a + Number(x.amount), 0);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior="padding" keyboardVerticalOffset={insets.top + (Platform.OS === 'ios' ? 44 : 56)}>
     <ScrollView ref={scroll} style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 + insets.bottom }} keyboardShouldPersistTaps="handled">
-      <Stack.Screen options={{ title: isChange ? 'Pay for your change' : 'Complete your booking' }} />
-      <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{b.court?.name} · {b.sport?.name}</Text>
-      <Text style={{ color: colors.muted, marginTop: 4 }}>{b.court?.facility?.name}, {b.court?.facility?.city}</Text>
-      <Text style={{ color: colors.muted, marginBottom: 16 }}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} – {timeLabel(b.end_time)}</Text>
-
-      {b.payment_status === 'paid' && b.status !== 'cancelled' && (
-        <View>
-          <Note kind="ok">✅ Payment approved, you are booked! The court's phone number shows in Bookings 30 minutes before your game.</Note>
-          <Button title="Go to Bookings →" onPress={() => router.replace('/bookings')} />
-        </View>
+      <Stack.Screen options={{ title: ticket ? 'Your booking' : isChange ? 'Pay for your change' : 'Complete your booking' }} />
+      {!ticket && (
+        <>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{b.court?.name} · {b.sport?.name}</Text>
+          <Text style={{ color: colors.muted, marginTop: 4 }}>{b.court?.facility?.name}, {b.court?.facility?.city}</Text>
+          <Text style={{ color: colors.muted, marginBottom: 16 }}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} – {timeLabel(b.end_time)}</Text>
+        </>
       )}
 
-      {b.payment_status === 'pending_review' && b.status !== 'cancelled' && (
-        <View>
-          <Note kind="ok">
-            ⏳ Payment received. We check your InstaPay screenshot within {REVIEW_MINUTES} minutes. Your time is reserved meanwhile.
-          </Note>
-          <Text style={{ color: colors.muted, marginBottom: 14 }}>
-            {reviewLeft !== null && reviewLeft > 0 ? `Approval expected within ${countdown(reviewLeft)}` : 'Taking a little longer than usual, we are on it.'} This page updates by itself.
-          </Text>
-          <Button title="Go to Bookings →" onPress={() => router.replace('/bookings')} />
-          <View style={{ height: 10 }} />
-          <Button title="🔄 Refresh status" variant="ghost" onPress={load} />
-        </View>
+      {(b.payment_status === 'paid' || b.payment_status === 'pending_review') && b.status !== 'cancelled' && (
+        <BookingTicket b={b} mode={b.payment_status === 'paid' ? 'booked' : 'waiting'} now={now} reviewLeft={reviewLeft} isChange={isChange} />
       )}
 
       {expired && lateRefund && (
