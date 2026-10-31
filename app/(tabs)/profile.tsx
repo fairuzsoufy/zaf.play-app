@@ -149,7 +149,6 @@ export default function Profile() {
           </View>
           {isPlayer && player.stats && <Text style={{ color: colors.muted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{nextBadgeText(player.stats.games, player.next)}</Text>}
         </View>
-        <IconButton icon="edit" label="Edit my details" onPress={editDetails} />
       </View>
 
       {isPlayer && <View style={{ marginTop: 12 }}><BlockedNotice /></View>}
@@ -270,17 +269,6 @@ function Row({ icon, title, value, open, onPress, last, children }: { icon: Icon
       </Pressable>
       {open && <View style={{ paddingBottom: 12 }}>{children}</View>}
     </View>
-  );
-}
-
-// Small square button beside the name (edit).
-function IconButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
-  useTheme();
-  return (
-    <PressableScale onPress={onPress} accessibilityLabel={label} hitSlop={6}
-      style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name={icon} color={colors.muted} size={17} />
-    </PressableScale>
   );
 }
 
