@@ -13,7 +13,6 @@ import { cairoDayMinutes, countdown, egp } from '@/lib/format';
 import { savedRefundInstapay } from '@/lib/bookPrefs';
 import { cleanInstapay, HOLD_MINUTES, INSTAPAY_HELP, isInstapay, MAX_PROOFS, MAX_PROOF_MB, REVIEW_MINUTES, ZAF_INSTAPAY_LINK } from '@/lib/payment';
 import { Button, Field, Note } from '@/components/ui';
-import { toast } from '@/components/Toast';
 import { askToNotify } from '@/components/BookingAlerts';
 import { PolicyNotice } from '@/components/PolicyNotice';
 import { dateLabel, timeLabel } from '@/lib/format';
@@ -81,10 +80,10 @@ export default function Pay() {
     return () => { off = true; };
   }, [session]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-  // while the screenshot is being checked, look again every 15 seconds
+  // while the screenshot is being checked, look again every 20 seconds (as the website does)
   useEffect(() => {
     if (b?.payment_status !== 'pending_review') return;
-    const t = setInterval(load, 15000);
+    const t = setInterval(load, 20000);
     return () => clearInterval(t);
   }, [b?.payment_status, load]);
   // live update the moment Zaf Play approves or rejects it
@@ -92,6 +91,7 @@ export default function Pay() {
     if (!session) return;
     const ch = supabase.channel(`pay-${id}-${Date.now()}`)
       .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'bookings', filter: `id=eq.${id}` }, () => load())
+      .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'payments', filter: `booking_id=eq.${id}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [id, session, load]);
@@ -133,8 +133,9 @@ export default function Pay() {
     req.done();
     setFiles([]);
     askToNotify();
-    toast("Payment sent! We'll confirm it shortly.");
-    router.replace('/bookings');
+    // stay here like the website: the screen turns into "Payment sent!" and then "You're booked!" once approved
+    await load();
+    scroll.current?.scrollTo({ y: 0, animated: false });
   }
 
   if (loading) return <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} />;

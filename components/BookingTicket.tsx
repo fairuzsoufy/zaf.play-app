@@ -74,6 +74,49 @@ function SmallButton({ icon, tint, title, onPress }: { icon: IconName; tint: str
   );
 }
 
+// a short burst of brand-coloured confetti when the booking is confirmed, like the website (none when motion is reduced)
+function Confetti({ reduce }: { reduce: boolean }) {
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduce) return;
+    Animated.timing(t, { toValue: 1, duration: 1600, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, [reduce, t]);
+  if (reduce) return null;
+  const tints = ['#2d5bff', '#8a4bff', '#e0206f', '#ffb547', '#3ddc97'];
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 320, zIndex: 10, overflow: 'visible' }}>
+      {Array.from({ length: 28 }, (_, i) => {
+        const delay = ((i % 7) * 0.08) / 1.6;
+        const p = t.interpolate({ inputRange: [0, delay, 1], outputRange: [0, 0, 1], extrapolate: 'clamp' });
+        const dx = ((i * 53) % 120) - 60;
+        return (
+          <Animated.View key={i} style={{
+            position: 'absolute', left: `${(i * 37) % 100}%`, top: 0, width: 8, height: 12, borderRadius: 2, backgroundColor: tints[i % tints.length],
+            opacity: p.interpolate({ inputRange: [0, 0.01, 0.8, 1], outputRange: [0, 1, 1, 0] }),
+            transform: [
+              { translateX: p.interpolate({ inputRange: [0, 1], outputRange: [0, dx] }) },
+              { translateY: p.interpolate({ inputRange: [0, 1], outputRange: [-10, 300] }) },
+              { rotate: p.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${(i * 97) % 720}deg`] }) },
+            ],
+          }} />
+        );
+      })}
+    </View>
+  );
+}
+
+// "Add to calendar": the website downloads an .ics file; on the phone, Google Calendar's add-event page does the same with no extra app library
+function calendarUrl(b: any) {
+  const stamp = (v: string) => new Date(v).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const q = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `${b.court?.name || 'Court'} (Zaf Play)`,
+    dates: `${stamp(b.start_time)}/${stamp(b.end_time)}`,
+    location: [b.court?.facility?.name, b.court?.facility?.city].filter(Boolean).join(' '),
+  });
+  return `https://calendar.google.com/calendar/render?${q.toString()}`;
+}
+
 export function BookingTicket({ b, mode, now, reviewLeft, isChange }: { b: any; mode: 'booked' | 'waiting'; now: number; reviewLeft: number | null; isChange: boolean }) {
   const router = useRouter();
   const reduce = useReduceMotion();
@@ -94,6 +137,7 @@ export function BookingTicket({ b, mode, now, reviewLeft, isChange }: { b: any; 
 
   return (
     <View style={{ gap: 12 }}>
+      {!waiting && <Confetti reduce={reduce} />}
       <Rise reduce={reduce}>
         <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, textAlign: 'center' }}>
           {waiting ? 'Payment sent!' : isChange ? 'Change confirmed' : 'You’re booked!'}
@@ -143,7 +187,8 @@ export function BookingTicket({ b, mode, now, reviewLeft, isChange }: { b: any; 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {!waiting && maps && <SmallButton icon="pin" tint="#0f9f63" title="Directions" onPress={() => Linking.openURL(maps)} />}
           {canChange && <SmallButton icon="edit" tint="#f0a020" title="Change" onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })} />}
-          <SmallButton icon="list" tint={canChange ? '#2d5bff' : '#f0a020'} title="Bookings" onPress={() => router.replace('/bookings')} />
+          {!waiting && <SmallButton icon="calendar" tint="#2d5bff" title="Add to calendar" onPress={() => Linking.openURL(calendarUrl(b))} />}
+          {(waiting || !canChange) && <SmallButton icon="list" tint="#f0a020" title="My bookings" onPress={() => router.replace('/bookings')} />}
           <SmallButton icon="home" tint="#e0206f" title="Home" onPress={() => router.replace('/')} />
         </View>
       </Rise>
