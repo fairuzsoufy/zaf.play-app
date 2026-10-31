@@ -15,28 +15,8 @@ import { RefundTracker, refundInfo } from '@/components/RefundTracker';
 import { RefundChoice } from '@/components/RefundChoice';
 import { PolicyNotice } from '@/components/PolicyNotice';
 import { LoggedOutPeek } from '@/components/LoggedOutPeek';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Ellipse, Line } from 'react-native-svg';
-
-const SPORT_LOOK: Record<string, [string, [string, string]]> = {
-  padel: ['🎾', ['#2D5BFF', '#6A3BD6']], tennis: ['🎾', ['#0F9F63', '#2D5BFF']], football: ['⚽', ['#E0206F', '#5A2A8A']],
-  basketball: ['🏀', ['#FF8A3D', '#E0206F']], volleyball: ['🏐', ['#FFB547', '#2D5BFF']], squash: ['🎾', ['#6A3BD6', '#E0206F']],
-};
-const sportKey = (slug?: string) => Object.keys(SPORT_LOOK).find((k) => (slug || '').includes(k));
-const sportEmoji = (slug?: string) => SPORT_LOOK[sportKey(slug) ?? '']?.[0] ?? '🏟';
-// phones have no squash emoji, so draw one: a racket and the black ball with its two yellow dots
-function SquashGlyph() {
-  return (
-    <Svg width={34} height={34} viewBox="0 0 34 34">
-      <Line x1={14} y1={17} x2={5} y2={30} stroke="#fff" strokeWidth={3.2} strokeLinecap="round" />
-      <Ellipse cx={19} cy={11} rx={6.5} ry={8.5} transform="rotate(35 19 11)" fill="rgba(255,255,255,0.18)" stroke="#fff" strokeWidth={2.4} />
-      <Circle cx={26} cy={26} r={5.5} fill="#111" stroke="#fff" strokeWidth={1.2} />
-      <Circle cx={24.2} cy={25} r={1.1} fill="#FFD400" />
-      <Circle cx={27.8} cy={25} r={1.1} fill="#FFD400" />
-    </Svg>
-  );
-}
-const sportGradient =(slug?: string): [string, string] => SPORT_LOOK[sportKey(slug) ?? '']?.[1] ?? ['#2D5BFF', '#E0206F'];
+import { SvgXml } from 'react-native-svg';
+import { sportSvg } from '@/lib/sportIcons';
 
 function IconBtn({ icon, label, color, onPress }: { icon: string; label: string; color: string; onPress: () => void }) {
   return (
@@ -201,8 +181,7 @@ export default function Bookings() {
             {/* compact card: sport square, title, time, status pill and the main actions as icon buttons */}
             <Pressable accessibilityRole="button" onPress={() => setOpenId(openId === b.id ? null : b.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={s.sq}>
-                <LinearGradient colors={sportGradient(b.sport?.slug)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-                {sportKey(b.sport?.slug) === 'squash' ? <SquashGlyph /> : <Text style={{ fontSize: 24 }}>{sportEmoji(b.sport?.slug)}</Text>}
+                {(() => { const xml = sportSvg(b.sport?.slug, { ic: colors.text, a: colors.brandPinkBright, b: colors.primary, cut: colors.cardAlt }); return xml ? <SvgXml xml={xml} width={36} height={36} /> : <Text style={{ fontSize: 24 }}>🏟</Text>; })()}
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={s.title} numberOfLines={1}>{b.sport?.name}</Text>
@@ -417,7 +396,7 @@ const useS = themed(() => StyleSheet.create({
   tab: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
   tabOn: { borderColor: 'transparent', overflow: 'hidden' },
   card: { backgroundColor: colors.card, borderRadius: 20, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-  sq: { width: 56, height: 56, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  sq: { width: 56, height: 56, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' },
   title: { color: colors.text, fontWeight: '700', fontSize: 15 },
   sub: { color: colors.muted, marginTop: 3 },
   link: { color: colors.primaryAlt, fontWeight: '600', marginTop: 8 },
