@@ -203,7 +203,8 @@ export default function Bookings() {
                 {awaiting && <IconBtn icon="💳" label="Pay" color={colors.brandPinkBright} onPress={() => router.push({ pathname: '/pay/[id]', params: { id: b.id } })} />}
                 {paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id) && <IconBtn icon="✏️" label="Modify" color={colors.primaryAlt} onPress={() => router.push({ pathname: '/change/[id]', params: { id: b.id } })} />}
                 {canCancel && <IconBtn icon="✕" label="Cancel" color={colors.danger} onPress={() => setCancelId(cancelId === b.id ? null : b.id)} />}
-                {!awaiting && !(paidUpcoming && !requestOpen(b) && !pendingChangeFor.has(b.id)) && !canCancel && b.court?.maps_url && b.status !== 'cancelled' && <IconBtn icon="📍" label="Map" color={colors.primaryAlt} onPress={() => Linking.openURL(b.court.maps_url)} />}
+                {b.status !== 'cancelled' && new Date(b.end_time).getTime() > now && b.court?.maps_url && <IconBtn icon="📍" label="Map" color={colors.primaryAlt} onPress={() => Linking.openURL(b.court.maps_url)} />}
+                {tab === 'past' && b.court?.id && <IconBtn icon="🏟" label="Court" color={colors.primaryAlt} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })} />}
               </View>
             </Pressable>
             {awaiting && <Text style={{ color: colors.brandPinkBright, marginTop: 10, fontWeight: '600', fontSize: 13 }}>Send {egp(b.amount_due)} by InstaPay{holdLeft !== null ? ` · ${countdown(holdLeft)} left` : ''}</Text>}
@@ -214,7 +215,7 @@ export default function Bookings() {
                 {(b.booking_extras ?? []).length > 0 && <Text style={s.sub}>Extras: {b.booking_extras.map((x: any) => `${x.name} × ${x.qty}`).join(', ')}</Text>}
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
                   {b.court?.id && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => router.push({ pathname: '/court/[id]', params: { id: b.court.id } })}><Text style={s.link}>View court</Text></Pressable>}
-                  {b.court?.maps_url && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
+                  {tab !== 'past' && b.court?.maps_url && <Pressable accessibilityRole="button" hitSlop={10} style={s.action} onPress={() => Linking.openURL(b.court.maps_url)}><Text style={s.link}>📍 Directions</Text></Pressable>}
                 </View>
               </View>
             )}
