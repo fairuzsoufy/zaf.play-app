@@ -197,8 +197,8 @@ export default function Bookings() {
                 <Text style={[s.sub, { fontSize: 12, marginTop: 1 }]} numberOfLines={1}>{dateLabel(b.start_time)}</Text>
                 <Text style={[s.sub, { fontSize: 12, marginTop: 1, color: colors.text }]} numberOfLines={1}>{timeLabel(b.start_time)} → {timeLabel(b.end_time)}</Text>
               </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <View style={{ alignSelf: 'flex-end', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginBottom: 6 }}>
+              <View style={{ alignItems: 'center' }}>
+                <View style={{ alignSelf: 'center', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginBottom: 6 }}>
                   <Text style={{ color: bd.color, fontSize: 12, fontWeight: '700', textTransform: 'capitalize' }}>{bd.label}</Text>
                 </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
