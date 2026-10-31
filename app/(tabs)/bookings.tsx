@@ -24,7 +24,6 @@ const SPORT_LOOK: Record<string, [string, [string, string]]> = {
 const sportKey = (slug?: string) => Object.keys(SPORT_LOOK).find((k) => (slug || '').includes(k));
 const sportEmoji = (slug?: string) => SPORT_LOOK[sportKey(slug) ?? '']?.[0] ?? '🏟';
 const sportGradient = (slug?: string): [string, string] => SPORT_LOOK[sportKey(slug) ?? '']?.[1] ?? ['#2D5BFF', '#E0206F'];
-const hoursLabel = (a: string, b: string) => { const h = (new Date(b).getTime() - new Date(a).getTime()) / 3600000; return `${Number.isInteger(h) ? h : h.toFixed(1)} h`; };
 
 function IconBtn({ icon, label, color, onPress }: { icon: string; label: string; color: string; onPress: () => void }) {
   return (
@@ -195,7 +194,8 @@ export default function Bookings() {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={s.title} numberOfLines={1}>{b.sport?.name}</Text>
                 <Text style={[s.sub, { fontSize: 12, color: colors.text }]} numberOfLines={1}>{b.court?.facility?.name ?? b.court?.name}</Text>
-                <Text style={[s.sub, { fontSize: 12, marginTop: 1 }]} numberOfLines={1}>{dateLabel(b.start_time)} · {timeLabel(b.start_time)} · {hoursLabel(b.start_time, b.end_time)}</Text>
+                <Text style={[s.sub, { fontSize: 12, marginTop: 1 }]} numberOfLines={1}>{dateLabel(b.start_time)}</Text>
+                <Text style={[s.sub, { fontSize: 12, marginTop: 1, color: colors.text }]} numberOfLines={1}>{timeLabel(b.start_time)} → {timeLabel(b.end_time)}</Text>
                 <View style={{ alignSelf: 'flex-start', borderRadius: 999, backgroundColor: bd.color + '22', paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 }}>
                   <Text style={{ color: bd.color, fontSize: 12, fontWeight: '700', textTransform: 'capitalize' }}>{bd.label}</Text>
                 </View>
